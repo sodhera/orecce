@@ -3,123 +3,90 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Orecce Web Feed Tester</title>
+    <title>Orecce Feed</title>
     <script type="module" src="/src/main.js"></script>
   </head>
   <body>
-    <main class="layout">
-      <header class="header">
-        <h1>Orecce Feed Tester</h1>
-        <p>Local web interface for the AI-post backend emulator.</p>
+    <div class="bg-glow"></div>
+    <main class="app-shell">
+      <header class="topbar">
+        <div>
+          <p class="brand-eyebrow">Orecce</p>
+          <h1>Story Feed</h1>
+        </div>
+        <span id="healthPill" class="pill">Checking backend...</span>
       </header>
 
-      <section class="card">
-        <h2>Connection</h2>
-        <label>
-          Backend Base URL
-          <input id="baseUrl" type="text" />
-        </label>
-        <div class="row">
-          <button id="healthBtn">Health Check</button>
-          <span id="healthStatus" class="status"></span>
+      <section id="setupScreen" class="screen">
+        <div class="screen-head">
+          <p class="step">Step 1 of 2</p>
+          <h2>Choose your feed</h2>
+          <p>Select one track, pick a topic, then jump into an endless story feed.</p>
+        </div>
+
+        <div class="surface">
+          <div class="segment-title">Pick one</div>
+          <div id="modeGrid" class="mode-grid"></div>
+
+          <div class="segment-title">Choose an option</div>
+          <h3 id="optionHeading" class="option-heading"></h3>
+          <div id="optionGrid" class="option-grid"></div>
+
+          <div class="field-grid">
+            <label>
+              User ID
+              <input id="userId" type="text" />
+            </label>
+
+            <label>
+              Length
+              <select id="length">
+                <option value="short">short</option>
+                <option value="medium">medium</option>
+              </select>
+            </label>
+          </div>
+
+          <details class="advanced">
+            <summary>Advanced Connection Settings</summary>
+            <div class="field-grid single">
+              <label>
+                Backend Base URL
+                <input id="baseUrl" type="text" />
+              </label>
+            </div>
+          </details>
+
+          <div class="actions">
+            <button id="checkHealthBtn" class="btn ghost">Check Connection</button>
+            <button id="enterFeedBtn" class="btn primary">Enter Feed</button>
+          </div>
         </div>
       </section>
 
-      <section class="card">
-        <h2>Feed Request</h2>
-        <div class="grid two">
-          <label>
-            User ID
-            <input id="userId" type="text" value="web-user-1" />
-          </label>
-          <label>
-            Mode
-            <select id="mode">
-              <option value="BIOGRAPHY">BIOGRAPHY</option>
-              <option value="TRIVIA">TRIVIA</option>
-              <option value="NICHE">NICHE</option>
-            </select>
-          </label>
-          <label>
-            Profile
-            <input id="profile" type="text" value="Bill Gates" />
-          </label>
-          <label>
-            Length
-            <select id="length">
-              <option value="short">short</option>
-              <option value="medium">medium</option>
-            </select>
-          </label>
+      <section id="feedScreen" class="screen hidden">
+        <div class="screen-head feed-head">
+          <div>
+            <p class="step">Step 2 of 2</p>
+            <h2 id="feedTitle">Loading feed...</h2>
+            <p id="feedSubtitle">Scroll to keep generating more stories.</p>
+          </div>
+          <div class="actions compact">
+            <button id="backToSetupBtn" class="btn ghost">Back to Setup</button>
+            <button id="generateNowBtn" class="btn primary">Generate Now</button>
+          </div>
         </div>
-        <div class="row">
-          <button id="generateBtn">Generate (JSON)</button>
-          <button id="streamBtn">Generate (Stream)</button>
-          <button id="listBtn">List Posts</button>
-          <button id="moreBtn">Load More</button>
-        </div>
-      </section>
 
-      <section class="card">
-        <h2>Prompt Preferences</h2>
-        <div class="grid two">
-          <label>
-            Biography Instructions
-            <textarea id="bioInstructions" rows="4"></textarea>
-          </label>
-          <label>
-            Niche Instructions
-            <textarea id="nicheInstructions" rows="4"></textarea>
-          </label>
-        </div>
-        <div class="row">
-          <button id="loadPrefsBtn">Load Preferences</button>
-          <button id="savePrefsBtn">Save Preferences</button>
-        </div>
-      </section>
+        <section id="streamPanel" class="stream-panel">
+          <p id="generationStatus">Preparing your stories...</p>
+        </section>
 
-      <section class="card">
-        <h2>Latest Post</h2>
-        <pre id="streamOutput" class="panel"></pre>
-        <pre id="latestPost" class="panel"></pre>
-      </section>
+        <section id="feedList" class="feed-list"></section>
 
-      <section class="card">
-        <h2>Posts</h2>
-        <pre id="postsOutput" class="panel"></pre>
-      </section>
-
-      <section class="card">
-        <h2>Feedback</h2>
-        <div class="grid three">
-          <label>
-            Post ID
-            <input id="feedbackPostId" type="text" />
-          </label>
-          <label>
-            Feedback Type
-            <select id="feedbackType">
-              <option value="upvote">upvote</option>
-              <option value="downvote">downvote</option>
-              <option value="skip">skip</option>
-            </select>
-          </label>
-          <label>
-            Page Size
-            <input id="feedbackPageSize" type="number" min="1" max="50" value="20" />
-          </label>
-        </div>
-        <div class="row">
-          <button id="sendFeedbackBtn">Send Feedback</button>
-          <button id="listFeedbackBtn">List Feedback</button>
-        </div>
-        <pre id="feedbackOutput" class="panel"></pre>
-      </section>
-
-      <section class="card">
-        <h2>API Log</h2>
-        <pre id="logOutput" class="panel"></pre>
+        <div id="feedSentinel" class="feed-sentinel">Scroll for more</div>
       </section>
     </main>
+
+    <div id="toast" class="toast hidden"></div>
   </body>
 </html>

@@ -1,44 +1,77 @@
 import "./styles.css";
 
+const STORAGE_KEY = "orecce-web-settings-v3";
 const DEFAULT_BASE_URL = "http://127.0.0.1:5001/ai-post-dev/us-central1/api";
 
+const CATALOG = {
+  FACTS: {
+    label: "Facts",
+    apiMode: "TRIVIA",
+    options: ["Space", "History", "Biology", "Tech", "Sports"]
+  },
+  NICHE: {
+    label: "Niche",
+    apiMode: "NICHE",
+    options: ["90s Nostalgia", "Y2K Internet", "Cozy Gaming", "Streetwear Culture", "Dark Academia"]
+  },
+  BIOGRAPHIES: {
+    label: "Biographies",
+    apiMode: "BIOGRAPHY",
+    options: ["Elon Musk", "Steve Jobs", "Warren Buffett", "Bill Gates", "Jeff Bezos"]
+  }
+};
+
 const state = {
-  postCursor: null,
-  feedbackCursor: null
+  settings: {
+    baseUrl: DEFAULT_BASE_URL,
+    userId: createUserId(),
+    category: "BIOGRAPHIES",
+    profile: "Bill Gates",
+    length: "short"
+  },
+  nextCursor: null,
+  loadedPostIds: new Set(),
+  isGenerating: false,
+  hasUserScrolled: false,
+  observer: null,
+  lastAutoMs: 0
 };
 
-const elements = {
-  baseUrl: byId("baseUrl"),
+const view = {
+  setupScreen: byId("setupScreen"),
+  feedScreen: byId("feedScreen"),
+  healthPill: byId("healthPill"),
+  toast: byId("toast"),
+  modeGrid: byId("modeGrid"),
+  optionHeading: byId("optionHeading"),
+  optionGrid: byId("optionGrid"),
   userId: byId("userId"),
-  mode: byId("mode"),
-  profile: byId("profile"),
   length: byId("length"),
-  bioInstructions: byId("bioInstructions"),
-  nicheInstructions: byId("nicheInstructions"),
-  feedbackPostId: byId("feedbackPostId"),
-  feedbackType: byId("feedbackType"),
-  feedbackPageSize: byId("feedbackPageSize"),
-  healthStatus: byId("healthStatus"),
-  streamOutput: byId("streamOutput"),
-  latestPost: byId("latestPost"),
-  postsOutput: byId("postsOutput"),
-  feedbackOutput: byId("feedbackOutput"),
-  logOutput: byId("logOutput")
+  baseUrl: byId("baseUrl"),
+  checkHealthBtn: byId("checkHealthBtn"),
+  enterFeedBtn: byId("enterFeedBtn"),
+  feedTitle: byId("feedTitle"),
+  feedSubtitle: byId("feedSubtitle"),
+  streamPanel: byId("streamPanel"),
+  generationStatus: byId("generationStatus"),
+  feedList: byId("feedList"),
+  feedSentinel: byId("feedSentinel"),
+  backToSetupBtn: byId("backToSetupBtn"),
+  generateNowBtn: byId("generateNowBtn")
 };
 
-elements.baseUrl.value = DEFAULT_BASE_URL;
+bootstrap();
 
-byId("healthBtn").addEventListener("click", runHealthCheck);
-byId("generateBtn").addEventListener("click", generatePost);
-byId("streamBtn").addEventListener("click", generatePostStream);
-byId("listBtn").addEventListener("click", () => listPosts(true));
-byId("moreBtn").addEventListener("click", () => listPosts(false));
-byId("loadPrefsBtn").addEventListener("click", loadPreferences);
-byId("savePrefsBtn").addEventListener("click", savePreferences);
-byId("sendFeedbackBtn").addEventListener("click", sendFeedback);
-byId("listFeedbackBtn").addEventListener("click", () => listFeedback(true));
+function bootstrap() {
+  loadSettings();
+  renderSetup();
+  bindHandlers();
+  void checkHealth();
+}
 
-void runHealthCheck();
+function createUserId() {
+  return `web-user-${Math.floor(Math.random() * 10000)}`;
+}
 
 function byId(id) {
   const element = document.getElementById(id);
@@ -48,222 +81,390 @@ function byId(id) {
   return element;
 }
 
-function getBaseUrl() {
-  return String(elements.baseUrl.value || "").trim().replace(/\/$/, "");
+function bindHandlers() {
+  view.checkHealthBtn.addEventListener("click", () => void checkHealth(true));
+  view.enterFeedBtn.addEventListener("click", () => void enterFeed());
+  view.backToSetupBtn.addEventListener("click", () => {
+    stopFeedObserver();
+    showScreen("setup");
+  });
+  view.generateNowBtn.addEventListener("click", () => void generateNextPost("manual"));
+
+  window.addEventListener(
+    "scroll",
+    () => {
+      state.hasUserScrolled = true;
+    },
+    { passive: true }
+  );
 }
 
-function getRequestPayload() {
-  return {
-    user_id: String(elements.userId.value || "").trim(),
-    mode: String(elements.mode.value || "").trim(),
-    profile: String(elements.profile.value || "").trim(),
-    length: String(elements.length.value || "short").trim()
-  };
+function loadSettings() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      return;
+    }
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") {
+      return;
+    }
+    state.settings = { ...state.settings, ...parsed };
+  } catch {
+    // ignore
+  }
+
+  if (!CATALOG[state.settings.category]) {
+    state.settings.category = "BIOGRAPHIES";
+  }
+
+  const categoryOptions = CATALOG[state.settings.category].options;
+  if (!categoryOptions.includes(state.settings.profile)) {
+    state.settings.profile = categoryOptions[0];
+  }
 }
 
-function appendLog(message, payload) {
-  const stamp = new Date().toLocaleTimeString();
-  const line =
-    typeof payload === "undefined"
-      ? `[${stamp}] ${message}`
-      : `[${stamp}] ${message}\n${JSON.stringify(payload, null, 2)}`;
-  elements.logOutput.textContent = `${line}\n\n${elements.logOutput.textContent}`.trim();
+function persistSettings() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state.settings));
 }
 
-async function requestJson(path, method, body) {
-  const url = `${getBaseUrl()}${path}`;
-  const response = await fetch(url, {
+function syncSettingsFromInputs() {
+  state.settings.userId = String(view.userId.value || "").trim();
+  state.settings.length = String(view.length.value || "short").trim();
+  state.settings.baseUrl = String(view.baseUrl.value || "").trim().replace(/\/$/, "");
+}
+
+function renderSetup() {
+  view.userId.value = state.settings.userId;
+  view.length.value = state.settings.length;
+  view.baseUrl.value = state.settings.baseUrl;
+
+  const categories = Object.keys(CATALOG);
+  view.modeGrid.innerHTML = categories
+    .map((key) => {
+      const activeClass = state.settings.category === key ? "active" : "";
+      return `<button class="mode-pill ${activeClass}" data-category="${key}">${CATALOG[key].label}</button>`;
+    })
+    .join("");
+
+  for (const button of Array.from(view.modeGrid.querySelectorAll("button[data-category]"))) {
+    button.addEventListener("click", () => {
+      const category = button.dataset.category;
+      if (!category || !CATALOG[category]) {
+        return;
+      }
+      state.settings.category = category;
+      if (!CATALOG[category].options.includes(state.settings.profile)) {
+        state.settings.profile = CATALOG[category].options[0];
+      }
+      renderSetup();
+      persistSettings();
+    });
+  }
+
+  const selected = CATALOG[state.settings.category];
+  view.optionHeading.textContent = `${selected.label} options`;
+  view.optionGrid.innerHTML = selected.options
+    .map((option) => {
+      const activeClass = state.settings.profile === option ? "active" : "";
+      return `<button class="option-pill ${activeClass}" data-profile="${escapeHtml(option)}">${escapeHtml(option)}</button>`;
+    })
+    .join("");
+
+  for (const button of Array.from(view.optionGrid.querySelectorAll("button[data-profile]"))) {
+    button.addEventListener("click", () => {
+      const profile = button.dataset.profile;
+      if (!profile) {
+        return;
+      }
+      state.settings.profile = profile;
+      renderSetup();
+      persistSettings();
+    });
+  }
+}
+
+function showScreen(name) {
+  const isSetup = name === "setup";
+  view.setupScreen.classList.toggle("hidden", !isSetup);
+  view.feedScreen.classList.toggle("hidden", isSetup);
+}
+
+function setHealthPill(connected) {
+  view.healthPill.classList.remove("live", "dead");
+  if (connected) {
+    view.healthPill.classList.add("live");
+    view.healthPill.textContent = "Backend connected";
+  } else {
+    view.healthPill.classList.add("dead");
+    view.healthPill.textContent = "Backend unavailable";
+  }
+}
+
+function showToast(message) {
+  view.toast.textContent = message;
+  view.toast.classList.remove("hidden");
+  setTimeout(() => {
+    view.toast.classList.add("hidden");
+  }, 2600);
+}
+
+async function checkHealth(showToaster = false) {
+  syncSettingsFromInputs();
+  persistSettings();
+  try {
+    const response = await fetch(`${state.settings.baseUrl}/health`);
+    const payload = await response.json();
+    const ok = response.ok && payload?.ok === true;
+    setHealthPill(ok);
+    if (showToaster) {
+      showToast(ok ? "Connection looks good." : "Cannot reach backend.");
+    }
+    return ok;
+  } catch {
+    setHealthPill(false);
+    if (showToaster) {
+      showToast("Cannot reach backend.");
+    }
+    return false;
+  }
+}
+
+async function apiRequest(path, method = "GET", body) {
+  const response = await fetch(`${state.settings.baseUrl}${path}`, {
     method,
     headers: { "Content-Type": "application/json" },
     body: body ? JSON.stringify(body) : undefined
   });
-  let data = null;
+
+  let payload = null;
   try {
-    data = await response.json();
+    payload = await response.json();
   } catch {
-    data = null;
+    payload = null;
   }
-  if (!response.ok || !data?.ok) {
-    appendLog("API error", { path, status: response.status, data });
-    throw new Error(data?.error?.message || `Request failed: ${response.status}`);
+
+  if (!response.ok || payload?.ok === false) {
+    throw new Error(payload?.error?.message || `Request failed (${response.status})`);
   }
-  appendLog("API ok", { path, status: response.status });
-  return data;
+
+  return payload;
 }
 
-async function runHealthCheck() {
+function postPayload() {
+  const category = CATALOG[state.settings.category];
+  return {
+    user_id: state.settings.userId,
+    mode: category.apiMode,
+    profile: state.settings.profile,
+    length: state.settings.length
+  };
+}
+
+function updateFeedHeader() {
+  const category = CATALOG[state.settings.category];
+  view.feedTitle.textContent = `${category.label}: ${state.settings.profile}`;
+  view.feedSubtitle.textContent = "Scroll and the app keeps generating new posts.";
+}
+
+function clearFeed() {
+  state.nextCursor = null;
+  state.loadedPostIds.clear();
+  view.feedList.innerHTML = "";
+}
+
+async function enterFeed() {
+  syncSettingsFromInputs();
+  if (!state.settings.userId) {
+    showToast("Please enter a user ID.");
+    return;
+  }
+
+  persistSettings();
+  updateFeedHeader();
+  showScreen("feed");
+  clearFeed();
+
   try {
-    const url = `${getBaseUrl()}/health`;
-    const response = await fetch(url);
-    const data = await response.json();
-    if (!response.ok || !data?.ok) {
-      throw new Error(`Health check failed (${response.status})`);
-    }
-    elements.healthStatus.textContent = "Connected";
-    appendLog("Health check passed");
-  } catch (error) {
-    elements.healthStatus.textContent = "Disconnected";
-    appendLog("Health check failed", { message: String(error) });
-  }
-}
-
-async function savePreferences() {
-  const payload = {
-    user_id: String(elements.userId.value || "").trim(),
-    biography_instructions: String(elements.bioInstructions.value || "").trim(),
-    niche_instructions: String(elements.nicheInstructions.value || "").trim()
-  };
-  const data = await requestJson("/v1/prompt-preferences/set", "POST", payload);
-  appendLog("Preferences saved", data.data);
-}
-
-async function loadPreferences() {
-  const userId = String(elements.userId.value || "").trim();
-  const data = await requestJson(`/v1/prompt-preferences?user_id=${encodeURIComponent(userId)}`, "GET");
-  elements.bioInstructions.value = data.data.biographyInstructions || "";
-  elements.nicheInstructions.value = data.data.nicheInstructions || "";
-  appendLog("Preferences loaded", data.data);
-}
-
-async function generatePost() {
-  elements.streamOutput.textContent = "";
-  const payload = getRequestPayload();
-  const started = performance.now();
-  const data = await requestJson("/v1/posts/generate", "POST", payload);
-  const elapsedMs = Math.round(performance.now() - started);
-  elements.latestPost.textContent = JSON.stringify({ latency_ms: elapsedMs, ...data.data }, null, 2);
-  elements.feedbackPostId.value = data.data.id;
-}
-
-async function generatePostStream() {
-  elements.streamOutput.textContent = "";
-  const payload = getRequestPayload();
-  const url = `${getBaseUrl()}/v1/posts/generate/stream`;
-  const started = performance.now();
-
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
-    body: JSON.stringify(payload)
-  });
-
-  if (!response.ok || !response.body) {
-    throw new Error(`Stream failed: ${response.status}`);
-  }
-
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-  let chunkText = "";
-  let finalPost = null;
-
-  const processBlock = (block) => {
-    const lines = block.split("\n").map((line) => line.trim());
-    let eventName = "message";
-    const dataLines = [];
-    for (const line of lines) {
-      if (line.startsWith("event:")) {
-        eventName = line.slice(6).trim();
-      } else if (line.startsWith("data:")) {
-        dataLines.push(line.slice(5).trim());
-      }
-    }
-    const raw = dataLines.join("\n");
-    if (!raw) {
-      return;
-    }
-    let parsed = null;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      return;
-    }
-    if (eventName === "chunk") {
-      chunkText += String(parsed?.delta || "");
-      elements.streamOutput.textContent = chunkText;
-      return;
-    }
-    if (eventName === "post" && parsed?.ok) {
-      finalPost = parsed.data;
-      return;
-    }
-    if (eventName === "error") {
-      throw new Error(parsed?.error?.message || "Stream error");
-    }
-  };
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) {
-      break;
-    }
-    buffer += decoder.decode(value, { stream: true });
-    while (true) {
-      const marker = buffer.indexOf("\n\n");
-      if (marker === -1) {
+    await loadExistingPosts();
+    while (state.loadedPostIds.size < 3) {
+      await generateNextPost("initial");
+      if (state.loadedPostIds.size >= 3) {
         break;
       }
-      const block = buffer.slice(0, marker);
-      buffer = buffer.slice(marker + 2);
-      processBlock(block);
+    }
+    startFeedObserver();
+  } catch (error) {
+    showToast(error instanceof Error ? error.message : "Could not load feed.");
+  }
+}
+
+function createPostCard(post) {
+  const card = document.createElement("article");
+  card.className = "post-card";
+  card.dataset.postId = post.id;
+
+  const tags = Array.isArray(post.tags) ? post.tags : [];
+  const tagsHtml = tags.map((tag) => `<span class="chip">${escapeHtml(String(tag))}</span>`).join("");
+  const note = post.uncertainty_note
+    ? `<div class="subtle">Note: ${escapeHtml(String(post.uncertainty_note))}</div>`
+    : "";
+
+  card.innerHTML = `
+    <h3>${escapeHtml(String(post.title || "Untitled"))}</h3>
+    <p class="body">${escapeHtml(String(post.body || ""))}</p>
+    <div class="meta">${tagsHtml}</div>
+    <div class="meta-row">
+      <span class="subtle">${escapeHtml(String(post.post_type || "story"))} • ${escapeHtml(String(post.confidence || "medium"))}</span>
+      <div class="feedback">
+        <button data-feedback="upvote">Upvote</button>
+        <button data-feedback="downvote">Downvote</button>
+        <button data-feedback="skip">Skip</button>
+      </div>
+    </div>
+    ${note}
+  `;
+
+  const buttons = Array.from(card.querySelectorAll("button[data-feedback]"));
+  for (const button of buttons) {
+    button.addEventListener("click", async () => {
+      const type = button.dataset.feedback;
+      if (!type) {
+        return;
+      }
+      await sendFeedback(post.id, type, buttons);
+    });
+  }
+
+  return card;
+}
+
+function addPosts(posts, append = true) {
+  if (!Array.isArray(posts) || posts.length === 0) {
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+  let count = 0;
+  for (const post of posts) {
+    if (!post?.id || state.loadedPostIds.has(post.id)) {
+      continue;
+    }
+    state.loadedPostIds.add(post.id);
+    fragment.appendChild(createPostCard(post));
+    count += 1;
+  }
+
+  if (count === 0) {
+    return;
+  }
+
+  if (append) {
+    view.feedList.appendChild(fragment);
+  } else {
+    view.feedList.prepend(fragment);
+  }
+}
+
+async function loadExistingPosts() {
+  const data = await apiRequest("/v1/posts/list", "POST", {
+    ...postPayload(),
+    page_size: 10
+  });
+  state.nextCursor = data?.data?.nextCursor || null;
+  addPosts(data?.data?.items || [], true);
+}
+
+async function sendFeedback(postId, type, buttons) {
+  try {
+    await apiRequest("/v1/posts/feedback", "POST", {
+      user_id: state.settings.userId,
+      post_id: postId,
+      feedback_type: type
+    });
+    for (const button of buttons) {
+      button.classList.toggle("active", button.dataset.feedback === type);
+    }
+    showToast(`Saved: ${type}`);
+  } catch (error) {
+    showToast(error instanceof Error ? error.message : "Failed to save feedback.");
+  }
+}
+
+function setGenerationStatus(message) {
+  view.generationStatus.textContent = message;
+}
+
+async function generateNextPost(trigger) {
+  if (state.isGenerating) {
+    return;
+  }
+
+  state.isGenerating = true;
+  if (trigger === "manual") {
+    view.generateNowBtn.disabled = true;
+    view.generateNowBtn.textContent = "Generating...";
+  }
+  setGenerationStatus("Generating next story...");
+
+  try {
+    const started = performance.now();
+    const data = await apiRequest("/v1/posts/generate", "POST", postPayload());
+    const elapsed = Math.round(performance.now() - started);
+    addPosts([data.data], true);
+    setGenerationStatus(`Latest story generated in ${elapsed}ms.`);
+  } catch (error) {
+    setGenerationStatus("Generation failed.");
+    showToast(error instanceof Error ? error.message : "Failed to generate post.");
+  } finally {
+    state.isGenerating = false;
+    if (trigger === "manual") {
+      view.generateNowBtn.disabled = false;
+      view.generateNowBtn.textContent = "Generate Now";
     }
   }
-  if (buffer.trim()) {
-    processBlock(buffer.trim());
-  }
-
-  const elapsedMs = Math.round(performance.now() - started);
-  if (!finalPost) {
-    throw new Error("Stream ended without final post");
-  }
-  elements.latestPost.textContent = JSON.stringify({ latency_ms: elapsedMs, ...finalPost }, null, 2);
-  elements.feedbackPostId.value = finalPost.id;
-  appendLog("Stream generated post", { latency_ms: elapsedMs, id: finalPost.id });
 }
 
-async function listPosts(resetCursor) {
-  if (resetCursor) {
-    state.postCursor = null;
-  }
-  const payload = {
-    user_id: String(elements.userId.value || "").trim(),
-    mode: String(elements.mode.value || "").trim(),
-    profile: String(elements.profile.value || "").trim(),
-    page_size: 10,
-    ...(state.postCursor ? { cursor: state.postCursor } : {})
-  };
-  const data = await requestJson("/v1/posts/list", "POST", payload);
-  state.postCursor = data.data.nextCursor;
-  elements.postsOutput.textContent = JSON.stringify(data.data, null, 2);
-  appendLog("Posts listed", { count: data.data.items?.length || 0, nextCursor: state.postCursor });
+function startFeedObserver() {
+  stopFeedObserver();
+  state.hasUserScrolled = false;
+  state.lastAutoMs = 0;
+
+  state.observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting || state.isGenerating) {
+          continue;
+        }
+        if (!state.hasUserScrolled) {
+          continue;
+        }
+        const now = Date.now();
+        if (now - state.lastAutoMs < 1200) {
+          continue;
+        }
+        state.lastAutoMs = now;
+        void generateNextPost("auto");
+      }
+    },
+    { threshold: 0.9 }
+  );
+
+  state.observer.observe(view.feedSentinel);
 }
 
-async function sendFeedback() {
-  const postId = String(elements.feedbackPostId.value || "").trim();
-  if (!postId) {
-    throw new Error("Feedback post id is required");
+function stopFeedObserver() {
+  if (state.observer) {
+    state.observer.disconnect();
+    state.observer = null;
   }
-  const payload = {
-    user_id: String(elements.userId.value || "").trim(),
-    post_id: postId,
-    feedback_type: String(elements.feedbackType.value || "upvote").trim()
-  };
-  const data = await requestJson("/v1/posts/feedback", "POST", payload);
-  elements.feedbackOutput.textContent = JSON.stringify(data.data, null, 2);
-  appendLog("Feedback saved", data.data);
 }
 
-async function listFeedback(resetCursor) {
-  if (resetCursor) {
-    state.feedbackCursor = null;
-  }
-  const payload = {
-    user_id: String(elements.userId.value || "").trim(),
-    page_size: Number(elements.feedbackPageSize.value || 20),
-    ...(state.feedbackCursor ? { cursor: state.feedbackCursor } : {})
-  };
-  const data = await requestJson("/v1/posts/feedback/list", "POST", payload);
-  state.feedbackCursor = data.data.nextCursor;
-  elements.feedbackOutput.textContent = JSON.stringify(data.data, null, 2);
-  appendLog("Feedback listed", { count: data.data.items?.length || 0, nextCursor: state.feedbackCursor });
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
 }

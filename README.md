@@ -17,6 +17,9 @@ This repository contains independent work areas:
   - This starts backend emulators + web app together.
   - Open `http://127.0.0.1:5173`
   - Stop everything with `Ctrl+C`
+  - If ports are already occupied, run:
+    - `npm run stop:all`
+    - `npm run start:all`
 - Mobile:
   - `npm --prefix mobile install`
   - `npm --prefix mobile run start`
@@ -46,6 +49,7 @@ This repository contains independent work areas:
 ### Single-command behavior
 - `npm run start:all` auto-installs missing `web` and backend deps.
 - If `backend/ai-post/functions/.env` has no OpenAI key, it falls back to `MOCK_LLM=true`.
+- If backend emulator is already healthy on `:5001`, it is reused.
 - Emulator Firestore/function data persists locally in `.firebase-emulator-data`.
 
 ## Integration docs

@@ -7,11 +7,23 @@ FUNCTIONS_DIR="$BACKEND_DIR/functions"
 WEB_DIR="$ROOT_DIR/web"
 ENV_FILE="$FUNCTIONS_DIR/.env"
 ENV_EXAMPLE_FILE="$FUNCTIONS_DIR/.env.example"
+BACKEND_HEALTH_URL="${BACKEND_HEALTH_URL:-http://127.0.0.1:5001/ai-post-dev/us-central1/api/health}"
 
 if ! command -v npm >/dev/null 2>&1; then
   echo "npm is required."
   exit 1
 fi
+
+is_backend_healthy() {
+  local response
+  response="$(curl -fsS "$BACKEND_HEALTH_URL" 2>/dev/null || true)"
+  [[ "$response" == *"\"ok\":true"* ]]
+}
+
+port_in_use() {
+  local port="$1"
+  lsof -nP -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1
+}
 
 if [[ ! -f "$ENV_FILE" && -f "$ENV_EXAMPLE_FILE" ]]; then
   cp "$ENV_EXAMPLE_FILE" "$ENV_FILE"
@@ -60,17 +72,35 @@ cleanup() {
 
 trap cleanup EXIT INT TERM
 
-(
-  cd "$BACKEND_DIR"
-  if [[ "$USE_MOCK" == "true" ]]; then
-    MOCK_LLM=true ./scripts/start-emulators-local.sh
-  else
-    ./scripts/start-emulators-local.sh
-  fi
-) &
-BACKEND_PID=$!
+START_BACKEND="yes"
+if is_backend_healthy; then
+  echo "Detected running backend emulator at $BACKEND_HEALTH_URL"
+  echo "Reusing existing backend process."
+  START_BACKEND="no"
+elif port_in_use 5001 || port_in_use 8080 || port_in_use 4000; then
+  echo "Port conflict detected (5001/8080/4000) and no healthy backend found."
+  echo "Run: npm run stop:all"
+  echo "Then: npm run start:all"
+  exit 1
+fi
+
+if [[ "$START_BACKEND" == "yes" ]]; then
+  (
+    cd "$BACKEND_DIR"
+    if [[ "$USE_MOCK" == "true" ]]; then
+      MOCK_LLM=true ./scripts/start-emulators-local.sh
+    else
+      ./scripts/start-emulators-local.sh
+    fi
+  ) &
+  BACKEND_PID=$!
+fi
 
 npm --prefix "$WEB_DIR" run dev &
 WEB_PID=$!
 
-wait "$BACKEND_PID" "$WEB_PID"
+if [[ "$START_BACKEND" == "yes" ]]; then
+  wait "$BACKEND_PID" "$WEB_PID"
+else
+  wait "$WEB_PID"
+fi

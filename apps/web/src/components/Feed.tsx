@@ -1,85 +1,80 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import PostCard, { type Post } from "./PostCard";
+import { generatePost, listPosts, type ApiPost } from "@/lib/api";
 
-const MOCK_POSTS: Post[] = [
-    {
-        id: 1,
-        topic: "AI",
-        text_content:
-            "GPT-5 is showing emergent reasoning capabilities that weren't present in previous models. The jump from GPT-4 to GPT-5 feels bigger than 3.5 to 4. Especially in multi-step planning and code generation.",
-        date: "Feb 10, 2026",
-    },
-    {
-        id: 2,
-        topic: "Frontend",
-        text_content:
-            "Next.js 16 just dropped with built-in Turbopack support. Dev server cold starts went from 1.2s to 180ms in our monorepo. The DX improvement is massive.",
-        date: "Feb 10, 2026",
-    },
-    {
-        id: 3,
-        topic: "Startups",
-        text_content:
-            "Hot take: most startups fail not because of bad ideas, but because founders optimize for fundraising instead of building something people actually want. Ship first, pitch later.",
-        date: "Feb 9, 2026",
-    },
-    {
-        id: 4,
-        topic: "Design",
-        text_content:
-            "The best interfaces feel invisible. Users shouldn't have to think about navigation — it should be instinctive. If your app needs a tutorial, your design needs work.",
-        date: "Feb 9, 2026",
-    },
-    {
-        id: 5,
-        topic: "Backend",
-        text_content:
-            "Switched our API from REST to tRPC and the type safety across the full stack is incredible. No more runtime type mismatches between client and server. Worth the migration effort.",
-        date: "Feb 8, 2026",
-    },
-    {
-        id: 6,
-        topic: "Open Source",
-        text_content:
-            "Just hit 10K stars on our open source project. The community contributions have been amazing — 47 contributors from 12 countries. Open source really is the best way to build software.",
-        date: "Feb 8, 2026",
-    },
-    {
-        id: 7,
-        topic: "DevOps",
-        text_content:
-            "Migrated our CI/CD from Jenkins to GitHub Actions. Build times dropped 60% and the config is 10x more readable. Should have done this years ago.",
-        date: "Feb 7, 2026",
-    },
-    {
-        id: 8,
-        topic: "Career",
-        text_content:
-            "Unpopular opinion: the best way to grow as an engineer isn't grinding LeetCode. It's shipping real projects, reading production codebases, and learning to communicate technical decisions clearly.",
-        date: "Feb 7, 2026",
-    },
-    {
-        id: 9,
-        topic: "AI",
-        text_content:
-            "Built an AI agent that reviews PRs, suggests optimizations, and auto-generates unit tests. It caught 3 bugs that our entire team missed during code review. The future of development is here.",
-        date: "Feb 6, 2026",
-    },
-    {
-        id: 10,
-        topic: "Frontend",
-        text_content:
-            "CSS container queries are a game changer. Finally we can build truly responsive components that adapt to their container, not just the viewport. No more hacky JavaScript resize observers.",
-        date: "Feb 6, 2026",
-    },
-];
+// ── Config ──────────────────────────────────────────────────────
+const USER_ID = "web-user-1";
 
-export default function Feed() {
+// ── Helpers ─────────────────────────────────────────────────────
+
+function apiPostToPost(p: ApiPost): Post {
+    return {
+        id: p.id,
+        topic: p.mode,
+        title: p.title,
+        text_content: p.body,
+        date: new Date(p.createdAtMs).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+        }),
+    };
+}
+
+// ── Component ───────────────────────────────────────────────────
+
+interface FeedProps {
+    mode: string;
+    profile: string;
+}
+
+export default function Feed({ mode, profile }: FeedProps) {
     const [activeTab, setActiveTab] = useState<"for-you" | "following">(
         "for-you"
     );
+    const [posts, setPosts] = useState<Post[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [generating, setGenerating] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    // Re-fetch posts when mode or profile changes
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                setPosts([]);
+                const result = await listPosts(USER_ID, mode, profile, 20);
+                if (!cancelled) {
+                    setPosts(result.items.map(apiPostToPost));
+                }
+            } catch (err) {
+                if (!cancelled) setError((err as Error).message);
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [mode, profile]);
+
+    // Generate a new post
+    const handleGenerate = useCallback(async () => {
+        try {
+            setGenerating(true);
+            setError(null);
+            const newPost = await generatePost(USER_ID, mode, profile, "short");
+            setPosts((prev) => [apiPostToPost(newPost), ...prev]);
+        } catch (err) {
+            setError((err as Error).message);
+        } finally {
+            setGenerating(false);
+        }
+    }, [mode, profile]);
 
     return (
         <main className="feed">
@@ -103,11 +98,63 @@ export default function Feed() {
                 </div>
             </div>
 
+            {/* Generate button */}
+            <div
+                style={{
+                    padding: "12px 16px",
+                    borderBottom: "1px solid var(--border)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                }}
+            >
+                <button
+                    onClick={handleGenerate}
+                    disabled={generating}
+                    style={{
+                        background: generating ? "#1a5c8a" : "#1d9bf0",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: 9999,
+                        padding: "8px 20px",
+                        fontWeight: 700,
+                        fontSize: 14,
+                        cursor: generating ? "not-allowed" : "pointer",
+                        opacity: generating ? 0.7 : 1,
+                        transition: "all 0.2s",
+                    }}
+                >
+                    {generating ? "Generating…" : "✨ Generate new post"}
+                </button>
+                {error && (
+                    <span style={{ color: "#f4212e", fontSize: 13 }}>{error}</span>
+                )}
+            </div>
 
             {/* Posts */}
-            {MOCK_POSTS.map((post) => (
-                <PostCard key={post.id} post={post} />
-            ))}
+            {loading ? (
+                <div
+                    style={{
+                        padding: 40,
+                        textAlign: "center",
+                        color: "var(--text-secondary)",
+                    }}
+                >
+                    Loading posts…
+                </div>
+            ) : posts.length === 0 ? (
+                <div
+                    style={{
+                        padding: 40,
+                        textAlign: "center",
+                        color: "var(--text-secondary)",
+                    }}
+                >
+                    No posts yet. Click &quot;Generate new post&quot; to create one!
+                </div>
+            ) : (
+                posts.map((post) => <PostCard key={post.id} post={post} />)
+            )}
         </main>
     );
 }

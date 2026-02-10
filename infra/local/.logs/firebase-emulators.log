@@ -1003,3 +1003,28 @@ i  hub: Stopping emulator hub {"metadata":{"emulator":{"name":"hub"},"message":"
 i  hub: Stopping emulator hub {"metadata":{"emulator":{"name":"hub"},"message":"Stopping emulator hub"}}
 i  logging: Stopping Logging Emulator {"metadata":{"emulator":{"name":"logging"},"message":"Stopping Logging Emulator"}}
 i  logging: Stopping Logging Emulator {"metadata":{"emulator":{"name":"logging"},"message":"Stopping Logging Emulator"}}
+[2026-02-10T11:52:33Z] starting firebase emulators
+node:internal/modules/cjs/loader:1228
+  throw err;
+  ^
+
+Error: Cannot find module 'semver'
+Require stack:
+- /Users/sulavshrestha/Desktop/orecce/node_modules/.pnpm/firebase-tools@15.5.1_@types+node@20.19.33_encoding@0.1.13_typescript@5.9.3/node_modules/firebase-tools/lib/bin/firebase.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1225:15)
+    at Function._load (node:internal/modules/cjs/loader:1055:27)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:220:24)
+    at Module.require (node:internal/modules/cjs/loader:1311:12)
+    at require (node:internal/modules/helpers:136:16)
+    at Object.<anonymous> (/Users/sulavshrestha/Desktop/orecce/node_modules/.pnpm/firebase-tools@15.5.1_@types+node@20.19.33_encoding@0.1.13_typescript@5.9.3/node_modules/firebase-tools/lib/bin/firebase.js:4:16)
+    at Module._compile (node:internal/modules/cjs/loader:1554:14)
+    at Object..js (node:internal/modules/cjs/loader:1706:10)
+    at Module.load (node:internal/modules/cjs/loader:1289:32) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/sulavshrestha/Desktop/orecce/node_modules/.pnpm/firebase-tools@15.5.1_@types+node@20.19.33_encoding@0.1.13_typescript@5.9.3/node_modules/firebase-tools/lib/bin/firebase.js'
+  ]
+}
+
+Node.js v22.14.0

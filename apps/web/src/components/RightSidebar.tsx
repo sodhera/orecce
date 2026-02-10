@@ -1,14 +1,129 @@
 "use client";
 
-export default function RightSidebar() {
+const MODES = [
+    { value: "BIOGRAPHY", label: "Biography", icon: "📖", desc: "Stories about real people" },
+    { value: "TRIVIA", label: "Trivia", icon: "🧠", desc: "Fascinating facts" },
+    { value: "NICHE", label: "Niche", icon: "🎯", desc: "Deep dives into topics" },
+];
+
+const SUGGESTED_PROFILES: Record<string, string[]> = {
+    BIOGRAPHY: ["Steve Jobs", "Elon Musk", "Ada Lovelace", "Nikola Tesla", "Marie Curie"],
+    TRIVIA: ["Space", "History", "Science", "Technology", "Nature"],
+    NICHE: ["Retro Computing", "Mechanical Keyboards", "Coffee Brewing", "Urban Exploration", "Film Photography"],
+};
+
+interface RightSidebarProps {
+    mode: string;
+    onModeChange: (mode: string) => void;
+    profile: string;
+    onProfileChange: (profile: string) => void;
+}
+
+export default function RightSidebar({
+    mode,
+    onModeChange,
+    profile,
+    onProfileChange,
+}: RightSidebarProps) {
+    const suggestions = SUGGESTED_PROFILES[mode] || [];
+
     return (
         <aside className="right-sidebar">
-            {/* Search */}
-            <div className="search-box">
-                <svg viewBox="0 0 24 24">
-                    <path d="M10.25 3.75c-3.59 0-6.5 2.91-6.5 6.5s2.91 6.5 6.5 6.5c1.795 0 3.419-.726 4.596-1.904 1.178-1.177 1.904-2.801 1.904-4.596 0-3.59-2.91-6.5-6.5-6.5zm-8.5 6.5c0-4.694 3.806-8.5 8.5-8.5s8.5 3.806 8.5 8.5c0 1.986-.682 3.815-1.824 5.262l4.781 4.781-1.414 1.414-4.781-4.781c-1.447 1.142-3.276 1.824-5.262 1.824-4.694 0-8.5-3.806-8.5-8.5z" />
-                </svg>
-                <input type="text" placeholder="Search" />
+            {/* Mode Selector */}
+            <div className="right-card">
+                <h2 className="right-card-title">Post Type</h2>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {MODES.map((m) => (
+                        <button
+                            key={m.value}
+                            onClick={() => {
+                                onModeChange(m.value);
+                                onProfileChange(SUGGESTED_PROFILES[m.value][0]);
+                            }}
+                            style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 10,
+                                padding: "10px 12px",
+                                borderRadius: 12,
+                                border: mode === m.value
+                                    ? "1px solid #1d9bf0"
+                                    : "1px solid var(--border)",
+                                background: mode === m.value
+                                    ? "rgba(29,155,240,0.1)"
+                                    : "transparent",
+                                cursor: "pointer",
+                                textAlign: "left",
+                                color: "var(--text-primary)",
+                                transition: "all 0.2s",
+                            }}
+                        >
+                            <span style={{ fontSize: 20 }}>{m.icon}</span>
+                            <div>
+                                <div style={{
+                                    fontWeight: 700,
+                                    fontSize: 14,
+                                    color: mode === m.value ? "#1d9bf0" : "var(--text-primary)",
+                                }}>
+                                    {m.label}
+                                </div>
+                                <div style={{ fontSize: 12, color: "var(--text-secondary)" }}>
+                                    {m.desc}
+                                </div>
+                            </div>
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Profile / Topic Selector */}
+            <div className="right-card">
+                <h2 className="right-card-title">
+                    {mode === "BIOGRAPHY" ? "Person" : "Topic"}
+                </h2>
+                <input
+                    type="text"
+                    value={profile}
+                    onChange={(e) => onProfileChange(e.target.value)}
+                    placeholder={mode === "BIOGRAPHY" ? "Enter a name…" : "Enter a topic…"}
+                    style={{
+                        width: "100%",
+                        padding: "10px 12px",
+                        borderRadius: 9999,
+                        border: "1px solid var(--border)",
+                        background: "var(--bg-secondary)",
+                        color: "var(--text-primary)",
+                        fontSize: 14,
+                        outline: "none",
+                        boxSizing: "border-box",
+                        marginBottom: 10,
+                    }}
+                />
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                    {suggestions.map((s) => (
+                        <button
+                            key={s}
+                            onClick={() => onProfileChange(s)}
+                            style={{
+                                padding: "5px 12px",
+                                borderRadius: 9999,
+                                border: profile === s
+                                    ? "1px solid #1d9bf0"
+                                    : "1px solid var(--border)",
+                                background: profile === s
+                                    ? "rgba(29,155,240,0.1)"
+                                    : "transparent",
+                                color: profile === s ? "#1d9bf0" : "var(--text-secondary)",
+                                fontSize: 13,
+                                cursor: "pointer",
+                                fontWeight: profile === s ? 700 : 400,
+                                transition: "all 0.2s",
+                            }}
+                        >
+                            {s}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* Footer */}

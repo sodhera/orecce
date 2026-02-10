@@ -62,6 +62,11 @@ npm --prefix functions run build
 firebase emulators:start --only functions,firestore
 ```
 
+To persist emulator Firestore/function state locally on disk:
+```bash
+./scripts/start-emulators-local.sh
+```
+
 ## Faster iteration (no emulator)
 If you're iterating on prompt quality, you don't need Firebase emulation at all.
 

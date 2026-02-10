@@ -8,6 +8,13 @@ mobile/.expo/
 mobile/.turbo/
 mobile/firebase-debug*.log
 
+# Web
+web/node_modules/
+web/dist/
+web/.vite/
+web/.env
+web/.env.*
+
 # Backend
 backend/ai-post/node_modules/
 backend/ai-post/functions/node_modules/
@@ -24,3 +31,6 @@ backend/ai-post/functions/.env.*
 
 # Local test UI for backend
 backend/ai-post/local-dev-ui/
+
+# Local emulator persistence
+.firebase-emulator-data/

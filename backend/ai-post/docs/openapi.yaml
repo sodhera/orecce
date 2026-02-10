@@ -1,0 +1,472 @@
+openapi: 3.0.3
+info:
+  title: AI-Post Backend API
+  version: 0.1.0
+  description: |
+    Firebase Functions backend for AI-generated feed posts.
+    v0 has no auth and is intended for prototype integration.
+servers:
+  - url: http://127.0.0.1:5001/{projectId}/us-central1/api
+    description: Firebase emulator
+    variables:
+      projectId:
+        default: ai-post-dev
+  - url: http://127.0.0.1:8787
+    description: Local in-memory dev server
+tags:
+  - name: Health
+  - name: Posts
+  - name: Feedback
+  - name: Preferences
+paths:
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+
+  /v1/posts/generate:
+    post:
+      tags: [Posts]
+      summary: Generate one post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GeneratePostRequest"
+      responses:
+        "200":
+          description: Generated post
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GeneratePostResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "502":
+          $ref: "#/components/responses/UpstreamError"
+
+  /v1/posts/generate/stream:
+    post:
+      tags: [Posts]
+      summary: Generate one post with streaming chunks (SSE)
+      description: |
+        Emits SSE events in this order: start -> chunk* -> post -> done.
+        On failure emits error event.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GeneratePostRequest"
+      responses:
+        "200":
+          description: text/event-stream
+          content:
+            text/event-stream:
+              schema:
+                type: string
+                example: |
+                  event: start
+                  data: {"user_id":"u1","mode":"BIOGRAPHY","profile":"Bill Gates","length":"short"}
+
+                  event: chunk
+                  data: {"delta":"He quit Harvard..."}
+
+                  event: post
+                  data: {"ok":true,"data":{"id":"post_1","title":"...","body":"..."}}
+
+                  event: done
+                  data: {"ok":true}
+
+  /v1/posts/list:
+    post:
+      tags: [Posts]
+      summary: List posts for (user, mode, profile) with pagination
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ListPostsRequest"
+      responses:
+        "200":
+          description: Post page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListPostsResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /v1/posts/feedback:
+    post:
+      tags: [Feedback]
+      summary: Record feedback for a post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FeedbackRequest"
+      responses:
+        "200":
+          description: Saved feedback
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedbackResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /v1/posts/feedback/list:
+    post:
+      tags: [Feedback]
+      summary: List feedback with pagination
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ListFeedbackRequest"
+      responses:
+        "200":
+          description: Feedback page
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListFeedbackResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /v1/prompt-preferences/set:
+    post:
+      tags: [Preferences]
+      summary: Set user prompt preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetPreferencesRequest"
+      responses:
+        "200":
+          description: Saved preferences
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetPreferencesResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /v1/prompt-preferences:
+    get:
+      tags: [Preferences]
+      summary: Get user prompt preferences
+      parameters:
+        - in: query
+          name: user_id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Preferences
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetPreferencesResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+components:
+  responses:
+    BadRequest:
+      description: Invalid request payload
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    UpstreamError:
+      description: Upstream LLM or payload error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          enum: [true]
+      required: [ok]
+
+    ErrorEnvelope:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          enum: [false]
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              nullable: true
+          required: [code, message]
+      required: [ok, error]
+
+    FeedMode:
+      type: string
+      enum: [BIOGRAPHY, TRIVIA, NICHE]
+
+    PostLength:
+      type: string
+      enum: [short, medium]
+
+    Confidence:
+      type: string
+      enum: [high, medium, low]
+
+    FeedbackType:
+      type: string
+      enum: [upvote, downvote, skip]
+
+    GeneratePostRequest:
+      type: object
+      properties:
+        user_id:
+          type: string
+          minLength: 1
+          maxLength: 100
+        mode:
+          $ref: "#/components/schemas/FeedMode"
+        profile:
+          type: string
+          minLength: 2
+          maxLength: 200
+        length:
+          $ref: "#/components/schemas/PostLength"
+      required: [user_id, mode, profile]
+
+    StoredPost:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        mode:
+          $ref: "#/components/schemas/FeedMode"
+        profile:
+          type: string
+        profileKey:
+          type: string
+        length:
+          $ref: "#/components/schemas/PostLength"
+        title:
+          type: string
+        body:
+          type: string
+        post_type:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        confidence:
+          $ref: "#/components/schemas/Confidence"
+        uncertainty_note:
+          type: string
+          nullable: true
+        createdAtMs:
+          type: integer
+          format: int64
+      required:
+        [
+          id,
+          userId,
+          mode,
+          profile,
+          profileKey,
+          length,
+          title,
+          body,
+          post_type,
+          tags,
+          confidence,
+          createdAtMs
+        ]
+
+    GeneratePostResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          enum: [true]
+        data:
+          $ref: "#/components/schemas/StoredPost"
+      required: [ok, data]
+
+    ListPostsRequest:
+      type: object
+      properties:
+        user_id:
+          type: string
+        mode:
+          $ref: "#/components/schemas/FeedMode"
+        profile:
+          type: string
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 10
+        cursor:
+          type: string
+      required: [user_id, mode, profile]
+
+    ListPostsResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          enum: [true]
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/StoredPost"
+            nextCursor:
+              type: string
+              nullable: true
+          required: [items, nextCursor]
+      required: [ok, data]
+
+    FeedbackRequest:
+      type: object
+      properties:
+        user_id:
+          type: string
+        post_id:
+          type: string
+        feedback_type:
+          $ref: "#/components/schemas/FeedbackType"
+      required: [user_id, post_id, feedback_type]
+
+    StoredFeedback:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        postId:
+          type: string
+        type:
+          $ref: "#/components/schemas/FeedbackType"
+        createdAtMs:
+          type: integer
+          format: int64
+      required: [id, userId, postId, type, createdAtMs]
+
+    FeedbackResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          enum: [true]
+        data:
+          $ref: "#/components/schemas/StoredFeedback"
+      required: [ok, data]
+
+    ListFeedbackRequest:
+      type: object
+      properties:
+        user_id:
+          type: string
+        post_id:
+          type: string
+        page_size:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+        cursor:
+          type: string
+      required: [user_id]
+
+    ListFeedbackResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          enum: [true]
+        data:
+          type: object
+          properties:
+            items:
+              type: array
+              items:
+                $ref: "#/components/schemas/StoredFeedback"
+            nextCursor:
+              type: string
+              nullable: true
+          required: [items, nextCursor]
+      required: [ok, data]
+
+    SetPreferencesRequest:
+      type: object
+      properties:
+        user_id:
+          type: string
+        biography_instructions:
+          type: string
+          maxLength: 3000
+        niche_instructions:
+          type: string
+          maxLength: 3000
+      required: [user_id]
+
+    PromptPreferences:
+      type: object
+      properties:
+        biographyInstructions:
+          type: string
+        nicheInstructions:
+          type: string
+        updatedAtMs:
+          type: integer
+          format: int64
+      required: [biographyInstructions, nicheInstructions]
+
+    GetPreferencesResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          enum: [true]
+        data:
+          $ref: "#/components/schemas/PromptPreferences"
+      required: [ok, data]

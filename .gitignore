@@ -1,0 +1,26 @@
+# OS/editor
+.DS_Store
+.vscode/
+
+# Mobile
+mobile/node_modules/
+mobile/.expo/
+mobile/.turbo/
+mobile/firebase-debug*.log
+
+# Backend
+backend/ai-post/node_modules/
+backend/ai-post/functions/node_modules/
+backend/ai-post/functions/lib/
+backend/ai-post/.firebase/
+backend/ai-post/firebase-debug*.log
+backend/ai-post/firestore-debug.log
+
+# Env files
+.env
+.env.*
+backend/ai-post/functions/.env
+backend/ai-post/functions/.env.*
+
+# Local test UI for backend
+backend/ai-post/local-dev-ui/

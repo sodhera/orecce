@@ -1,0 +1,32 @@
+{
+  "name": "ai-post-functions",
+  "private": true,
+  "main": "lib/index.js",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "rm -rf lib",
+    "dev:generate": "tsx scripts/dev-generate.ts",
+    "dev:server": "tsx scripts/dev-server.ts",
+    "lint:types": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^6.2.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.13.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  }
+}

@@ -20,9 +20,6 @@ services/api/node_modules/
 services/api/functions/node_modules/
 services/api/functions/lib/
 services/api/.firebase/
-services/api/firebase-debug*.log
-services/api/firestore-debug.log
-services/api/firebase-export-*
 
 # Env files
 .env
@@ -32,10 +29,3 @@ services/api/functions/.env.*
 
 # Local test UI for backend
 services/api/local-dev-ui/
-
-# Local emulator artifacts (non-production)
-infra/local/.firebase-emulator-data/
-infra/local/.logs/
-infra/local/firebase-debug*.log
-infra/local/firestore-debug.log
-infra/local/firebase-export-*

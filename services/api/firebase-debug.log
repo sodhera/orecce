@@ -1,0 +1,763 @@
+[debug] [2026-02-10T09:07:25.970Z] ----------------------------------------------------------------------
+[debug] [2026-02-10T09:07:25.976Z] Command:       /usr/local/bin/node /usr/local/bin/firebase emulators:start --only functions,firestore --import=/Users/sirishjoshi/Desktop/AI-Post/orecce/.firebase-emulator-data --export-on-exit=/Users/sirishjoshi/Desktop/AI-Post/orecce/.firebase-emulator-data --debug
+[debug] [2026-02-10T09:07:25.977Z] CLI Version:   14.0.0
+[debug] [2026-02-10T09:07:25.977Z] Platform:      darwin
+[debug] [2026-02-10T09:07:25.977Z] Node Version:  v22.11.0
+[debug] [2026-02-10T09:07:25.977Z] Time:          Tue Feb 10 2026 13:07:25 GMT+0400 (Gulf Standard Time)
+[debug] [2026-02-10T09:07:25.977Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-02-10T09:07:26.253Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-10T09:07:26.254Z] > authorizing via signed-in user (admin@sodhera.com)
+[debug] [2026-02-10T09:07:26.704Z] openjdk version "23.0.2" 2025-01-21
+OpenJDK Runtime Environment Homebrew (build 23.0.2)
+OpenJDK 64-Bit Server VM Homebrew (build 23.0.2, mixed mode, sharing)
+
+[debug] [2026-02-10T09:07:26.712Z] Parsed Java major version: 23
+[info] i  emulators: Starting emulators: functions, firestore {"metadata":{"emulator":{"name":"hub"},"message":"Starting emulators: functions, firestore"}}
+[debug] [2026-02-10T09:07:28.054Z] [logging] Logging Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-02-10T09:07:28.055Z] [firestore] Firestore Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-02-10T09:07:28.055Z] [firestore.websocket] websocket server for firestore only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-02-10T09:07:28.056Z] assigned listening specs for emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"firestore":[{"address":"127.0.0.1","family":"IPv4","port":8080}],"firestore.websocket":[{"address":"127.0.0.1","family":"IPv4","port":9150}]},"metadata":{"message":"assigned listening specs for emulators"}}
+[debug] [2026-02-10T09:07:28.069Z] [hub] writing locator at /var/folders/ym/pj5ffdrs3lv5cw4w_xwzy8kc0000gn/T/hub-ai-post-dev.json
+[debug] [2026-02-10T09:07:29.213Z] [functions] Functions Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-02-10T09:07:29.229Z] [eventarc] Eventarc Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-02-10T09:07:29.229Z] [tasks] Cloud Tasks Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-02-10T09:07:29.229Z] late-assigned ports for functions and eventarc emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"firestore":[{"address":"127.0.0.1","family":"IPv4","port":8080}],"firestore.websocket":[{"address":"127.0.0.1","family":"IPv4","port":9150}],"functions":[{"address":"127.0.0.1","family":"IPv4","port":5001}],"eventarc":[{"address":"127.0.0.1","family":"IPv4","port":9299}],"tasks":[{"address":"127.0.0.1","family":"IPv4","port":9499}]},"metadata":{"message":"late-assigned ports for functions and eventarc emulators"}}
+[warn] ⚠  functions: The following emulators are not running, calls to these services from the Functions emulator will affect production: apphosting, auth, database, hosting, pubsub, storage, dataconnect {"metadata":{"emulator":{"name":"functions"},"message":"The following emulators are not running, calls to these services from the Functions emulator will affect production: apphosting, auth, database, hosting, pubsub, storage, dataconnect"}}
+[warn] ⚠  functions: Application Default Credentials detected. Non-emulated services will access production using these credentials. Be careful! {"metadata":{"emulator":{"name":"functions"},"message":"Application Default Credentials detected. Non-emulated services will access production using these credentials. Be careful!"}}
+[debug] [2026-02-10T09:07:30.770Z] Checked if tokens are valid: false, expires at: 1770656289545
+[debug] [2026-02-10T09:07:30.771Z] Checked if tokens are valid: false, expires at: 1770656289545
+[debug] [2026-02-10T09:07:30.771Z] > refreshing access token with scopes: []
+[debug] [2026-02-10T09:07:30.772Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-02-10T09:07:30.772Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-02-10T09:07:31.177Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 400
+[debug] [2026-02-10T09:07:31.177Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[error] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[error] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[debug] [2026-02-10T09:07:31.178Z] Failed to get Admin SDK config for ai-post-dev, falling back to cache Failed to get Admin SDK for Firebase project ai-post-dev. Please make sure the project exists and your account has permission to access it. {"name":"FirebaseError","children":[],"exit":2,"message":"Failed to get Admin SDK for Firebase project ai-post-dev. Please make sure the project exists and your account has permission to access it.","original":{"name":"FirebaseError","children":[],"exit":1,"message":"Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth\n\nFor CI servers and headless environments, generate a new token with firebase login:ci","status":500},"status":500}
+[warn] ⚠  functions: Unable to fetch project Admin SDK configuration, Admin SDK behavior in Cloud Functions emulator may be incorrect. {"metadata":{"emulator":{"name":"functions"},"message":"Unable to fetch project Admin SDK configuration, Admin SDK behavior in Cloud Functions emulator may be incorrect."}}
+[info] i  firestore: Importing data from /Users/sirishjoshi/Desktop/AI-Post/orecce/.firebase-emulator-data/firestore_export/firestore_export.overall_export_metadata {"metadata":{"emulator":{"name":"firestore"},"message":"Importing data from /Users/sirishjoshi/Desktop/AI-Post/orecce/.firebase-emulator-data/firestore_export/firestore_export.overall_export_metadata"}}
+[debug] [2026-02-10T09:07:31.202Z] Ignoring unsupported arg: auto_download {"metadata":{"emulator":{"name":"firestore"},"message":"Ignoring unsupported arg: auto_download"}}
+[debug] [2026-02-10T09:07:31.202Z] Ignoring unsupported arg: single_project_mode_error {"metadata":{"emulator":{"name":"firestore"},"message":"Ignoring unsupported arg: single_project_mode_error"}}
+[debug] [2026-02-10T09:07:31.203Z] Starting Firestore Emulator with command {"binary":"java","args":["-Dgoogle.cloud_firestore.debug_log_level=FINE","-Duser.language=en","-jar","/Users/sirishjoshi/.cache/firebase/emulators/cloud-firestore-emulator-v1.19.8.jar","--host","127.0.0.1","--port",8080,"--websocket_port",9150,"--project_id","ai-post-dev","--seed_from_export","/Users/sirishjoshi/Desktop/AI-Post/orecce/.firebase-emulator-data/firestore_export/firestore_export.overall_export_metadata","--rules","/Users/sirishjoshi/Desktop/AI-Post/orecce/backend/ai-post/firestore.rules","--single_project_mode",true,"--functions_emulator","127.0.0.1:5001"],"optionalArgs":["port","webchannel_port","host","rules","websocket_port","functions_emulator","seed_from_export","project_id","single_project_mode"],"joinArgs":false,"shell":false,"port":8080} {"metadata":{"emulator":{"name":"firestore"},"message":"Starting Firestore Emulator with command {\"binary\":\"java\",\"args\":[\"-Dgoogle.cloud_firestore.debug_log_level=FINE\",\"-Duser.language=en\",\"-jar\",\"/Users/sirishjoshi/.cache/firebase/emulators/cloud-firestore-emulator-v1.19.8.jar\",\"--host\",\"127.0.0.1\",\"--port\",8080,\"--websocket_port\",9150,\"--project_id\",\"ai-post-dev\",\"--seed_from_export\",\"/Users/sirishjoshi/Desktop/AI-Post/orecce/.firebase-emulator-data/firestore_export/firestore_export.overall_export_metadata\",\"--rules\",\"/Users/sirishjoshi/Desktop/AI-Post/orecce/backend/ai-post/firestore.rules\",\"--single_project_mode\",true,\"--functions_emulator\",\"127.0.0.1:5001\"],\"optionalArgs\":[\"port\",\"webchannel_port\",\"host\",\"rules\",\"websocket_port\",\"functions_emulator\",\"seed_from_export\",\"project_id\",\"single_project_mode\"],\"joinArgs\":false,\"shell\":false,\"port\":8080}"}}
+[info] i  firestore: Firestore Emulator logging to firestore-debug.log {"metadata":{"emulator":{"name":"firestore"},"message":"Firestore Emulator logging to firestore-debug.log"}}
+[debug] [2026-02-10T09:07:31.362Z] [work-queue] {"queuedWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:07:31.362Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:07:31.362Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:07:31.362Z"],"workRunningCount":1}
+[debug] [2026-02-10T09:07:31.363Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:07:32.439Z] [work-queue] {"queuedWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:07:32.435Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:07:32.442Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:07:32.435Z"],"workRunningCount":1}
+[debug] [2026-02-10T09:07:32.443Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:07:33.210Z] Feb 10, 2026 1:07:33 PM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketServer start
+INFO: Started WebSocket server on ws://127.0.0.1:9150
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Feb 10, 2026 1:07:33 PM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketServer start\nINFO: Started WebSocket server on ws://127.0.0.1:9150\n"}}
+[debug] [2026-02-10T09:07:33.239Z] API endpoint: http://127.0.0.1:8080
+If you are using a library that supports the FIRESTORE_EMULATOR_HOST environment variable, run:
+ {"metadata":{"emulator":{"name":"firestore"},"message":"API endpoint: http://127.0.0.1:8080\nIf you are using a library that supports the FIRESTORE_EMULATOR_HOST environment variable, run:\n"}}
+[debug] [2026-02-10T09:07:33.241Z] 
+   export FIRESTORE_EMULATOR_HOST=127.0.0.1:8080
+
+If you are running a Firestore in Datastore Mode project, run:
+
+   export DATASTORE_EMULATOR_HOST=127.0.0.1:8080
+
+Note: Support for Datastore Mode is in preview. If you encounter any bugs please file at https://github.com/firebase/firebase-tools/issues.
+Dev App Server is now running.
+
+ {"metadata":{"emulator":{"name":"firestore"},"message":"\n   export FIRESTORE_EMULATOR_HOST=127.0.0.1:8080\n\nIf you are running a Firestore in Datastore Mode project, run:\n\n   export DATASTORE_EMULATOR_HOST=127.0.0.1:8080\n\nNote: Support for Datastore Mode is in preview. If you encounter any bugs please file at https://github.com/firebase/firebase-tools/issues.\nDev App Server is now running.\n\n"}}
+[info] ✔  firestore: Firestore Emulator UI websocket is running on 9150. {"metadata":{"emulator":{"name":"firestore"},"message":"Firestore Emulator UI websocket is running on 9150."}}
+[info] i  functions: Watching "/Users/sirishjoshi/Desktop/AI-Post/orecce/backend/ai-post/functions" for Cloud Functions... {"metadata":{"emulator":{"name":"functions"},"message":"Watching \"/Users/sirishjoshi/Desktop/AI-Post/orecce/backend/ai-post/functions\" for Cloud Functions..."}}
+[debug] [2026-02-10T09:07:33.294Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[warn] ⚠  functions: Please note that there will be breaking changes when you upgrade. 
+[debug] [2026-02-10T09:07:34.498Z] > [functions] package.json contents: {
+  "name": "ai-post-functions",
+  "private": true,
+  "main": "lib/index.js",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "rm -rf lib",
+    "dev:generate": "tsx scripts/dev-generate.ts",
+    "dev:server": "tsx scripts/dev-server.ts",
+    "lint:types": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^6.2.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.13.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  }
+}
+[debug] [2026-02-10T09:07:34.499Z] Building nodejs source
+[debug] [2026-02-10T09:07:34.501Z] Failed to find version of module node: reached end of search path /Users/sirishjoshi/Desktop/AI-Post/orecce/backend/ai-post/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "20" doesn't match your global version "22". Using node@22 from host. 
+[info] i  functions: Loaded environment variables from .env. 
+[debug] [2026-02-10T09:07:34.511Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-02-10T09:07:34.519Z] Found firebase-functions binary at '/Users/sirishjoshi/Desktop/AI-Post/orecce/backend/ai-post/functions/node_modules/.bin/firebase-functions'
+[debug] [2026-02-10T09:07:34.536Z] [work-queue] {"queuedWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:07:34.536Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:07:34.537Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:07:34.536Z"],"workRunningCount":1}
+[debug] [2026-02-10T09:07:34.537Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[info] Serving at port 8319
+
+[debug] [2026-02-10T09:07:35.548Z] Got response from /__/functions.yaml {"endpoints":{"api":{"availableMemoryMb":null,"timeoutSeconds":120,"minInstances":1,"maxInstances":10,"ingressSettings":null,"concurrency":20,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","region":["us-central1"],"labels":{},"httpsTrigger":{},"entryPoint":"api"}},"specVersion":"v1alpha1","requiredAPIs":[],"extensions":{}}
+[debug] [2026-02-10T09:07:35.669Z] [work-queue] {"queuedWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:07:35.669Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:07:35.669Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:07:35.669Z"],"workRunningCount":1}
+[debug] [2026-02-10T09:07:35.670Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:07:36.706Z] [work-queue] {"queuedWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:07:36.706Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:07:36.707Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:07:36.706Z"],"workRunningCount":1}
+[debug] [2026-02-10T09:07:36.707Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:07:37.764Z] [work-queue] {"queuedWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:07:37.764Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:07:37.765Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:07:37.764Z"],"workRunningCount":1}
+[debug] [2026-02-10T09:07:37.765Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:07:38.790Z] [work-queue] {"queuedWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:07:38.790Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:07:38.790Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:07:38.790Z"],"workRunningCount":1}
+[debug] [2026-02-10T09:07:38.791Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[info] ✔  functions: Loaded functions definitions from source: api. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: api."}}
+[info] ✔  functions[us-central1-api]: http function initialized (http://127.0.0.1:5001/ai-post-dev/us-central1/api). {"metadata":{"emulator":{"name":"functions"},"message":"http function initialized (http://127.0.0.1:5001/ai-post-dev/us-central1/api)."}}
+[debug] [2026-02-10T09:07:39.674Z] Could not find VSCode notification endpoint: FetchError: request to http://localhost:40001/vscode/notify failed, reason: . If you are not running the Firebase Data Connect VSCode extension, this is expected and not an issue.
+[info] 
+┌─────────────────────────────────────────────────────────────┐
+│ ✔  All emulators ready! It is now safe to connect your app. │
+│ i  View Emulator UI at http://127.0.0.1:4000/               │
+└─────────────────────────────────────────────────────────────┘
+
+┌───────────┬────────────────┬─────────────────────────────────┐
+│ Emulator  │ Host:Port      │ View in Emulator UI             │
+├───────────┼────────────────┼─────────────────────────────────┤
+│ Functions │ 127.0.0.1:5001 │ http://127.0.0.1:4000/functions │
+├───────────┼────────────────┼─────────────────────────────────┤
+│ Firestore │ 127.0.0.1:8080 │ http://127.0.0.1:4000/firestore │
+└───────────┴────────────────┴─────────────────────────────────┘
+  Emulator Hub host: 127.0.0.1 port: 4400
+  Other reserved ports: 4500, 9150
+
+Issues? Report them at https://github.com/firebase/firebase-tools/issues and attach the *-debug.log files.
+ 
+[debug] [2026-02-10T09:07:39.820Z] [work-queue] {"queuedWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:07:39.820Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:07:39.820Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:07:39.820Z"],"workRunningCount":1}
+[debug] [2026-02-10T09:07:39.820Z] Accepted request GET /ai-post-dev/us-central1/api/health --> us-central1-api
+[debug] [2026-02-10T09:07:39.821Z] [functions] Runtime ready! Sending request! {"metadata":{"emulator":{"name":"functions"},"message":"[functions] Runtime ready! Sending request!"}}
+[debug] [2026-02-10T09:07:39.821Z] [functions] Got req.url=/ai-post-dev/us-central1/api/health, mapping to path=/health {"metadata":{"emulator":{"name":"functions"},"message":"[functions] Got req.url=/ai-post-dev/us-central1/api/health, mapping to path=/health"}}
+[info] i  functions: Loaded environment variables from .env. 
+[debug] [2026-02-10T09:07:39.825Z] [worker-pool] addWorker(us-central1-api) {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] addWorker(us-central1-api)"}}
+[debug] [2026-02-10T09:07:39.825Z] [worker-pool] Adding worker with key us-central1-api, total=1 {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] Adding worker with key us-central1-api, total=1"}}
+[info] >  (node:9105) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead. {"user":"(node:9105) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":">  (node:9105) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead."}}
+[info] >  (Use `node --trace-deprecation ...` to show where the warning was created) {"user":"(Use `node --trace-deprecation ...` to show where the warning was created)","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":">  (Use `node --trace-deprecation ...` to show where the warning was created)"}}
+[debug] [2026-02-10T09:07:41.503Z] [runtime-status] [9105] Resolved module firebase-admin {"declared":true,"installed":true,"version":"12.7.0","resolution":"/Users/sirishjoshi/Desktop/AI-Post/orecce/backend/ai-post/functions/node_modules/firebase-admin/lib/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [9105] Resolved module firebase-admin {\"declared\":true,\"installed\":true,\"version\":\"12.7.0\",\"resolution\":\"/Users/sirishjoshi/Desktop/AI-Post/orecce/backend/ai-post/functions/node_modules/firebase-admin/lib/index.js\"}"}}
+[debug] [2026-02-10T09:07:41.504Z] [runtime-status] [9105] Resolved module firebase-functions {"declared":true,"installed":true,"version":"6.6.0","resolution":"/Users/sirishjoshi/Desktop/AI-Post/orecce/backend/ai-post/functions/node_modules/firebase-functions/lib/v2/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [9105] Resolved module firebase-functions {\"declared\":true,\"installed\":true,\"version\":\"6.6.0\",\"resolution\":\"/Users/sirishjoshi/Desktop/AI-Post/orecce/backend/ai-post/functions/node_modules/firebase-functions/lib/v2/index.js\"}"}}
+[debug] [2026-02-10T09:07:41.504Z] [runtime-status] [9105] Outgoing network have been stubbed. [{"name":"http","status":"mocked"},{"name":"http","status":"mocked"},{"name":"https","status":"mocked"},{"name":"https","status":"mocked"},{"name":"net","status":"mocked"}] {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [9105] Outgoing network have been stubbed. [{\"name\":\"http\",\"status\":\"mocked\"},{\"name\":\"http\",\"status\":\"mocked\"},{\"name\":\"https\",\"status\":\"mocked\"},{\"name\":\"https\",\"status\":\"mocked\"},{\"name\":\"net\",\"status\":\"mocked\"}]"}}
+[debug] [2026-02-10T09:07:41.504Z] [runtime-status] [9105] Resolved module firebase-functions {"declared":true,"installed":true,"version":"6.6.0","resolution":"/Users/sirishjoshi/Desktop/AI-Post/orecce/backend/ai-post/functions/node_modules/firebase-functions/lib/v2/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [9105] Resolved module firebase-functions {\"declared\":true,\"installed\":true,\"version\":\"6.6.0\",\"resolution\":\"/Users/sirishjoshi/Desktop/AI-Post/orecce/backend/ai-post/functions/node_modules/firebase-functions/lib/v2/index.js\"}"}}
+[debug] [2026-02-10T09:07:41.770Z] [runtime-status] [9105] Checked functions.config() {"config":{}} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [9105] Checked functions.config() {\"config\":{}}"}}
+[debug] [2026-02-10T09:07:41.770Z] [runtime-status] [9105] firebase-functions has been stubbed. {"functionsResolution":{"declared":true,"installed":true,"version":"6.6.0","resolution":"/Users/sirishjoshi/Desktop/AI-Post/orecce/backend/ai-post/functions/node_modules/firebase-functions/lib/v2/index.js"}} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [9105] firebase-functions has been stubbed. {\"functionsResolution\":{\"declared\":true,\"installed\":true,\"version\":\"6.6.0\",\"resolution\":\"/Users/sirishjoshi/Desktop/AI-Post/orecce/backend/ai-post/functions/node_modules/firebase-functions/lib/v2/index.js\"}}"}}
+[debug] [2026-02-10T09:07:41.771Z] [runtime-status] [9105] Resolved module firebase-functions {"declared":true,"installed":true,"version":"6.6.0","resolution":"/Users/sirishjoshi/Desktop/AI-Post/orecce/backend/ai-post/functions/node_modules/firebase-functions/lib/v2/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [9105] Resolved module firebase-functions {\"declared\":true,\"installed\":true,\"version\":\"6.6.0\",\"resolution\":\"/Users/sirishjoshi/Desktop/AI-Post/orecce/backend/ai-post/functions/node_modules/firebase-functions/lib/v2/index.js\"}"}}
+[debug] [2026-02-10T09:07:41.772Z] [runtime-status] [9105] Resolved module firebase-admin {"declared":true,"installed":true,"version":"12.7.0","resolution":"/Users/sirishjoshi/Desktop/AI-Post/orecce/backend/ai-post/functions/node_modules/firebase-admin/lib/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [9105] Resolved module firebase-admin {\"declared\":true,\"installed\":true,\"version\":\"12.7.0\",\"resolution\":\"/Users/sirishjoshi/Desktop/AI-Post/orecce/backend/ai-post/functions/node_modules/firebase-admin/lib/index.js\"}"}}
+[debug] [2026-02-10T09:07:41.775Z] [runtime-status] [9105] Resolved module firebase-functions {"declared":true,"installed":true,"version":"6.6.0","resolution":"/Users/sirishjoshi/Desktop/AI-Post/orecce/backend/ai-post/functions/node_modules/firebase-functions/lib/v2/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [9105] Resolved module firebase-functions {\"declared\":true,\"installed\":true,\"version\":\"6.6.0\",\"resolution\":\"/Users/sirishjoshi/Desktop/AI-Post/orecce/backend/ai-post/functions/node_modules/firebase-functions/lib/v2/index.js\"}"}}
+[debug] [2026-02-10T09:07:41.775Z] [runtime-status] [9105] firebase-admin has been stubbed. {"adminResolution":{"declared":true,"installed":true,"version":"12.7.0","resolution":"/Users/sirishjoshi/Desktop/AI-Post/orecce/backend/ai-post/functions/node_modules/firebase-admin/lib/index.js"}} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [9105] firebase-admin has been stubbed. {\"adminResolution\":{\"declared\":true,\"installed\":true,\"version\":\"12.7.0\",\"resolution\":\"/Users/sirishjoshi/Desktop/AI-Post/orecce/backend/ai-post/functions/node_modules/firebase-admin/lib/index.js\"}}"}}
+[debug] [2026-02-10T09:07:41.883Z] [runtime-status] [9105] Functions runtime initialized. {"cwd":"/Users/sirishjoshi/Desktop/AI-Post/orecce/backend/ai-post/functions","node_version":"22.11.0"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [9105] Functions runtime initialized. {\"cwd\":\"/Users/sirishjoshi/Desktop/AI-Post/orecce/backend/ai-post/functions\",\"node_version\":\"22.11.0\"}"}}
+[debug] [2026-02-10T09:07:41.883Z] [runtime-status] [9105] Listening to port: /var/folders/ym/pj5ffdrs3lv5cw4w_xwzy8kc0000gn/T/fire_emu_7a7ae58fa014b28f.sock {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [9105] Listening to port: /var/folders/ym/pj5ffdrs3lv5cw4w_xwzy8kc0000gn/T/fire_emu_7a7ae58fa014b28f.sock"}}
+[debug] [2026-02-10T09:07:41.905Z] [worker-us-central1-api-0bec3528-d6f4-49b9-947a-dbe022594445]: IDLE {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[worker-us-central1-api-0bec3528-d6f4-49b9-947a-dbe022594445]: IDLE"}}
+[debug] [2026-02-10T09:07:41.906Z] [worker-pool] submitRequest(triggerId=us-central1-api) {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] submitRequest(triggerId=us-central1-api)"}}
+[info] i  functions: Beginning execution of "us-central1-api" {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Beginning execution of \"us-central1-api\""}}
+[debug] [2026-02-10T09:07:41.907Z] [worker-us-central1-api-0bec3528-d6f4-49b9-947a-dbe022594445]: BUSY {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[worker-us-central1-api-0bec3528-d6f4-49b9-947a-dbe022594445]: BUSY"}}
+[info] >  {"timestamp":"2026-02-10T09:07:41.917Z","level":"INFO","event":"http.request.start","request_id":"1988e740-b182-4001-992c-f7cd1690da04","method":"GET","path":"/health","query":{},"body":{"keys":[]}} {"user":{"timestamp":"2026-02-10T09:07:41.917Z","level":"INFO","event":"http.request.start","request_id":"1988e740-b182-4001-992c-f7cd1690da04","method":"GET","path":"/health","query":{},"body":{"keys":[]}},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":">  {\"timestamp\":\"2026-02-10T09:07:41.917Z\",\"level\":\"INFO\",\"event\":\"http.request.start\",\"request_id\":\"1988e740-b182-4001-992c-f7cd1690da04\",\"method\":\"GET\",\"path\":\"/health\",\"query\":{},\"body\":{\"keys\":[]}}"}}
+[debug] [2026-02-10T09:07:41.921Z] Finishing up request with event=pause {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Finishing up request with event=pause"}}
+[info] i  functions: Finished "us-central1-api" in 14.227958ms {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Finished \"us-central1-api\" in 14.227958ms"}}
+[debug] [2026-02-10T09:07:41.923Z] [worker-us-central1-api-0bec3528-d6f4-49b9-947a-dbe022594445]: IDLE {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[worker-us-central1-api-0bec3528-d6f4-49b9-947a-dbe022594445]: IDLE"}}
+[debug] [2026-02-10T09:07:41.923Z] Finishing up request with event=finish {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Finishing up request with event=finish"}}
+[debug] [2026-02-10T09:07:41.923Z] Finishing up request with event=close {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Finishing up request with event=close"}}
+[debug] [2026-02-10T09:07:41.924Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[info] >  {"timestamp":"2026-02-10T09:07:41.918Z","level":"INFO","event":"http.request.finish","request_id":"1988e740-b182-4001-992c-f7cd1690da04","method":"GET","path":"/health","status":200,"duration_ms":1} {"user":{"timestamp":"2026-02-10T09:07:41.918Z","level":"INFO","event":"http.request.finish","request_id":"1988e740-b182-4001-992c-f7cd1690da04","method":"GET","path":"/health","status":200,"duration_ms":1},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":">  {\"timestamp\":\"2026-02-10T09:07:41.918Z\",\"level\":\"INFO\",\"event\":\"http.request.finish\",\"request_id\":\"1988e740-b182-4001-992c-f7cd1690da04\",\"method\":\"GET\",\"path\":\"/health\",\"status\":200,\"duration_ms\":1}"}}
+[debug] [2026-02-10T09:07:41.954Z] [work-queue] {"queuedWork":["/ai-post-dev/us-central1/api/v1/posts/generate-2026-02-10T09:07:41.954Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:07:41.954Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/ai-post-dev/us-central1/api/v1/posts/generate-2026-02-10T09:07:41.954Z"],"workRunningCount":1}
+[debug] [2026-02-10T09:07:41.954Z] Accepted request POST /ai-post-dev/us-central1/api/v1/posts/generate --> us-central1-api
+[debug] [2026-02-10T09:07:41.955Z] [functions] Runtime ready! Sending request! {"metadata":{"emulator":{"name":"functions"},"message":"[functions] Runtime ready! Sending request!"}}
+[debug] [2026-02-10T09:07:41.955Z] [functions] Got req.url=/ai-post-dev/us-central1/api/v1/posts/generate, mapping to path=/v1/posts/generate {"metadata":{"emulator":{"name":"functions"},"message":"[functions] Got req.url=/ai-post-dev/us-central1/api/v1/posts/generate, mapping to path=/v1/posts/generate"}}
+[debug] [2026-02-10T09:07:41.955Z] [worker-pool] submitRequest(triggerId=us-central1-api) {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] submitRequest(triggerId=us-central1-api)"}}
+[info] i  functions: Beginning execution of "us-central1-api" {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Beginning execution of \"us-central1-api\""}}
+[debug] [2026-02-10T09:07:41.955Z] [worker-us-central1-api-0bec3528-d6f4-49b9-947a-dbe022594445]: BUSY {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[worker-us-central1-api-0bec3528-d6f4-49b9-947a-dbe022594445]: BUSY"}}
+[info] >  {"timestamp":"2026-02-10T09:07:41.965Z","level":"INFO","event":"http.request.start","request_id":"a7e716b7-5a87-4a88-9f97-696997da1ed0","method":"POST","path":"/v1/posts/generate","query":{},"body":{"user_id":"smoke-u1","mode":"BIOGRAPHY","profile":"Bill Gates","length":"short"}} {"user":{"timestamp":"2026-02-10T09:07:41.965Z","level":"INFO","event":"http.request.start","request_id":"a7e716b7-5a87-4a88-9f97-696997da1ed0","method":"POST","path":"/v1/posts/generate","query":{},"body":{"user_id":"smoke-u1","mode":"BIOGRAPHY","profile":"Bill Gates","length":"short"}},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":">  {\"timestamp\":\"2026-02-10T09:07:41.965Z\",\"level\":\"INFO\",\"event\":\"http.request.start\",\"request_id\":\"a7e716b7-5a87-4a88-9f97-696997da1ed0\",\"method\":\"POST\",\"path\":\"/v1/posts/generate\",\"query\":{},\"body\":{\"user_id\":\"smoke-u1\",\"mode\":\"BIOGRAPHY\",\"profile\":\"Bill Gates\",\"length\":\"short\"}}"}}
+[info] >  {"timestamp":"2026-02-10T09:07:41.966Z","level":"INFO","event":"post.generate.start","user_id":"smoke-u1","mode":"BIOGRAPHY","profile":"Bill Gates","length":"short","stream":false} {"user":{"timestamp":"2026-02-10T09:07:41.966Z","level":"INFO","event":"post.generate.start","user_id":"smoke-u1","mode":"BIOGRAPHY","profile":"Bill Gates","length":"short","stream":false},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":">  {\"timestamp\":\"2026-02-10T09:07:41.966Z\",\"level\":\"INFO\",\"event\":\"post.generate.start\",\"user_id\":\"smoke-u1\",\"mode\":\"BIOGRAPHY\",\"profile\":\"Bill Gates\",\"length\":\"short\",\"stream\":false}"}}
+[debug] [2026-02-10T09:07:42.282Z] Feb 10, 2026 1:07:42 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Feb 10, 2026 1:07:42 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected HTTP/2 connection.\n"}}
+[info] >  {"timestamp":"2026-02-10T09:07:43.087Z","level":"INFO","event":"llm.upstream.start","mode":"BIOGRAPHY","profile":"Bill Gates","length":"short","stream":false,"retries_left":0,"model":"gpt-5-mini","base_url":"https://api.openai.com/v1","recent_titles_count":0} {"user":{"timestamp":"2026-02-10T09:07:43.087Z","level":"INFO","event":"llm.upstream.start","mode":"BIOGRAPHY","profile":"Bill Gates","length":"short","stream":false,"retries_left":0,"model":"gpt-5-mini","base_url":"https://api.openai.com/v1","recent_titles_count":0},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":">  {\"timestamp\":\"2026-02-10T09:07:43.087Z\",\"level\":\"INFO\",\"event\":\"llm.upstream.start\",\"mode\":\"BIOGRAPHY\",\"profile\":\"Bill Gates\",\"length\":\"short\",\"stream\":false,\"retries_left\":0,\"model\":\"gpt-5-mini\",\"base_url\":\"https://api.openai.com/v1\",\"recent_titles_count\":0}"}}
+[info] >  {"timestamp":"2026-02-10T09:07:43.532Z","level":"ERROR","event":"llm.upstream.error","status":401,"duration_ms":445,"mode":"BIOGRAPHY","profile":"Bill Gates","length":"short","stream":false,"retries_left":0,"upstream_body":"{\n  \"error\": {\n    \"message\": \"Incorrect API key provided: PASTE_YO******************HERE. You can find your API key at https://platform.openai.com/account/api-keys.\",\n    \"type\": \"invalid_request_error\",\n    \"param\": null,\n    \"code\": \"invalid_api_key\"\n  }\n}"} {"user":{"timestamp":"2026-02-10T09:07:43.532Z","level":"ERROR","event":"llm.upstream.error","status":401,"duration_ms":445,"mode":"BIOGRAPHY","profile":"Bill Gates","length":"short","stream":false,"retries_left":0,"upstream_body":"{\n  \"error\": {\n    \"message\": \"Incorrect API key provided: PASTE_YO******************HERE. You can find your API key at https://platform.openai.com/account/api-keys.\",\n    \"type\": \"invalid_request_error\",\n    \"param\": null,\n    \"code\": \"invalid_api_key\"\n  }\n}"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":">  {\"timestamp\":\"2026-02-10T09:07:43.532Z\",\"level\":\"ERROR\",\"event\":\"llm.upstream.error\",\"status\":401,\"duration_ms\":445,\"mode\":\"BIOGRAPHY\",\"profile\":\"Bill Gates\",\"length\":\"short\",\"stream\":false,\"retries_left\":0,\"upstream_body\":\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Incorrect API key provided: PASTE_YO******************HERE. You can find your API key at https://platform.openai.com/account/api-keys.\\\",\\n    \\\"type\\\": \\\"invalid_request_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"invalid_api_key\\\"\\n  }\\n}\"}"}}
+[info] >  {"timestamp":"2026-02-10T09:07:43.533Z","level":"ERROR","event":"post.generate.failure","user_id":"smoke-u1","mode":"BIOGRAPHY","profile":"Bill Gates","length":"short","stream":false,"llm_duration_ms":446,"total_duration_ms":1567,"message":"OpenAI authentication failed. Check OPENAI_API_KEY in backend/ai-post/functions/.env and restart emulators."} {"user":{"timestamp":"2026-02-10T09:07:43.533Z","level":"ERROR","event":"post.generate.failure","user_id":"smoke-u1","mode":"BIOGRAPHY","profile":"Bill Gates","length":"short","stream":false,"llm_duration_ms":446,"total_duration_ms":1567,"message":"OpenAI authentication failed. Check OPENAI_API_KEY in backend/ai-post/functions/.env and restart emulators."},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":">  {\"timestamp\":\"2026-02-10T09:07:43.533Z\",\"level\":\"ERROR\",\"event\":\"post.generate.failure\",\"user_id\":\"smoke-u1\",\"mode\":\"BIOGRAPHY\",\"profile\":\"Bill Gates\",\"length\":\"short\",\"stream\":false,\"llm_duration_ms\":446,\"total_duration_ms\":1567,\"message\":\"OpenAI authentication failed. Check OPENAI_API_KEY in backend/ai-post/functions/.env and restart emulators.\"}"}}
+[info] >  {"timestamp":"2026-02-10T09:07:43.533Z","level":"ERROR","event":"http.request.error","request_id":"a7e716b7-5a87-4a88-9f97-696997da1ed0","status":502,"code":"llm_auth_error","message":"OpenAI authentication failed. Check OPENAI_API_KEY in backend/ai-post/functions/.env and restart emulators.","details":{"upstream_status":401,"upstream_body":"{\n  \"error\": {\n    \"message\": \"Incorrect API key provided: PASTE_YO******************HERE. You can find your API key at https://platform.openai.com/account/api-keys.\",\n    \"type\": \"invalid_request_error\",\n    \"param\": null,\n    \"code\": \"invalid_api_key\"\n  }\n}","api_key_hint":"PASTE_Y...HERE"}} {"user":{"timestamp":"2026-02-10T09:07:43.533Z","level":"ERROR","event":"http.request.error","request_id":"a7e716b7-5a87-4a88-9f97-696997da1ed0","status":502,"code":"llm_auth_error","message":"OpenAI authentication failed. Check OPENAI_API_KEY in backend/ai-post/functions/.env and restart emulators.","details":{"upstream_status":401,"upstream_body":"{\n  \"error\": {\n    \"message\": \"Incorrect API key provided: PASTE_YO******************HERE. You can find your API key at https://platform.openai.com/account/api-keys.\",\n    \"type\": \"invalid_request_error\",\n    \"param\": null,\n    \"code\": \"invalid_api_key\"\n  }\n}","api_key_hint":"PASTE_Y...HERE"}},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":">  {\"timestamp\":\"2026-02-10T09:07:43.533Z\",\"level\":\"ERROR\",\"event\":\"http.request.error\",\"request_id\":\"a7e716b7-5a87-4a88-9f97-696997da1ed0\",\"status\":502,\"code\":\"llm_auth_error\",\"message\":\"OpenAI authentication failed. Check OPENAI_API_KEY in backend/ai-post/functions/.env and restart emulators.\",\"details\":{\"upstream_status\":401,\"upstream_body\":\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Incorrect API key provided: PASTE_YO******************HERE. You can find your API key at https://platform.openai.com/account/api-keys.\\\",\\n    \\\"type\\\": \\\"invalid_request_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"invalid_api_key\\\"\\n  }\\n}\",\"api_key_hint\":\"PASTE_Y...HERE\"}}"}}
+[debug] [2026-02-10T09:07:43.547Z] Finishing up request with event=pause {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Finishing up request with event=pause"}}
+[info] i  functions: Finished "us-central1-api" in 1591.488417ms {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Finished \"us-central1-api\" in 1591.488417ms"}}
+[debug] [2026-02-10T09:07:43.547Z] [worker-us-central1-api-0bec3528-d6f4-49b9-947a-dbe022594445]: IDLE {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[worker-us-central1-api-0bec3528-d6f4-49b9-947a-dbe022594445]: IDLE"}}
+[debug] [2026-02-10T09:07:43.547Z] Finishing up request with event=finish {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Finishing up request with event=finish"}}
+[debug] [2026-02-10T09:07:43.547Z] Finishing up request with event=close {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Finishing up request with event=close"}}
+[debug] [2026-02-10T09:07:43.547Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[info] >  {"timestamp":"2026-02-10T09:07:43.539Z","level":"INFO","event":"http.request.finish","request_id":"a7e716b7-5a87-4a88-9f97-696997da1ed0","method":"POST","path":"/v1/posts/generate","status":502,"duration_ms":1574} {"user":{"timestamp":"2026-02-10T09:07:43.539Z","level":"INFO","event":"http.request.finish","request_id":"a7e716b7-5a87-4a88-9f97-696997da1ed0","method":"POST","path":"/v1/posts/generate","status":502,"duration_ms":1574},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":">  {\"timestamp\":\"2026-02-10T09:07:43.539Z\",\"level\":\"INFO\",\"event\":\"http.request.finish\",\"request_id\":\"a7e716b7-5a87-4a88-9f97-696997da1ed0\",\"method\":\"POST\",\"path\":\"/v1/posts/generate\",\"status\":502,\"duration_ms\":1574}"}}
+[debug] [2026-02-10T09:08:02.671Z] Received signal SIGTERM 1
+[info]  
+[info] i  emulators: Received SIGTERM for the first time. Starting a clean shutdown. 
+[info] i  emulators: Please wait for a clean shutdown or send the SIGTERM signal again to stop right now. 
+[info] i  Automatically exporting data using --export-on-exit "/Users/sirishjoshi/Desktop/AI-Post/orecce/.firebase-emulator-data" please wait for the export to finish... 
+[debug] [2026-02-10T09:08:02.685Z] >>> [apiv2][query] GET http://127.0.0.1:4400/ [none]
+[debug] [2026-02-10T09:08:02.687Z] *** shutting down gRPC server since JVM is shutting down
+ {"metadata":{"emulator":{"name":"firestore"},"message":"*** shutting down gRPC server since JVM is shutting down\n"}}
+[debug] [2026-02-10T09:08:02.696Z] <<< [apiv2][status] GET http://127.0.0.1:4400/ 200
+[debug] [2026-02-10T09:08:02.696Z] <<< [apiv2][body] GET http://127.0.0.1:4400/ {"version":"14.0.0","origins":["http://127.0.0.1:4400","http://[::1]:4400"],"host":"127.0.0.1","port":4400}
+[info] i  Found running emulator hub for project ai-post-dev at http://127.0.0.1:4400 
+[info] i  Exporting data to: /Users/sirishjoshi/Desktop/AI-Post/orecce/.firebase-emulator-data 
+[debug] [2026-02-10T09:08:02.703Z] >>> [apiv2][query] GET http://127.0.0.1:4400/ [none]
+[debug] [2026-02-10T09:08:02.708Z] *** server shut down
+ {"metadata":{"emulator":{"name":"firestore"},"message":"*** server shut down\n"}}
+[debug] [2026-02-10T09:08:02.708Z] <<< [apiv2][status] GET http://127.0.0.1:4400/ 200
+[debug] [2026-02-10T09:08:02.708Z] <<< [apiv2][body] GET http://127.0.0.1:4400/ {"version":"14.0.0","origins":["http://127.0.0.1:4400","http://[::1]:4400"],"host":"127.0.0.1","port":4400}
+[debug] [2026-02-10T09:08:02.708Z] >>> [apiv2][query] POST http://127.0.0.1:4400/_admin/export [none]
+[debug] [2026-02-10T09:08:02.708Z] >>> [apiv2][body] POST http://127.0.0.1:4400/_admin/export {"path":"/Users/sirishjoshi/Desktop/AI-Post/orecce/.firebase-emulator-data","initiatedBy":"exit"}
+[info] i  emulators: Received export request. Exporting data to /Users/sirishjoshi/Desktop/AI-Post/orecce/.firebase-emulator-data. 
+[debug] [2026-02-10T09:08:02.736Z] >>> [apiv2][query] POST http://127.0.0.1:8080/emulator/v1/projects/ai-post-dev:export [none]
+[debug] [2026-02-10T09:08:02.736Z] >>> [apiv2][body] POST http://127.0.0.1:8080/emulator/v1/projects/ai-post-dev:export {"database":"projects/ai-post-dev/databases/(default)","export_directory":"firebase-export-17707144827323X3eLJ","export_name":"firestore_export"}
+[debug] [2026-02-10T09:08:02.737Z] *** [apiv2] error from fetch(http://127.0.0.1:8080/emulator/v1/projects/ai-post-dev:export, {"headers":{},"method":"POST","body":"{\"database\":\"projects/ai-post-dev/databases/(default)\",\"export_directory\":\"firebase-export-17707144827323X3eLJ\",\"export_name\":\"firestore_export\"}"}): FetchError: request to http://127.0.0.1:8080/emulator/v1/projects/ai-post-dev:export failed, reason: connect ECONNREFUSED 127.0.0.1:8080
+[warn] ⚠  emulators: Export failed: Failed to make request to http://127.0.0.1:8080/emulator/v1/projects/ai-post-dev:export 
+[debug] [2026-02-10T09:08:02.738Z] <<< [apiv2][status] POST http://127.0.0.1:4400/_admin/export 500
+[debug] [2026-02-10T09:08:02.738Z] <<< [apiv2][body] POST http://127.0.0.1:4400/_admin/export {"message":"Failed to make request to http://127.0.0.1:8080/emulator/v1/projects/ai-post-dev:export"}
+[warn] ⚠  FirebaseError: Export request failed, see emulator logs for more information. 
+[warn] ⚠  Automatic export to "/Users/sirishjoshi/Desktop/AI-Post/orecce/.firebase-emulator-data" failed, going to exit now... 
+[info] i  emulators: Shutting down emulators. {"metadata":{"emulator":{"name":"hub"},"message":"Shutting down emulators."}}
+[info] i  ui: Stopping Emulator UI {"metadata":{"emulator":{"name":"ui"},"message":"Stopping Emulator UI"}}
+[info] i  functions: Stopping Functions Emulator {"metadata":{"emulator":{"name":"functions"},"message":"Stopping Functions Emulator"}}
+[info] i  firestore: Stopping Firestore Emulator {"metadata":{"emulator":{"name":"firestore"},"message":"Stopping Firestore Emulator"}}
+[debug] [2026-02-10T09:08:02.753Z] [worker-us-central1-api-0bec3528-d6f4-49b9-947a-dbe022594445]: exited {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[worker-us-central1-api-0bec3528-d6f4-49b9-947a-dbe022594445]: exited"}}
+[debug] [2026-02-10T09:08:02.753Z] [worker-us-central1-api-0bec3528-d6f4-49b9-947a-dbe022594445]: FINISHED {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[worker-us-central1-api-0bec3528-d6f4-49b9-947a-dbe022594445]: FINISHED"}}
+[warn] ⚠  firestore: Fatal error occurred: 
+   Firestore Emulator has exited with code: 143, 
+   stopping all running emulators {"metadata":{"emulator":{"name":"firestore"},"message":"Fatal error occurred: \n   Firestore Emulator has exited with code: 143, \n   stopping all running emulators"}}
+[info] i  firestore: Stopping Firestore Emulator {"metadata":{"emulator":{"name":"firestore"},"message":"Stopping Firestore Emulator"}}
+[info] i  eventarc: Stopping Eventarc Emulator {"metadata":{"emulator":{"name":"eventarc"},"message":"Stopping Eventarc Emulator"}}
+[info] i  eventarc: Stopping Eventarc Emulator {"metadata":{"emulator":{"name":"eventarc"},"message":"Stopping Eventarc Emulator"}}
+[info] i  tasks: Stopping Cloud Tasks Emulator {"metadata":{"emulator":{"name":"tasks"},"message":"Stopping Cloud Tasks Emulator"}}
+[info] i  tasks: Stopping Cloud Tasks Emulator {"metadata":{"emulator":{"name":"tasks"},"message":"Stopping Cloud Tasks Emulator"}}
+[info] i  hub: Stopping emulator hub {"metadata":{"emulator":{"name":"hub"},"message":"Stopping emulator hub"}}
+[info] i  hub: Stopping emulator hub {"metadata":{"emulator":{"name":"hub"},"message":"Stopping emulator hub"}}
+[debug] [2026-02-10T09:17:40.443Z] ----------------------------------------------------------------------
+[debug] [2026-02-10T09:17:40.445Z] Command:       /usr/local/bin/node /usr/local/bin/firebase emulators:start --only functions,firestore --import=/Users/sirishjoshi/Desktop/AI-Post/orecce/infra/local/.firebase-emulator-data --export-on-exit=/Users/sirishjoshi/Desktop/AI-Post/orecce/infra/local/.firebase-emulator-data --debug
+[debug] [2026-02-10T09:17:40.446Z] CLI Version:   14.0.0
+[debug] [2026-02-10T09:17:40.446Z] Platform:      darwin
+[debug] [2026-02-10T09:17:40.446Z] Node Version:  v22.11.0
+[debug] [2026-02-10T09:17:40.446Z] Time:          Tue Feb 10 2026 13:17:40 GMT+0400 (Gulf Standard Time)
+[debug] [2026-02-10T09:17:40.446Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-02-10T09:17:40.580Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-10T09:17:40.581Z] > authorizing via signed-in user (admin@sodhera.com)
+[debug] [2026-02-10T09:17:40.818Z] openjdk version "23.0.2" 2025-01-21
+
+[debug] [2026-02-10T09:17:40.819Z] OpenJDK Runtime Environment Homebrew (build 23.0.2)
+OpenJDK 64-Bit Server VM Homebrew (build 23.0.2, mixed mode, sharing)
+
+[debug] [2026-02-10T09:17:40.822Z] Parsed Java major version: 23
+[info] i  emulators: Starting emulators: functions, firestore {"metadata":{"emulator":{"name":"hub"},"message":"Starting emulators: functions, firestore"}}
+[debug] [2026-02-10T09:17:41.372Z] [logging] Logging Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-02-10T09:17:41.372Z] [firestore] Firestore Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-02-10T09:17:41.373Z] [firestore.websocket] websocket server for firestore only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-02-10T09:17:41.373Z] assigned listening specs for emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"firestore":[{"address":"127.0.0.1","family":"IPv4","port":8080}],"firestore.websocket":[{"address":"127.0.0.1","family":"IPv4","port":9150}]},"metadata":{"message":"assigned listening specs for emulators"}}
+[debug] [2026-02-10T09:17:41.375Z] [hub] writing locator at /var/folders/ym/pj5ffdrs3lv5cw4w_xwzy8kc0000gn/T/hub-ai-post-dev.json
+[debug] [2026-02-10T09:17:41.690Z] [functions] Functions Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-02-10T09:17:41.691Z] [eventarc] Eventarc Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-02-10T09:17:41.691Z] [tasks] Cloud Tasks Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-02-10T09:17:41.691Z] late-assigned ports for functions and eventarc emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"firestore":[{"address":"127.0.0.1","family":"IPv4","port":8080}],"firestore.websocket":[{"address":"127.0.0.1","family":"IPv4","port":9150}],"functions":[{"address":"127.0.0.1","family":"IPv4","port":5001}],"eventarc":[{"address":"127.0.0.1","family":"IPv4","port":9299}],"tasks":[{"address":"127.0.0.1","family":"IPv4","port":9499}]},"metadata":{"message":"late-assigned ports for functions and eventarc emulators"}}
+[warn] ⚠  functions: The following emulators are not running, calls to these services from the Functions emulator will affect production: apphosting, auth, database, hosting, pubsub, storage, dataconnect {"metadata":{"emulator":{"name":"functions"},"message":"The following emulators are not running, calls to these services from the Functions emulator will affect production: apphosting, auth, database, hosting, pubsub, storage, dataconnect"}}
+[warn] ⚠  functions: Application Default Credentials detected. Non-emulated services will access production using these credentials. Be careful! {"metadata":{"emulator":{"name":"functions"},"message":"Application Default Credentials detected. Non-emulated services will access production using these credentials. Be careful!"}}
+[debug] [2026-02-10T09:17:44.612Z] Checked if tokens are valid: false, expires at: 1770656289545
+[debug] [2026-02-10T09:17:44.612Z] Checked if tokens are valid: false, expires at: 1770656289545
+[debug] [2026-02-10T09:17:44.612Z] > refreshing access token with scopes: []
+[debug] [2026-02-10T09:17:44.615Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-02-10T09:17:44.615Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-02-10T09:17:44.982Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 400
+[debug] [2026-02-10T09:17:44.982Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[error] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[error] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[debug] [2026-02-10T09:17:44.982Z] Failed to get Admin SDK config for ai-post-dev, falling back to cache Failed to get Admin SDK for Firebase project ai-post-dev. Please make sure the project exists and your account has permission to access it. {"name":"FirebaseError","children":[],"exit":2,"message":"Failed to get Admin SDK for Firebase project ai-post-dev. Please make sure the project exists and your account has permission to access it.","original":{"name":"FirebaseError","children":[],"exit":1,"message":"Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth\n\nFor CI servers and headless environments, generate a new token with firebase login:ci","status":500},"status":500}
+[warn] ⚠  functions: Unable to fetch project Admin SDK configuration, Admin SDK behavior in Cloud Functions emulator may be incorrect. {"metadata":{"emulator":{"name":"functions"},"message":"Unable to fetch project Admin SDK configuration, Admin SDK behavior in Cloud Functions emulator may be incorrect."}}
+[info] i  firestore: Importing data from /Users/sirishjoshi/Desktop/AI-Post/orecce/infra/local/.firebase-emulator-data/firestore_export/firestore_export.overall_export_metadata {"metadata":{"emulator":{"name":"firestore"},"message":"Importing data from /Users/sirishjoshi/Desktop/AI-Post/orecce/infra/local/.firebase-emulator-data/firestore_export/firestore_export.overall_export_metadata"}}
+[debug] [2026-02-10T09:17:45.002Z] Ignoring unsupported arg: auto_download {"metadata":{"emulator":{"name":"firestore"},"message":"Ignoring unsupported arg: auto_download"}}
+[debug] [2026-02-10T09:17:45.002Z] Ignoring unsupported arg: single_project_mode_error {"metadata":{"emulator":{"name":"firestore"},"message":"Ignoring unsupported arg: single_project_mode_error"}}
+[debug] [2026-02-10T09:17:45.002Z] Starting Firestore Emulator with command {"binary":"java","args":["-Dgoogle.cloud_firestore.debug_log_level=FINE","-Duser.language=en","-jar","/Users/sirishjoshi/.cache/firebase/emulators/cloud-firestore-emulator-v1.19.8.jar","--host","127.0.0.1","--port",8080,"--websocket_port",9150,"--project_id","ai-post-dev","--seed_from_export","/Users/sirishjoshi/Desktop/AI-Post/orecce/infra/local/.firebase-emulator-data/firestore_export/firestore_export.overall_export_metadata","--rules","/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/firestore.rules","--single_project_mode",true,"--functions_emulator","127.0.0.1:5001"],"optionalArgs":["port","webchannel_port","host","rules","websocket_port","functions_emulator","seed_from_export","project_id","single_project_mode"],"joinArgs":false,"shell":false,"port":8080} {"metadata":{"emulator":{"name":"firestore"},"message":"Starting Firestore Emulator with command {\"binary\":\"java\",\"args\":[\"-Dgoogle.cloud_firestore.debug_log_level=FINE\",\"-Duser.language=en\",\"-jar\",\"/Users/sirishjoshi/.cache/firebase/emulators/cloud-firestore-emulator-v1.19.8.jar\",\"--host\",\"127.0.0.1\",\"--port\",8080,\"--websocket_port\",9150,\"--project_id\",\"ai-post-dev\",\"--seed_from_export\",\"/Users/sirishjoshi/Desktop/AI-Post/orecce/infra/local/.firebase-emulator-data/firestore_export/firestore_export.overall_export_metadata\",\"--rules\",\"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/firestore.rules\",\"--single_project_mode\",true,\"--functions_emulator\",\"127.0.0.1:5001\"],\"optionalArgs\":[\"port\",\"webchannel_port\",\"host\",\"rules\",\"websocket_port\",\"functions_emulator\",\"seed_from_export\",\"project_id\",\"single_project_mode\"],\"joinArgs\":false,\"shell\":false,\"port\":8080}"}}
+[info] i  firestore: Firestore Emulator logging to firestore-debug.log {"metadata":{"emulator":{"name":"firestore"},"message":"Firestore Emulator logging to firestore-debug.log"}}
+[debug] [2026-02-10T09:17:45.317Z] [work-queue] {"queuedWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:17:45.316Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:17:45.317Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:17:45.316Z"],"workRunningCount":1}
+[debug] [2026-02-10T09:17:45.319Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:17:46.374Z] [work-queue] {"queuedWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:17:46.374Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:17:46.390Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:17:46.374Z"],"workRunningCount":1}
+[debug] [2026-02-10T09:17:46.393Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:17:46.818Z] Feb 10, 2026 1:17:46 PM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketServer start
+INFO: Started WebSocket server on ws://127.0.0.1:9150
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Feb 10, 2026 1:17:46 PM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketServer start\nINFO: Started WebSocket server on ws://127.0.0.1:9150\n"}}
+[debug] [2026-02-10T09:17:46.870Z] API endpoint: http://127.0.0.1:8080
+If you are using a library that supports the FIRESTORE_EMULATOR_HOST environment variable, run:
+
+   export FIRESTORE_EMULATOR_HOST=127.0.0.1:8080
+
+If you are running a Firestore in Datastore Mode project, run:
+
+   export DATASTORE_EMULATOR_HOST=127.0.0.1:8080
+
+Note: Support for Datastore Mode is in preview. If you encounter any bugs please file at https://github.com/firebase/firebase-tools/issues.
+Dev App Server is now running.
+
+ {"metadata":{"emulator":{"name":"firestore"},"message":"API endpoint: http://127.0.0.1:8080\nIf you are using a library that supports the FIRESTORE_EMULATOR_HOST environment variable, run:\n\n   export FIRESTORE_EMULATOR_HOST=127.0.0.1:8080\n\nIf you are running a Firestore in Datastore Mode project, run:\n\n   export DATASTORE_EMULATOR_HOST=127.0.0.1:8080\n\nNote: Support for Datastore Mode is in preview. If you encounter any bugs please file at https://github.com/firebase/firebase-tools/issues.\nDev App Server is now running.\n\n"}}
+[info] ✔  firestore: Firestore Emulator UI websocket is running on 9150. {"metadata":{"emulator":{"name":"firestore"},"message":"Firestore Emulator UI websocket is running on 9150."}}
+[info] i  functions: Watching "/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions" for Cloud Functions... {"metadata":{"emulator":{"name":"functions"},"message":"Watching \"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions\" for Cloud Functions..."}}
+[debug] [2026-02-10T09:17:47.118Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[warn] ⚠  functions: Please note that there will be breaking changes when you upgrade. 
+[debug] [2026-02-10T09:17:48.514Z] > [functions] package.json contents: {
+  "name": "ai-post-functions",
+  "private": true,
+  "main": "lib/index.js",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "rm -rf lib",
+    "dev:generate": "tsx scripts/dev-generate.ts",
+    "dev:server": "tsx scripts/dev-server.ts",
+    "lint:types": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^6.2.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.13.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  }
+}
+[debug] [2026-02-10T09:17:48.514Z] Building nodejs source
+[debug] [2026-02-10T09:17:48.515Z] Failed to find version of module node: reached end of search path /Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "20" doesn't match your global version "22". Using node@22 from host. 
+[info] i  functions: Loaded environment variables from .env. 
+[debug] [2026-02-10T09:17:48.525Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-02-10T09:17:48.536Z] Found firebase-functions binary at '/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/.bin/firebase-functions'
+[debug] [2026-02-10T09:17:48.562Z] [work-queue] {"queuedWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:17:48.561Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:17:48.562Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:17:48.561Z"],"workRunningCount":1}
+[debug] [2026-02-10T09:17:48.564Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[info] Serving at port 8317
+
+[debug] [2026-02-10T09:17:49.374Z] Got response from /__/functions.yaml {"endpoints":{"api":{"availableMemoryMb":null,"timeoutSeconds":120,"minInstances":1,"maxInstances":10,"ingressSettings":null,"concurrency":20,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","region":["us-central1"],"labels":{},"httpsTrigger":{},"entryPoint":"api"}},"specVersion":"v1alpha1","requiredAPIs":[],"extensions":{}}
+[debug] [2026-02-10T09:17:49.617Z] [work-queue] {"queuedWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:17:49.617Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:17:49.618Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:17:49.617Z"],"workRunningCount":1}
+[debug] [2026-02-10T09:17:49.618Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:17:50.669Z] [work-queue] {"queuedWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:17:50.669Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:17:50.672Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:17:50.669Z"],"workRunningCount":1}
+[debug] [2026-02-10T09:17:50.673Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:17:51.719Z] [work-queue] {"queuedWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:17:51.719Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:17:51.725Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:17:51.719Z"],"workRunningCount":1}
+[debug] [2026-02-10T09:17:51.726Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:17:52.782Z] [work-queue] {"queuedWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:17:52.782Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:17:52.783Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:17:52.782Z"],"workRunningCount":1}
+[debug] [2026-02-10T09:17:52.784Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[info] ✔  functions: Loaded functions definitions from source: api. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: api."}}
+[info] ✔  functions[us-central1-api]: http function initialized (http://127.0.0.1:5001/ai-post-dev/us-central1/api). {"metadata":{"emulator":{"name":"functions"},"message":"http function initialized (http://127.0.0.1:5001/ai-post-dev/us-central1/api)."}}
+[debug] [2026-02-10T09:17:53.455Z] Could not find VSCode notification endpoint: FetchError: request to http://localhost:40001/vscode/notify failed, reason: . If you are not running the Firebase Data Connect VSCode extension, this is expected and not an issue.
+[info] 
+┌─────────────────────────────────────────────────────────────┐
+│ ✔  All emulators ready! It is now safe to connect your app. │
+│ i  View Emulator UI at http://127.0.0.1:4000/               │
+└─────────────────────────────────────────────────────────────┘
+
+┌───────────┬────────────────┬─────────────────────────────────┐
+│ Emulator  │ Host:Port      │ View in Emulator UI             │
+├───────────┼────────────────┼─────────────────────────────────┤
+│ Functions │ 127.0.0.1:5001 │ http://127.0.0.1:4000/functions │
+├───────────┼────────────────┼─────────────────────────────────┤
+│ Firestore │ 127.0.0.1:8080 │ http://127.0.0.1:4000/firestore │
+└───────────┴────────────────┴─────────────────────────────────┘
+  Emulator Hub host: 127.0.0.1 port: 4400
+  Other reserved ports: 4500, 9150
+
+Issues? Report them at https://github.com/firebase/firebase-tools/issues and attach the *-debug.log files.
+ 
+[debug] [2026-02-10T09:17:53.825Z] [work-queue] {"queuedWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:17:53.825Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:17:53.825Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:17:53.825Z"],"workRunningCount":1}
+[debug] [2026-02-10T09:17:53.825Z] Accepted request GET /ai-post-dev/us-central1/api/health --> us-central1-api
+[debug] [2026-02-10T09:17:53.826Z] [functions] Runtime ready! Sending request! {"metadata":{"emulator":{"name":"functions"},"message":"[functions] Runtime ready! Sending request!"}}
+[debug] [2026-02-10T09:17:53.826Z] [functions] Got req.url=/ai-post-dev/us-central1/api/health, mapping to path=/health {"metadata":{"emulator":{"name":"functions"},"message":"[functions] Got req.url=/ai-post-dev/us-central1/api/health, mapping to path=/health"}}
+[info] i  functions: Loaded environment variables from .env. 
+[debug] [2026-02-10T09:17:53.834Z] [worker-pool] addWorker(us-central1-api) {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] addWorker(us-central1-api)"}}
+[debug] [2026-02-10T09:17:53.835Z] [worker-pool] Adding worker with key us-central1-api, total=1 {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] Adding worker with key us-central1-api, total=1"}}
+[info] >  (node:15265) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead. {"user":"(node:15265) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":">  (node:15265) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead."}}
+[info] >  (Use `node --trace-deprecation ...` to show where the warning was created) {"user":"(Use `node --trace-deprecation ...` to show where the warning was created)","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":">  (Use `node --trace-deprecation ...` to show where the warning was created)"}}
+[debug] [2026-02-10T09:17:55.291Z] [runtime-status] [15265] Resolved module firebase-admin {"declared":true,"installed":true,"version":"12.7.0","resolution":"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/firebase-admin/lib/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [15265] Resolved module firebase-admin {\"declared\":true,\"installed\":true,\"version\":\"12.7.0\",\"resolution\":\"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/firebase-admin/lib/index.js\"}"}}
+[debug] [2026-02-10T09:17:55.292Z] [runtime-status] [15265] Resolved module firebase-functions {"declared":true,"installed":true,"version":"6.6.0","resolution":"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/firebase-functions/lib/v2/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [15265] Resolved module firebase-functions {\"declared\":true,\"installed\":true,\"version\":\"6.6.0\",\"resolution\":\"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/firebase-functions/lib/v2/index.js\"}"}}
+[debug] [2026-02-10T09:17:55.292Z] [runtime-status] [15265] Outgoing network have been stubbed. [{"name":"http","status":"mocked"},{"name":"http","status":"mocked"},{"name":"https","status":"mocked"},{"name":"https","status":"mocked"},{"name":"net","status":"mocked"}] {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [15265] Outgoing network have been stubbed. [{\"name\":\"http\",\"status\":\"mocked\"},{\"name\":\"http\",\"status\":\"mocked\"},{\"name\":\"https\",\"status\":\"mocked\"},{\"name\":\"https\",\"status\":\"mocked\"},{\"name\":\"net\",\"status\":\"mocked\"}]"}}
+[debug] [2026-02-10T09:17:55.292Z] [runtime-status] [15265] Resolved module firebase-functions {"declared":true,"installed":true,"version":"6.6.0","resolution":"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/firebase-functions/lib/v2/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [15265] Resolved module firebase-functions {\"declared\":true,\"installed\":true,\"version\":\"6.6.0\",\"resolution\":\"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/firebase-functions/lib/v2/index.js\"}"}}
+[debug] [2026-02-10T09:17:55.672Z] [runtime-status] [15265] Checked functions.config() {"config":{}} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [15265] Checked functions.config() {\"config\":{}}"}}
+[debug] [2026-02-10T09:17:55.672Z] [runtime-status] [15265] firebase-functions has been stubbed. {"functionsResolution":{"declared":true,"installed":true,"version":"6.6.0","resolution":"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/firebase-functions/lib/v2/index.js"}} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [15265] firebase-functions has been stubbed. {\"functionsResolution\":{\"declared\":true,\"installed\":true,\"version\":\"6.6.0\",\"resolution\":\"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/firebase-functions/lib/v2/index.js\"}}"}}
+[debug] [2026-02-10T09:17:55.673Z] [runtime-status] [15265] Resolved module firebase-functions {"declared":true,"installed":true,"version":"6.6.0","resolution":"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/firebase-functions/lib/v2/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [15265] Resolved module firebase-functions {\"declared\":true,\"installed\":true,\"version\":\"6.6.0\",\"resolution\":\"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/firebase-functions/lib/v2/index.js\"}"}}
+[debug] [2026-02-10T09:17:55.675Z] [runtime-status] [15265] Resolved module firebase-admin {"declared":true,"installed":true,"version":"12.7.0","resolution":"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/firebase-admin/lib/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [15265] Resolved module firebase-admin {\"declared\":true,\"installed\":true,\"version\":\"12.7.0\",\"resolution\":\"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/firebase-admin/lib/index.js\"}"}}
+[debug] [2026-02-10T09:17:55.678Z] [runtime-status] [15265] Resolved module firebase-functions {"declared":true,"installed":true,"version":"6.6.0","resolution":"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/firebase-functions/lib/v2/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [15265] Resolved module firebase-functions {\"declared\":true,\"installed\":true,\"version\":\"6.6.0\",\"resolution\":\"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/firebase-functions/lib/v2/index.js\"}"}}
+[debug] [2026-02-10T09:17:55.678Z] [runtime-status] [15265] firebase-admin has been stubbed. {"adminResolution":{"declared":true,"installed":true,"version":"12.7.0","resolution":"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/firebase-admin/lib/index.js"}} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [15265] firebase-admin has been stubbed. {\"adminResolution\":{\"declared\":true,\"installed\":true,\"version\":\"12.7.0\",\"resolution\":\"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/firebase-admin/lib/index.js\"}}"}}
+[debug] [2026-02-10T09:17:55.861Z] [runtime-status] [15265] Functions runtime initialized. {"cwd":"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions","node_version":"22.11.0"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [15265] Functions runtime initialized. {\"cwd\":\"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions\",\"node_version\":\"22.11.0\"}"}}
+[debug] [2026-02-10T09:17:55.861Z] [runtime-status] [15265] Listening to port: /var/folders/ym/pj5ffdrs3lv5cw4w_xwzy8kc0000gn/T/fire_emu_89e9e50931d31e2f.sock {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [15265] Listening to port: /var/folders/ym/pj5ffdrs3lv5cw4w_xwzy8kc0000gn/T/fire_emu_89e9e50931d31e2f.sock"}}
+[debug] [2026-02-10T09:17:55.897Z] [worker-us-central1-api-89bb7086-26fe-41ed-a51e-a0eadf19e7e9]: IDLE {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[worker-us-central1-api-89bb7086-26fe-41ed-a51e-a0eadf19e7e9]: IDLE"}}
+[debug] [2026-02-10T09:17:55.898Z] [worker-pool] submitRequest(triggerId=us-central1-api) {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] submitRequest(triggerId=us-central1-api)"}}
+[info] i  functions: Beginning execution of "us-central1-api" {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Beginning execution of \"us-central1-api\""}}
+[debug] [2026-02-10T09:17:55.898Z] [worker-us-central1-api-89bb7086-26fe-41ed-a51e-a0eadf19e7e9]: BUSY {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[worker-us-central1-api-89bb7086-26fe-41ed-a51e-a0eadf19e7e9]: BUSY"}}
+[info] >  {"timestamp":"2026-02-10T09:17:55.906Z","level":"INFO","event":"http.request.start","request_id":"0e91cf07-0270-49df-936a-71e87832e70c","method":"GET","path":"/health","query":{},"body":{"keys":[]}} {"user":{"timestamp":"2026-02-10T09:17:55.906Z","level":"INFO","event":"http.request.start","request_id":"0e91cf07-0270-49df-936a-71e87832e70c","method":"GET","path":"/health","query":{},"body":{"keys":[]}},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":">  {\"timestamp\":\"2026-02-10T09:17:55.906Z\",\"level\":\"INFO\",\"event\":\"http.request.start\",\"request_id\":\"0e91cf07-0270-49df-936a-71e87832e70c\",\"method\":\"GET\",\"path\":\"/health\",\"query\":{},\"body\":{\"keys\":[]}}"}}
+[debug] [2026-02-10T09:17:55.915Z] Finishing up request with event=pause {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Finishing up request with event=pause"}}
+[info] i  functions: Finished "us-central1-api" in 16.322542ms {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Finished \"us-central1-api\" in 16.322542ms"}}
+[debug] [2026-02-10T09:17:55.915Z] [worker-us-central1-api-89bb7086-26fe-41ed-a51e-a0eadf19e7e9]: IDLE {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[worker-us-central1-api-89bb7086-26fe-41ed-a51e-a0eadf19e7e9]: IDLE"}}
+[debug] [2026-02-10T09:17:55.915Z] Finishing up request with event=finish {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Finishing up request with event=finish"}}
+[debug] [2026-02-10T09:17:55.915Z] Finishing up request with event=close {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Finishing up request with event=close"}}
+[debug] [2026-02-10T09:17:55.915Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[info] >  {"timestamp":"2026-02-10T09:17:55.908Z","level":"INFO","event":"http.request.finish","request_id":"0e91cf07-0270-49df-936a-71e87832e70c","method":"GET","path":"/health","status":200,"duration_ms":2} {"user":{"timestamp":"2026-02-10T09:17:55.908Z","level":"INFO","event":"http.request.finish","request_id":"0e91cf07-0270-49df-936a-71e87832e70c","method":"GET","path":"/health","status":200,"duration_ms":2},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":">  {\"timestamp\":\"2026-02-10T09:17:55.908Z\",\"level\":\"INFO\",\"event\":\"http.request.finish\",\"request_id\":\"0e91cf07-0270-49df-936a-71e87832e70c\",\"method\":\"GET\",\"path\":\"/health\",\"status\":200,\"duration_ms\":2}"}}
+[debug] [2026-02-10T09:17:55.953Z] [work-queue] {"queuedWork":["/ai-post-dev/us-central1/api/v1/posts/generate-2026-02-10T09:17:55.953Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:17:55.953Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/ai-post-dev/us-central1/api/v1/posts/generate-2026-02-10T09:17:55.953Z"],"workRunningCount":1}
+[debug] [2026-02-10T09:17:55.953Z] Accepted request POST /ai-post-dev/us-central1/api/v1/posts/generate --> us-central1-api
+[debug] [2026-02-10T09:17:55.954Z] [functions] Runtime ready! Sending request! {"metadata":{"emulator":{"name":"functions"},"message":"[functions] Runtime ready! Sending request!"}}
+[debug] [2026-02-10T09:17:55.954Z] [functions] Got req.url=/ai-post-dev/us-central1/api/v1/posts/generate, mapping to path=/v1/posts/generate {"metadata":{"emulator":{"name":"functions"},"message":"[functions] Got req.url=/ai-post-dev/us-central1/api/v1/posts/generate, mapping to path=/v1/posts/generate"}}
+[debug] [2026-02-10T09:17:55.954Z] [worker-pool] submitRequest(triggerId=us-central1-api) {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] submitRequest(triggerId=us-central1-api)"}}
+[info] i  functions: Beginning execution of "us-central1-api" {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Beginning execution of \"us-central1-api\""}}
+[debug] [2026-02-10T09:17:55.954Z] [worker-us-central1-api-89bb7086-26fe-41ed-a51e-a0eadf19e7e9]: BUSY {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[worker-us-central1-api-89bb7086-26fe-41ed-a51e-a0eadf19e7e9]: BUSY"}}
+[info] >  {"timestamp":"2026-02-10T09:17:55.966Z","level":"INFO","event":"http.request.start","request_id":"38ee98a3-83be-425c-b9f3-211bc20cf7a0","method":"POST","path":"/v1/posts/generate","query":{},"body":{"user_id":"smoke-monorepo","mode":"BIOGRAPHY","profile":"Bill Gates","length":"short"}} {"user":{"timestamp":"2026-02-10T09:17:55.966Z","level":"INFO","event":"http.request.start","request_id":"38ee98a3-83be-425c-b9f3-211bc20cf7a0","method":"POST","path":"/v1/posts/generate","query":{},"body":{"user_id":"smoke-monorepo","mode":"BIOGRAPHY","profile":"Bill Gates","length":"short"}},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":">  {\"timestamp\":\"2026-02-10T09:17:55.966Z\",\"level\":\"INFO\",\"event\":\"http.request.start\",\"request_id\":\"38ee98a3-83be-425c-b9f3-211bc20cf7a0\",\"method\":\"POST\",\"path\":\"/v1/posts/generate\",\"query\":{},\"body\":{\"user_id\":\"smoke-monorepo\",\"mode\":\"BIOGRAPHY\",\"profile\":\"Bill Gates\",\"length\":\"short\"}}"}}
+[info] >  {"timestamp":"2026-02-10T09:17:55.974Z","level":"INFO","event":"post.generate.start","user_id":"smoke-monorepo","mode":"BIOGRAPHY","profile":"Bill Gates","length":"short","stream":false} {"user":{"timestamp":"2026-02-10T09:17:55.974Z","level":"INFO","event":"post.generate.start","user_id":"smoke-monorepo","mode":"BIOGRAPHY","profile":"Bill Gates","length":"short","stream":false},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":">  {\"timestamp\":\"2026-02-10T09:17:55.974Z\",\"level\":\"INFO\",\"event\":\"post.generate.start\",\"user_id\":\"smoke-monorepo\",\"mode\":\"BIOGRAPHY\",\"profile\":\"Bill Gates\",\"length\":\"short\",\"stream\":false}"}}
+[debug] [2026-02-10T09:17:56.396Z] Feb 10, 2026 1:17:56 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Feb 10, 2026 1:17:56 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected HTTP/2 connection.\n"}}
+[info] >  {"timestamp":"2026-02-10T09:17:57.372Z","level":"INFO","event":"llm.upstream.start","mode":"BIOGRAPHY","profile":"Bill Gates","length":"short","stream":false,"retries_left":0,"model":"gpt-5-mini","base_url":"https://api.openai.com/v1","recent_titles_count":0} {"user":{"timestamp":"2026-02-10T09:17:57.372Z","level":"INFO","event":"llm.upstream.start","mode":"BIOGRAPHY","profile":"Bill Gates","length":"short","stream":false,"retries_left":0,"model":"gpt-5-mini","base_url":"https://api.openai.com/v1","recent_titles_count":0},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":">  {\"timestamp\":\"2026-02-10T09:17:57.372Z\",\"level\":\"INFO\",\"event\":\"llm.upstream.start\",\"mode\":\"BIOGRAPHY\",\"profile\":\"Bill Gates\",\"length\":\"short\",\"stream\":false,\"retries_left\":0,\"model\":\"gpt-5-mini\",\"base_url\":\"https://api.openai.com/v1\",\"recent_titles_count\":0}"}}
+[info] >  {"timestamp":"2026-02-10T09:17:57.911Z","level":"ERROR","event":"llm.upstream.error","status":401,"duration_ms":539,"mode":"BIOGRAPHY","profile":"Bill Gates","length":"short","stream":false,"retries_left":0,"upstream_body":"{\n  \"error\": {\n    \"message\": \"Incorrect API key provided: PASTE_YO******************HERE. You can find your API key at https://platform.openai.com/account/api-keys.\",\n    \"type\": \"invalid_request_error\",\n    \"param\": null,\n    \"code\": \"invalid_api_key\"\n  }\n}"} {"user":{"timestamp":"2026-02-10T09:17:57.911Z","level":"ERROR","event":"llm.upstream.error","status":401,"duration_ms":539,"mode":"BIOGRAPHY","profile":"Bill Gates","length":"short","stream":false,"retries_left":0,"upstream_body":"{\n  \"error\": {\n    \"message\": \"Incorrect API key provided: PASTE_YO******************HERE. You can find your API key at https://platform.openai.com/account/api-keys.\",\n    \"type\": \"invalid_request_error\",\n    \"param\": null,\n    \"code\": \"invalid_api_key\"\n  }\n}"},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":">  {\"timestamp\":\"2026-02-10T09:17:57.911Z\",\"level\":\"ERROR\",\"event\":\"llm.upstream.error\",\"status\":401,\"duration_ms\":539,\"mode\":\"BIOGRAPHY\",\"profile\":\"Bill Gates\",\"length\":\"short\",\"stream\":false,\"retries_left\":0,\"upstream_body\":\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Incorrect API key provided: PASTE_YO******************HERE. You can find your API key at https://platform.openai.com/account/api-keys.\\\",\\n    \\\"type\\\": \\\"invalid_request_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"invalid_api_key\\\"\\n  }\\n}\"}"}}
+[info] >  {"timestamp":"2026-02-10T09:17:57.911Z","level":"ERROR","event":"post.generate.failure","user_id":"smoke-monorepo","mode":"BIOGRAPHY","profile":"Bill Gates","length":"short","stream":false,"llm_duration_ms":540,"total_duration_ms":1937,"message":"OpenAI authentication failed. Check OPENAI_API_KEY in services/api/functions/.env and restart emulators."} {"user":{"timestamp":"2026-02-10T09:17:57.911Z","level":"ERROR","event":"post.generate.failure","user_id":"smoke-monorepo","mode":"BIOGRAPHY","profile":"Bill Gates","length":"short","stream":false,"llm_duration_ms":540,"total_duration_ms":1937,"message":"OpenAI authentication failed. Check OPENAI_API_KEY in services/api/functions/.env and restart emulators."},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":">  {\"timestamp\":\"2026-02-10T09:17:57.911Z\",\"level\":\"ERROR\",\"event\":\"post.generate.failure\",\"user_id\":\"smoke-monorepo\",\"mode\":\"BIOGRAPHY\",\"profile\":\"Bill Gates\",\"length\":\"short\",\"stream\":false,\"llm_duration_ms\":540,\"total_duration_ms\":1937,\"message\":\"OpenAI authentication failed. Check OPENAI_API_KEY in services/api/functions/.env and restart emulators.\"}"}}
+[info] >  {"timestamp":"2026-02-10T09:17:57.916Z","level":"ERROR","event":"http.request.error","request_id":"38ee98a3-83be-425c-b9f3-211bc20cf7a0","status":502,"code":"llm_auth_error","message":"OpenAI authentication failed. Check OPENAI_API_KEY in services/api/functions/.env and restart emulators.","details":{"upstream_status":401,"upstream_body":"{\n  \"error\": {\n    \"message\": \"Incorrect API key provided: PASTE_YO******************HERE. You can find your API key at https://platform.openai.com/account/api-keys.\",\n    \"type\": \"invalid_request_error\",\n    \"param\": null,\n    \"code\": \"invalid_api_key\"\n  }\n}","api_key_hint":"PASTE_Y...HERE"}} {"user":{"timestamp":"2026-02-10T09:17:57.916Z","level":"ERROR","event":"http.request.error","request_id":"38ee98a3-83be-425c-b9f3-211bc20cf7a0","status":502,"code":"llm_auth_error","message":"OpenAI authentication failed. Check OPENAI_API_KEY in services/api/functions/.env and restart emulators.","details":{"upstream_status":401,"upstream_body":"{\n  \"error\": {\n    \"message\": \"Incorrect API key provided: PASTE_YO******************HERE. You can find your API key at https://platform.openai.com/account/api-keys.\",\n    \"type\": \"invalid_request_error\",\n    \"param\": null,\n    \"code\": \"invalid_api_key\"\n  }\n}","api_key_hint":"PASTE_Y...HERE"}},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":">  {\"timestamp\":\"2026-02-10T09:17:57.916Z\",\"level\":\"ERROR\",\"event\":\"http.request.error\",\"request_id\":\"38ee98a3-83be-425c-b9f3-211bc20cf7a0\",\"status\":502,\"code\":\"llm_auth_error\",\"message\":\"OpenAI authentication failed. Check OPENAI_API_KEY in services/api/functions/.env and restart emulators.\",\"details\":{\"upstream_status\":401,\"upstream_body\":\"{\\n  \\\"error\\\": {\\n    \\\"message\\\": \\\"Incorrect API key provided: PASTE_YO******************HERE. You can find your API key at https://platform.openai.com/account/api-keys.\\\",\\n    \\\"type\\\": \\\"invalid_request_error\\\",\\n    \\\"param\\\": null,\\n    \\\"code\\\": \\\"invalid_api_key\\\"\\n  }\\n}\",\"api_key_hint\":\"PASTE_Y...HERE\"}}"}}
+[debug] [2026-02-10T09:17:57.928Z] Finishing up request with event=pause {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Finishing up request with event=pause"}}
+[info] i  functions: Finished "us-central1-api" in 1974.201958ms {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Finished \"us-central1-api\" in 1974.201958ms"}}
+[debug] [2026-02-10T09:17:57.929Z] [worker-us-central1-api-89bb7086-26fe-41ed-a51e-a0eadf19e7e9]: IDLE {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[worker-us-central1-api-89bb7086-26fe-41ed-a51e-a0eadf19e7e9]: IDLE"}}
+[debug] [2026-02-10T09:17:57.930Z] Finishing up request with event=finish {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Finishing up request with event=finish"}}
+[debug] [2026-02-10T09:17:57.930Z] Finishing up request with event=close {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Finishing up request with event=close"}}
+[debug] [2026-02-10T09:17:57.930Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[info] >  {"timestamp":"2026-02-10T09:17:57.918Z","level":"INFO","event":"http.request.finish","request_id":"38ee98a3-83be-425c-b9f3-211bc20cf7a0","method":"POST","path":"/v1/posts/generate","status":502,"duration_ms":1952} {"user":{"timestamp":"2026-02-10T09:17:57.918Z","level":"INFO","event":"http.request.finish","request_id":"38ee98a3-83be-425c-b9f3-211bc20cf7a0","method":"POST","path":"/v1/posts/generate","status":502,"duration_ms":1952},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":">  {\"timestamp\":\"2026-02-10T09:17:57.918Z\",\"level\":\"INFO\",\"event\":\"http.request.finish\",\"request_id\":\"38ee98a3-83be-425c-b9f3-211bc20cf7a0\",\"method\":\"POST\",\"path\":\"/v1/posts/generate\",\"status\":502,\"duration_ms\":1952}"}}
+[debug] [2026-02-10T09:18:25.020Z] Received signal SIGTERM 1
+[info]  
+[info] i  emulators: Received SIGTERM for the first time. Starting a clean shutdown. 
+[info] i  emulators: Please wait for a clean shutdown or send the SIGTERM signal again to stop right now. 
+[info] i  Automatically exporting data using --export-on-exit "/Users/sirishjoshi/Desktop/AI-Post/orecce/infra/local/.firebase-emulator-data" please wait for the export to finish... 
+[debug] [2026-02-10T09:18:25.035Z] >>> [apiv2][query] GET http://127.0.0.1:4400/ [none]
+[debug] [2026-02-10T09:18:25.038Z] *** shutting down gRPC server since JVM is shutting down
+ {"metadata":{"emulator":{"name":"firestore"},"message":"*** shutting down gRPC server since JVM is shutting down\n"}}
+[debug] [2026-02-10T09:18:25.057Z] <<< [apiv2][status] GET http://127.0.0.1:4400/ 200
+[debug] [2026-02-10T09:18:25.057Z] <<< [apiv2][body] GET http://127.0.0.1:4400/ {"version":"14.0.0","origins":["http://127.0.0.1:4400","http://[::1]:4400"],"host":"127.0.0.1","port":4400}
+[info] i  Found running emulator hub for project ai-post-dev at http://127.0.0.1:4400 
+[info] i  Exporting data to: /Users/sirishjoshi/Desktop/AI-Post/orecce/infra/local/.firebase-emulator-data 
+[debug] [2026-02-10T09:18:25.060Z] >>> [apiv2][query] GET http://127.0.0.1:4400/ [none]
+[debug] [2026-02-10T09:18:25.062Z] *** server shut down
+ {"metadata":{"emulator":{"name":"firestore"},"message":"*** server shut down\n"}}
+[debug] [2026-02-10T09:18:25.066Z] <<< [apiv2][status] GET http://127.0.0.1:4400/ 200
+[debug] [2026-02-10T09:18:25.066Z] <<< [apiv2][body] GET http://127.0.0.1:4400/ {"version":"14.0.0","origins":["http://127.0.0.1:4400","http://[::1]:4400"],"host":"127.0.0.1","port":4400}
+[debug] [2026-02-10T09:18:25.069Z] >>> [apiv2][query] POST http://127.0.0.1:4400/_admin/export [none]
+[debug] [2026-02-10T09:18:25.070Z] >>> [apiv2][body] POST http://127.0.0.1:4400/_admin/export {"path":"/Users/sirishjoshi/Desktop/AI-Post/orecce/infra/local/.firebase-emulator-data","initiatedBy":"exit"}
+[info] i  emulators: Received export request. Exporting data to /Users/sirishjoshi/Desktop/AI-Post/orecce/infra/local/.firebase-emulator-data. 
+[debug] [2026-02-10T09:18:25.098Z] >>> [apiv2][query] POST http://127.0.0.1:8080/emulator/v1/projects/ai-post-dev:export [none]
+[debug] [2026-02-10T09:18:25.098Z] >>> [apiv2][body] POST http://127.0.0.1:8080/emulator/v1/projects/ai-post-dev:export {"database":"projects/ai-post-dev/databases/(default)","export_directory":"firebase-export-17707151050935kvBGB","export_name":"firestore_export"}
+[debug] [2026-02-10T09:18:25.100Z] *** [apiv2] error from fetch(http://127.0.0.1:8080/emulator/v1/projects/ai-post-dev:export, {"headers":{},"method":"POST","body":"{\"database\":\"projects/ai-post-dev/databases/(default)\",\"export_directory\":\"firebase-export-17707151050935kvBGB\",\"export_name\":\"firestore_export\"}"}): FetchError: request to http://127.0.0.1:8080/emulator/v1/projects/ai-post-dev:export failed, reason: connect ECONNREFUSED 127.0.0.1:8080
+[warn] ⚠  emulators: Export failed: Failed to make request to http://127.0.0.1:8080/emulator/v1/projects/ai-post-dev:export 
+[debug] [2026-02-10T09:18:25.105Z] <<< [apiv2][status] POST http://127.0.0.1:4400/_admin/export 500
+[debug] [2026-02-10T09:18:25.106Z] <<< [apiv2][body] POST http://127.0.0.1:4400/_admin/export {"message":"Failed to make request to http://127.0.0.1:8080/emulator/v1/projects/ai-post-dev:export"}
+[warn] ⚠  FirebaseError: Export request failed, see emulator logs for more information. 
+[warn] ⚠  Automatic export to "/Users/sirishjoshi/Desktop/AI-Post/orecce/infra/local/.firebase-emulator-data" failed, going to exit now... 
+[info] i  emulators: Shutting down emulators. {"metadata":{"emulator":{"name":"hub"},"message":"Shutting down emulators."}}
+[info] i  ui: Stopping Emulator UI {"metadata":{"emulator":{"name":"ui"},"message":"Stopping Emulator UI"}}
+[info] i  functions: Stopping Functions Emulator {"metadata":{"emulator":{"name":"functions"},"message":"Stopping Functions Emulator"}}
+[info] i  firestore: Stopping Firestore Emulator {"metadata":{"emulator":{"name":"firestore"},"message":"Stopping Firestore Emulator"}}
+[debug] [2026-02-10T09:18:25.126Z] [worker-us-central1-api-89bb7086-26fe-41ed-a51e-a0eadf19e7e9]: exited {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[worker-us-central1-api-89bb7086-26fe-41ed-a51e-a0eadf19e7e9]: exited"}}
+[debug] [2026-02-10T09:18:25.126Z] [worker-us-central1-api-89bb7086-26fe-41ed-a51e-a0eadf19e7e9]: FINISHED {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[worker-us-central1-api-89bb7086-26fe-41ed-a51e-a0eadf19e7e9]: FINISHED"}}
+[warn] ⚠  firestore: Fatal error occurred: 
+   Firestore Emulator has exited with code: 143, 
+   stopping all running emulators {"metadata":{"emulator":{"name":"firestore"},"message":"Fatal error occurred: \n   Firestore Emulator has exited with code: 143, \n   stopping all running emulators"}}
+[info] i  firestore: Stopping Firestore Emulator {"metadata":{"emulator":{"name":"firestore"},"message":"Stopping Firestore Emulator"}}
+[info] i  eventarc: Stopping Eventarc Emulator {"metadata":{"emulator":{"name":"eventarc"},"message":"Stopping Eventarc Emulator"}}
+[info] i  eventarc: Stopping Eventarc Emulator {"metadata":{"emulator":{"name":"eventarc"},"message":"Stopping Eventarc Emulator"}}
+[info] i  tasks: Stopping Cloud Tasks Emulator {"metadata":{"emulator":{"name":"tasks"},"message":"Stopping Cloud Tasks Emulator"}}
+[info] i  tasks: Stopping Cloud Tasks Emulator {"metadata":{"emulator":{"name":"tasks"},"message":"Stopping Cloud Tasks Emulator"}}
+[info] i  hub: Stopping emulator hub {"metadata":{"emulator":{"name":"hub"},"message":"Stopping emulator hub"}}
+[info] i  hub: Stopping emulator hub {"metadata":{"emulator":{"name":"hub"},"message":"Stopping emulator hub"}}
+[info] i  logging: Stopping Logging Emulator {"metadata":{"emulator":{"name":"logging"},"message":"Stopping Logging Emulator"}}
+[debug] [2026-02-10T09:18:52.557Z] ----------------------------------------------------------------------
+[debug] [2026-02-10T09:18:52.559Z] Command:       /usr/local/bin/node /usr/local/bin/firebase emulators:start --only functions,firestore --import=/Users/sirishjoshi/Desktop/AI-Post/orecce/infra/local/.firebase-emulator-data --export-on-exit=/Users/sirishjoshi/Desktop/AI-Post/orecce/infra/local/.firebase-emulator-data --debug
+[debug] [2026-02-10T09:18:52.560Z] CLI Version:   14.0.0
+[debug] [2026-02-10T09:18:52.560Z] Platform:      darwin
+[debug] [2026-02-10T09:18:52.560Z] Node Version:  v22.11.0
+[debug] [2026-02-10T09:18:52.560Z] Time:          Tue Feb 10 2026 13:18:52 GMT+0400 (Gulf Standard Time)
+[debug] [2026-02-10T09:18:52.560Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-02-10T09:18:52.736Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-10T09:18:52.738Z] > authorizing via signed-in user (admin@sodhera.com)
+[debug] [2026-02-10T09:18:52.994Z] openjdk version "23.0.2" 2025-01-21
+
+[debug] [2026-02-10T09:18:52.995Z] OpenJDK Runtime Environment Homebrew (build 23.0.2)
+OpenJDK 64-Bit Server VM Homebrew (build 23.0.2, mixed mode, sharing)
+
+[debug] [2026-02-10T09:18:53.001Z] Parsed Java major version: 23
+[info] i  emulators: Starting emulators: functions, firestore {"metadata":{"emulator":{"name":"hub"},"message":"Starting emulators: functions, firestore"}}
+[debug] [2026-02-10T09:18:53.700Z] [logging] Logging Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-02-10T09:18:53.701Z] [firestore] Firestore Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-02-10T09:18:53.702Z] [firestore.websocket] websocket server for firestore only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-02-10T09:18:53.702Z] assigned listening specs for emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"firestore":[{"address":"127.0.0.1","family":"IPv4","port":8080}],"firestore.websocket":[{"address":"127.0.0.1","family":"IPv4","port":9150}]},"metadata":{"message":"assigned listening specs for emulators"}}
+[debug] [2026-02-10T09:18:53.709Z] [hub] writing locator at /var/folders/ym/pj5ffdrs3lv5cw4w_xwzy8kc0000gn/T/hub-ai-post-dev.json
+[debug] [2026-02-10T09:18:54.100Z] [functions] Functions Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-02-10T09:18:54.100Z] [eventarc] Eventarc Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-02-10T09:18:54.100Z] [tasks] Cloud Tasks Emulator only supports listening on one address (127.0.0.1). Not listening on ::1
+[debug] [2026-02-10T09:18:54.100Z] late-assigned ports for functions and eventarc emulators {"user":{"hub":[{"address":"127.0.0.1","family":"IPv4","port":4400},{"address":"::1","family":"IPv6","port":4400}],"ui":[{"address":"127.0.0.1","family":"IPv4","port":4000},{"address":"::1","family":"IPv6","port":4000}],"logging":[{"address":"127.0.0.1","family":"IPv4","port":4500}],"firestore":[{"address":"127.0.0.1","family":"IPv4","port":8080}],"firestore.websocket":[{"address":"127.0.0.1","family":"IPv4","port":9150}],"functions":[{"address":"127.0.0.1","family":"IPv4","port":5001}],"eventarc":[{"address":"127.0.0.1","family":"IPv4","port":9299}],"tasks":[{"address":"127.0.0.1","family":"IPv4","port":9499}]},"metadata":{"message":"late-assigned ports for functions and eventarc emulators"}}
+[warn] ⚠  functions: The following emulators are not running, calls to these services from the Functions emulator will affect production: apphosting, auth, database, hosting, pubsub, storage, dataconnect {"metadata":{"emulator":{"name":"functions"},"message":"The following emulators are not running, calls to these services from the Functions emulator will affect production: apphosting, auth, database, hosting, pubsub, storage, dataconnect"}}
+[warn] ⚠  functions: Application Default Credentials detected. Non-emulated services will access production using these credentials. Be careful! {"metadata":{"emulator":{"name":"functions"},"message":"Application Default Credentials detected. Non-emulated services will access production using these credentials. Be careful!"}}
+[debug] [2026-02-10T09:18:55.566Z] Checked if tokens are valid: false, expires at: 1770656289545
+[debug] [2026-02-10T09:18:55.566Z] Checked if tokens are valid: false, expires at: 1770656289545
+[debug] [2026-02-10T09:18:55.566Z] > refreshing access token with scopes: []
+[debug] [2026-02-10T09:18:55.568Z] >>> [apiv2][query] POST https://www.googleapis.com/oauth2/v3/token [none]
+[debug] [2026-02-10T09:18:55.568Z] >>> [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[debug] [2026-02-10T09:18:55.961Z] <<< [apiv2][status] POST https://www.googleapis.com/oauth2/v3/token 400
+[debug] [2026-02-10T09:18:55.961Z] <<< [apiv2][body] POST https://www.googleapis.com/oauth2/v3/token [omitted]
+[error] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[error] Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth
+
+For CI servers and headless environments, generate a new token with firebase login:ci
+[debug] [2026-02-10T09:18:55.961Z] Failed to get Admin SDK config for ai-post-dev, falling back to cache Failed to get Admin SDK for Firebase project ai-post-dev. Please make sure the project exists and your account has permission to access it. {"name":"FirebaseError","children":[],"exit":2,"message":"Failed to get Admin SDK for Firebase project ai-post-dev. Please make sure the project exists and your account has permission to access it.","original":{"name":"FirebaseError","children":[],"exit":1,"message":"Authentication Error: Your credentials are no longer valid. Please run firebase login --reauth\n\nFor CI servers and headless environments, generate a new token with firebase login:ci","status":500},"status":500}
+[warn] ⚠  functions: Unable to fetch project Admin SDK configuration, Admin SDK behavior in Cloud Functions emulator may be incorrect. {"metadata":{"emulator":{"name":"functions"},"message":"Unable to fetch project Admin SDK configuration, Admin SDK behavior in Cloud Functions emulator may be incorrect."}}
+[info] i  firestore: Importing data from /Users/sirishjoshi/Desktop/AI-Post/orecce/infra/local/.firebase-emulator-data/firestore_export/firestore_export.overall_export_metadata {"metadata":{"emulator":{"name":"firestore"},"message":"Importing data from /Users/sirishjoshi/Desktop/AI-Post/orecce/infra/local/.firebase-emulator-data/firestore_export/firestore_export.overall_export_metadata"}}
+[debug] [2026-02-10T09:18:55.978Z] Ignoring unsupported arg: auto_download {"metadata":{"emulator":{"name":"firestore"},"message":"Ignoring unsupported arg: auto_download"}}
+[debug] [2026-02-10T09:18:55.978Z] Ignoring unsupported arg: single_project_mode_error {"metadata":{"emulator":{"name":"firestore"},"message":"Ignoring unsupported arg: single_project_mode_error"}}
+[debug] [2026-02-10T09:18:55.978Z] Starting Firestore Emulator with command {"binary":"java","args":["-Dgoogle.cloud_firestore.debug_log_level=FINE","-Duser.language=en","-jar","/Users/sirishjoshi/.cache/firebase/emulators/cloud-firestore-emulator-v1.19.8.jar","--host","127.0.0.1","--port",8080,"--websocket_port",9150,"--project_id","ai-post-dev","--seed_from_export","/Users/sirishjoshi/Desktop/AI-Post/orecce/infra/local/.firebase-emulator-data/firestore_export/firestore_export.overall_export_metadata","--rules","/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/firestore.rules","--single_project_mode",true,"--functions_emulator","127.0.0.1:5001"],"optionalArgs":["port","webchannel_port","host","rules","websocket_port","functions_emulator","seed_from_export","project_id","single_project_mode"],"joinArgs":false,"shell":false,"port":8080} {"metadata":{"emulator":{"name":"firestore"},"message":"Starting Firestore Emulator with command {\"binary\":\"java\",\"args\":[\"-Dgoogle.cloud_firestore.debug_log_level=FINE\",\"-Duser.language=en\",\"-jar\",\"/Users/sirishjoshi/.cache/firebase/emulators/cloud-firestore-emulator-v1.19.8.jar\",\"--host\",\"127.0.0.1\",\"--port\",8080,\"--websocket_port\",9150,\"--project_id\",\"ai-post-dev\",\"--seed_from_export\",\"/Users/sirishjoshi/Desktop/AI-Post/orecce/infra/local/.firebase-emulator-data/firestore_export/firestore_export.overall_export_metadata\",\"--rules\",\"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/firestore.rules\",\"--single_project_mode\",true,\"--functions_emulator\",\"127.0.0.1:5001\"],\"optionalArgs\":[\"port\",\"webchannel_port\",\"host\",\"rules\",\"websocket_port\",\"functions_emulator\",\"seed_from_export\",\"project_id\",\"single_project_mode\"],\"joinArgs\":false,\"shell\":false,\"port\":8080}"}}
+[info] i  firestore: Firestore Emulator logging to firestore-debug.log {"metadata":{"emulator":{"name":"firestore"},"message":"Firestore Emulator logging to firestore-debug.log"}}
+[debug] [2026-02-10T09:18:56.469Z] [work-queue] {"queuedWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:18:56.469Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:18:56.470Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:18:56.469Z"],"workRunningCount":1}
+[debug] [2026-02-10T09:18:56.472Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:18:57.651Z] [work-queue] {"queuedWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:18:57.650Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:18:57.660Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:18:57.650Z"],"workRunningCount":1}
+[debug] [2026-02-10T09:18:57.661Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:18:57.890Z] Feb 10, 2026 1:18:57 PM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketServer start
+INFO: Started WebSocket server on ws://127.0.0.1:9150
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Feb 10, 2026 1:18:57 PM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketServer start\nINFO: Started WebSocket server on ws://127.0.0.1:9150\n"}}
+[debug] [2026-02-10T09:18:57.927Z] API endpoint: http://127.0.0.1:8080
+If you are using a library that supports the FIRESTORE_EMULATOR_HOST environment variable, run:
+ {"metadata":{"emulator":{"name":"firestore"},"message":"API endpoint: http://127.0.0.1:8080\nIf you are using a library that supports the FIRESTORE_EMULATOR_HOST environment variable, run:\n"}}
+[debug] [2026-02-10T09:18:57.927Z] 
+   export FIRESTORE_EMULATOR_HOST=127.0.0.1:8080
+
+If you are running a Firestore in Datastore Mode project, run:
+
+   export DATASTORE_EMULATOR_HOST=127.0.0.1:8080
+
+Note: Support for Datastore Mode is in preview. If you encounter any bugs please file at https://github.com/firebase/firebase-tools/issues.
+Dev App Server is now running.
+
+ {"metadata":{"emulator":{"name":"firestore"},"message":"\n   export FIRESTORE_EMULATOR_HOST=127.0.0.1:8080\n\nIf you are running a Firestore in Datastore Mode project, run:\n\n   export DATASTORE_EMULATOR_HOST=127.0.0.1:8080\n\nNote: Support for Datastore Mode is in preview. If you encounter any bugs please file at https://github.com/firebase/firebase-tools/issues.\nDev App Server is now running.\n\n"}}
+[info] ✔  firestore: Firestore Emulator UI websocket is running on 9150. {"metadata":{"emulator":{"name":"firestore"},"message":"Firestore Emulator UI websocket is running on 9150."}}
+[info] i  functions: Watching "/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions" for Cloud Functions... {"metadata":{"emulator":{"name":"functions"},"message":"Watching \"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions\" for Cloud Functions..."}}
+[debug] [2026-02-10T09:18:58.066Z] Validating nodejs source
+[warn] ⚠  functions: package.json indicates an outdated version of firebase-functions. Please upgrade using npm install --save firebase-functions@latest in your functions directory. 
+[warn] ⚠  functions: Please note that there will be breaking changes when you upgrade. 
+[debug] [2026-02-10T09:18:58.985Z] > [functions] package.json contents: {
+  "name": "ai-post-functions",
+  "private": true,
+  "main": "lib/index.js",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "clean": "rm -rf lib",
+    "dev:generate": "tsx scripts/dev-generate.ts",
+    "dev:server": "tsx scripts/dev-server.ts",
+    "lint:types": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^6.2.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^22.13.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  }
+}
+[debug] [2026-02-10T09:18:58.985Z] Building nodejs source
+[debug] [2026-02-10T09:18:58.985Z] Failed to find version of module node: reached end of search path /Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules
+[warn] ⚠  functions: Your requested "node" version "20" doesn't match your global version "22". Using node@22 from host. 
+[info] i  functions: Loaded environment variables from .env. 
+[debug] [2026-02-10T09:18:58.989Z] Could not find functions.yaml. Must use http discovery
+[debug] [2026-02-10T09:18:58.993Z] Found firebase-functions binary at '/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/.bin/firebase-functions'
+[debug] [2026-02-10T09:18:59.002Z] [work-queue] {"queuedWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:18:59.002Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:18:59.002Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:18:59.002Z"],"workRunningCount":1}
+[debug] [2026-02-10T09:18:59.002Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[info] Serving at port 8343
+
+[debug] [2026-02-10T09:18:59.717Z] Got response from /__/functions.yaml {"endpoints":{"api":{"availableMemoryMb":null,"timeoutSeconds":120,"minInstances":1,"maxInstances":10,"ingressSettings":null,"concurrency":20,"serviceAccountEmail":null,"vpc":null,"platform":"gcfv2","region":["us-central1"],"labels":{},"httpsTrigger":{},"entryPoint":"api"}},"specVersion":"v1alpha1","requiredAPIs":[],"extensions":{}}
+[debug] [2026-02-10T09:19:00.047Z] [work-queue] {"queuedWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:19:00.047Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:19:00.048Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:19:00.047Z"],"workRunningCount":1}
+[debug] [2026-02-10T09:19:00.049Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:19:01.083Z] [work-queue] {"queuedWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:19:01.083Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:19:01.085Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:19:01.083Z"],"workRunningCount":1}
+[debug] [2026-02-10T09:19:01.086Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:19:02.125Z] [work-queue] {"queuedWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:19:02.125Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:19:02.125Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:19:02.125Z"],"workRunningCount":1}
+[debug] [2026-02-10T09:19:02.126Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:19:03.164Z] [work-queue] {"queuedWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:19:03.164Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:19:03.169Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:19:03.164Z"],"workRunningCount":1}
+[debug] [2026-02-10T09:19:03.173Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[info] ✔  functions: Loaded functions definitions from source: api. {"metadata":{"emulator":{"name":"functions"},"message":"Loaded functions definitions from source: api."}}
+[info] ✔  functions[us-central1-api]: http function initialized (http://127.0.0.1:5001/ai-post-dev/us-central1/api). {"metadata":{"emulator":{"name":"functions"},"message":"http function initialized (http://127.0.0.1:5001/ai-post-dev/us-central1/api)."}}
+[debug] [2026-02-10T09:19:03.785Z] Could not find VSCode notification endpoint: FetchError: request to http://localhost:40001/vscode/notify failed, reason: . If you are not running the Firebase Data Connect VSCode extension, this is expected and not an issue.
+[info] 
+┌─────────────────────────────────────────────────────────────┐
+│ ✔  All emulators ready! It is now safe to connect your app. │
+│ i  View Emulator UI at http://127.0.0.1:4000/               │
+└─────────────────────────────────────────────────────────────┘
+
+┌───────────┬────────────────┬─────────────────────────────────┐
+│ Emulator  │ Host:Port      │ View in Emulator UI             │
+├───────────┼────────────────┼─────────────────────────────────┤
+│ Functions │ 127.0.0.1:5001 │ http://127.0.0.1:4000/functions │
+├───────────┼────────────────┼─────────────────────────────────┤
+│ Firestore │ 127.0.0.1:8080 │ http://127.0.0.1:4000/firestore │
+└───────────┴────────────────┴─────────────────────────────────┘
+  Emulator Hub host: 127.0.0.1 port: 4400
+  Other reserved ports: 4500, 9150
+
+Issues? Report them at https://github.com/firebase/firebase-tools/issues and attach the *-debug.log files.
+ 
+[debug] [2026-02-10T09:19:04.199Z] [work-queue] {"queuedWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:19:04.199Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:19:04.199Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/ai-post-dev/us-central1/api/health-2026-02-10T09:19:04.199Z"],"workRunningCount":1}
+[debug] [2026-02-10T09:19:04.199Z] Accepted request GET /ai-post-dev/us-central1/api/health --> us-central1-api
+[debug] [2026-02-10T09:19:04.200Z] [functions] Runtime ready! Sending request! {"metadata":{"emulator":{"name":"functions"},"message":"[functions] Runtime ready! Sending request!"}}
+[debug] [2026-02-10T09:19:04.201Z] [functions] Got req.url=/ai-post-dev/us-central1/api/health, mapping to path=/health {"metadata":{"emulator":{"name":"functions"},"message":"[functions] Got req.url=/ai-post-dev/us-central1/api/health, mapping to path=/health"}}
+[info] i  functions: Loaded environment variables from .env. 
+[debug] [2026-02-10T09:19:04.205Z] [worker-pool] addWorker(us-central1-api) {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] addWorker(us-central1-api)"}}
+[debug] [2026-02-10T09:19:04.210Z] [worker-pool] Adding worker with key us-central1-api, total=1 {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] Adding worker with key us-central1-api, total=1"}}
+[info] >  (node:16226) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead. {"user":"(node:16226) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":">  (node:16226) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead."}}
+[info] >  (Use `node --trace-deprecation ...` to show where the warning was created) {"user":"(Use `node --trace-deprecation ...` to show where the warning was created)","metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":">  (Use `node --trace-deprecation ...` to show where the warning was created)"}}
+[debug] [2026-02-10T09:19:05.600Z] [runtime-status] [16226] Resolved module firebase-admin {"declared":true,"installed":true,"version":"12.7.0","resolution":"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/firebase-admin/lib/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [16226] Resolved module firebase-admin {\"declared\":true,\"installed\":true,\"version\":\"12.7.0\",\"resolution\":\"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/firebase-admin/lib/index.js\"}"}}
+[debug] [2026-02-10T09:19:05.600Z] [runtime-status] [16226] Resolved module firebase-functions {"declared":true,"installed":true,"version":"6.6.0","resolution":"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/firebase-functions/lib/v2/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [16226] Resolved module firebase-functions {\"declared\":true,\"installed\":true,\"version\":\"6.6.0\",\"resolution\":\"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/firebase-functions/lib/v2/index.js\"}"}}
+[debug] [2026-02-10T09:19:05.601Z] [runtime-status] [16226] Outgoing network have been stubbed. [{"name":"http","status":"mocked"},{"name":"http","status":"mocked"},{"name":"https","status":"mocked"},{"name":"https","status":"mocked"},{"name":"net","status":"mocked"}] {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [16226] Outgoing network have been stubbed. [{\"name\":\"http\",\"status\":\"mocked\"},{\"name\":\"http\",\"status\":\"mocked\"},{\"name\":\"https\",\"status\":\"mocked\"},{\"name\":\"https\",\"status\":\"mocked\"},{\"name\":\"net\",\"status\":\"mocked\"}]"}}
+[debug] [2026-02-10T09:19:05.601Z] [runtime-status] [16226] Resolved module firebase-functions {"declared":true,"installed":true,"version":"6.6.0","resolution":"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/firebase-functions/lib/v2/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [16226] Resolved module firebase-functions {\"declared\":true,\"installed\":true,\"version\":\"6.6.0\",\"resolution\":\"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/firebase-functions/lib/v2/index.js\"}"}}
+[debug] [2026-02-10T09:19:05.952Z] [runtime-status] [16226] Checked functions.config() {"config":{}} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [16226] Checked functions.config() {\"config\":{}}"}}
+[debug] [2026-02-10T09:19:05.954Z] [runtime-status] [16226] firebase-functions has been stubbed. {"functionsResolution":{"declared":true,"installed":true,"version":"6.6.0","resolution":"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/firebase-functions/lib/v2/index.js"}} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [16226] firebase-functions has been stubbed. {\"functionsResolution\":{\"declared\":true,\"installed\":true,\"version\":\"6.6.0\",\"resolution\":\"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/firebase-functions/lib/v2/index.js\"}}"}}
+[debug] [2026-02-10T09:19:05.955Z] [runtime-status] [16226] Resolved module firebase-functions {"declared":true,"installed":true,"version":"6.6.0","resolution":"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/firebase-functions/lib/v2/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [16226] Resolved module firebase-functions {\"declared\":true,\"installed\":true,\"version\":\"6.6.0\",\"resolution\":\"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/firebase-functions/lib/v2/index.js\"}"}}
+[debug] [2026-02-10T09:19:05.956Z] [runtime-status] [16226] Resolved module firebase-admin {"declared":true,"installed":true,"version":"12.7.0","resolution":"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/firebase-admin/lib/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [16226] Resolved module firebase-admin {\"declared\":true,\"installed\":true,\"version\":\"12.7.0\",\"resolution\":\"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/firebase-admin/lib/index.js\"}"}}
+[debug] [2026-02-10T09:19:05.957Z] [runtime-status] [16226] Resolved module firebase-functions {"declared":true,"installed":true,"version":"6.6.0","resolution":"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/firebase-functions/lib/v2/index.js"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [16226] Resolved module firebase-functions {\"declared\":true,\"installed\":true,\"version\":\"6.6.0\",\"resolution\":\"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/firebase-functions/lib/v2/index.js\"}"}}
+[debug] [2026-02-10T09:19:05.957Z] [runtime-status] [16226] firebase-admin has been stubbed. {"adminResolution":{"declared":true,"installed":true,"version":"12.7.0","resolution":"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/firebase-admin/lib/index.js"}} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [16226] firebase-admin has been stubbed. {\"adminResolution\":{\"declared\":true,\"installed\":true,\"version\":\"12.7.0\",\"resolution\":\"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions/node_modules/firebase-admin/lib/index.js\"}}"}}
+[debug] [2026-02-10T09:19:06.105Z] [runtime-status] [16226] Functions runtime initialized. {"cwd":"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions","node_version":"22.11.0"} {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [16226] Functions runtime initialized. {\"cwd\":\"/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/functions\",\"node_version\":\"22.11.0\"}"}}
+[debug] [2026-02-10T09:19:06.105Z] [runtime-status] [16226] Listening to port: /var/folders/ym/pj5ffdrs3lv5cw4w_xwzy8kc0000gn/T/fire_emu_f304f848532fc4fe.sock {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[runtime-status] [16226] Listening to port: /var/folders/ym/pj5ffdrs3lv5cw4w_xwzy8kc0000gn/T/fire_emu_f304f848532fc4fe.sock"}}
+[debug] [2026-02-10T09:19:06.163Z] [worker-us-central1-api-df4f2705-b51a-47e3-9d97-34fc49dbfe4a]: IDLE {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[worker-us-central1-api-df4f2705-b51a-47e3-9d97-34fc49dbfe4a]: IDLE"}}
+[debug] [2026-02-10T09:19:06.169Z] [worker-pool] submitRequest(triggerId=us-central1-api) {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] submitRequest(triggerId=us-central1-api)"}}
+[info] i  functions: Beginning execution of "us-central1-api" {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Beginning execution of \"us-central1-api\""}}
+[debug] [2026-02-10T09:19:06.175Z] [worker-us-central1-api-df4f2705-b51a-47e3-9d97-34fc49dbfe4a]: BUSY {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[worker-us-central1-api-df4f2705-b51a-47e3-9d97-34fc49dbfe4a]: BUSY"}}
+[info] >  {"timestamp":"2026-02-10T09:19:06.178Z","level":"INFO","event":"http.request.start","request_id":"2e423d9a-4276-400f-a19d-6411fc1553f0","method":"GET","path":"/health","query":{},"body":{"keys":[]}} {"user":{"timestamp":"2026-02-10T09:19:06.178Z","level":"INFO","event":"http.request.start","request_id":"2e423d9a-4276-400f-a19d-6411fc1553f0","method":"GET","path":"/health","query":{},"body":{"keys":[]}},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":">  {\"timestamp\":\"2026-02-10T09:19:06.178Z\",\"level\":\"INFO\",\"event\":\"http.request.start\",\"request_id\":\"2e423d9a-4276-400f-a19d-6411fc1553f0\",\"method\":\"GET\",\"path\":\"/health\",\"query\":{},\"body\":{\"keys\":[]}}"}}
+[info] >  {"timestamp":"2026-02-10T09:19:06.181Z","level":"INFO","event":"http.request.finish","request_id":"2e423d9a-4276-400f-a19d-6411fc1553f0","method":"GET","path":"/health","status":200,"duration_ms":3} {"user":{"timestamp":"2026-02-10T09:19:06.181Z","level":"INFO","event":"http.request.finish","request_id":"2e423d9a-4276-400f-a19d-6411fc1553f0","method":"GET","path":"/health","status":200,"duration_ms":3},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":">  {\"timestamp\":\"2026-02-10T09:19:06.181Z\",\"level\":\"INFO\",\"event\":\"http.request.finish\",\"request_id\":\"2e423d9a-4276-400f-a19d-6411fc1553f0\",\"method\":\"GET\",\"path\":\"/health\",\"status\":200,\"duration_ms\":3}"}}
+[debug] [2026-02-10T09:19:06.186Z] Finishing up request with event=pause {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Finishing up request with event=pause"}}
+[info] i  functions: Finished "us-central1-api" in 11.405167ms {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Finished \"us-central1-api\" in 11.405167ms"}}
+[debug] [2026-02-10T09:19:06.186Z] [worker-us-central1-api-df4f2705-b51a-47e3-9d97-34fc49dbfe4a]: IDLE {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[worker-us-central1-api-df4f2705-b51a-47e3-9d97-34fc49dbfe4a]: IDLE"}}
+[debug] [2026-02-10T09:19:06.186Z] Finishing up request with event=finish {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Finishing up request with event=finish"}}
+[debug] [2026-02-10T09:19:06.187Z] Finishing up request with event=close {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Finishing up request with event=close"}}
+[debug] [2026-02-10T09:19:06.187Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:19:06.218Z] [work-queue] {"queuedWork":["/ai-post-dev/us-central1/api/v1/posts/generate-2026-02-10T09:19:06.218Z"],"queueLength":1,"runningWork":[],"workRunningCount":0}
+[debug] [2026-02-10T09:19:06.219Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":["/ai-post-dev/us-central1/api/v1/posts/generate-2026-02-10T09:19:06.218Z"],"workRunningCount":1}
+[debug] [2026-02-10T09:19:06.219Z] Accepted request POST /ai-post-dev/us-central1/api/v1/posts/generate --> us-central1-api
+[debug] [2026-02-10T09:19:06.219Z] [functions] Runtime ready! Sending request! {"metadata":{"emulator":{"name":"functions"},"message":"[functions] Runtime ready! Sending request!"}}
+[debug] [2026-02-10T09:19:06.219Z] [functions] Got req.url=/ai-post-dev/us-central1/api/v1/posts/generate, mapping to path=/v1/posts/generate {"metadata":{"emulator":{"name":"functions"},"message":"[functions] Got req.url=/ai-post-dev/us-central1/api/v1/posts/generate, mapping to path=/v1/posts/generate"}}
+[debug] [2026-02-10T09:19:06.219Z] [worker-pool] submitRequest(triggerId=us-central1-api) {"metadata":{"emulator":{"name":"functions"},"message":"[worker-pool] submitRequest(triggerId=us-central1-api)"}}
+[info] i  functions: Beginning execution of "us-central1-api" {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Beginning execution of \"us-central1-api\""}}
+[debug] [2026-02-10T09:19:06.220Z] [worker-us-central1-api-df4f2705-b51a-47e3-9d97-34fc49dbfe4a]: BUSY {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[worker-us-central1-api-df4f2705-b51a-47e3-9d97-34fc49dbfe4a]: BUSY"}}
+[info] >  {"timestamp":"2026-02-10T09:19:06.230Z","level":"INFO","event":"http.request.start","request_id":"7afd1506-7461-4a0f-8e35-0b22debf5082","method":"POST","path":"/v1/posts/generate","query":{},"body":{"user_id":"smoke-monorepo","mode":"BIOGRAPHY","profile":"Bill Gates","length":"short"}} {"user":{"timestamp":"2026-02-10T09:19:06.230Z","level":"INFO","event":"http.request.start","request_id":"7afd1506-7461-4a0f-8e35-0b22debf5082","method":"POST","path":"/v1/posts/generate","query":{},"body":{"user_id":"smoke-monorepo","mode":"BIOGRAPHY","profile":"Bill Gates","length":"short"}},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":">  {\"timestamp\":\"2026-02-10T09:19:06.230Z\",\"level\":\"INFO\",\"event\":\"http.request.start\",\"request_id\":\"7afd1506-7461-4a0f-8e35-0b22debf5082\",\"method\":\"POST\",\"path\":\"/v1/posts/generate\",\"query\":{},\"body\":{\"user_id\":\"smoke-monorepo\",\"mode\":\"BIOGRAPHY\",\"profile\":\"Bill Gates\",\"length\":\"short\"}}"}}
+[info] >  {"timestamp":"2026-02-10T09:19:06.232Z","level":"INFO","event":"post.generate.start","user_id":"smoke-monorepo","mode":"BIOGRAPHY","profile":"Bill Gates","length":"short","stream":false} {"user":{"timestamp":"2026-02-10T09:19:06.232Z","level":"INFO","event":"post.generate.start","user_id":"smoke-monorepo","mode":"BIOGRAPHY","profile":"Bill Gates","length":"short","stream":false},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":">  {\"timestamp\":\"2026-02-10T09:19:06.232Z\",\"level\":\"INFO\",\"event\":\"post.generate.start\",\"user_id\":\"smoke-monorepo\",\"mode\":\"BIOGRAPHY\",\"profile\":\"Bill Gates\",\"length\":\"short\",\"stream\":false}"}}
+[debug] [2026-02-10T09:19:06.712Z] Feb 10, 2026 1:19:06 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+INFO: Detected HTTP/2 connection.
+ {"metadata":{"emulator":{"name":"firestore"},"message":"Feb 10, 2026 1:19:06 PM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead\nINFO: Detected HTTP/2 connection.\n"}}
+[info] >  {"timestamp":"2026-02-10T09:19:08.963Z","level":"INFO","event":"llm.mock.generate","mode":"BIOGRAPHY","profile":"Bill Gates","length":"short","stream":false} {"user":{"timestamp":"2026-02-10T09:19:08.963Z","level":"INFO","event":"llm.mock.generate","mode":"BIOGRAPHY","profile":"Bill Gates","length":"short","stream":false},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":">  {\"timestamp\":\"2026-02-10T09:19:08.963Z\",\"level\":\"INFO\",\"event\":\"llm.mock.generate\",\"mode\":\"BIOGRAPHY\",\"profile\":\"Bill Gates\",\"length\":\"short\",\"stream\":false}"}}
+[info] >  {"timestamp":"2026-02-10T09:19:09.138Z","level":"INFO","event":"post.generate.success","user_id":"smoke-monorepo","post_id":"xTcxhLiGdBc8Zxw5huSx","mode":"BIOGRAPHY","profile":"Bill Gates","length":"short","recent_titles_used":0,"llm_duration_ms":175,"total_duration_ms":2906} {"user":{"timestamp":"2026-02-10T09:19:09.138Z","level":"INFO","event":"post.generate.success","user_id":"smoke-monorepo","post_id":"xTcxhLiGdBc8Zxw5huSx","mode":"BIOGRAPHY","profile":"Bill Gates","length":"short","recent_titles_used":0,"llm_duration_ms":175,"total_duration_ms":2906},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":">  {\"timestamp\":\"2026-02-10T09:19:09.138Z\",\"level\":\"INFO\",\"event\":\"post.generate.success\",\"user_id\":\"smoke-monorepo\",\"post_id\":\"xTcxhLiGdBc8Zxw5huSx\",\"mode\":\"BIOGRAPHY\",\"profile\":\"Bill Gates\",\"length\":\"short\",\"recent_titles_used\":0,\"llm_duration_ms\":175,\"total_duration_ms\":2906}"}}
+[debug] [2026-02-10T09:19:09.147Z] Finishing up request with event=pause {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Finishing up request with event=pause"}}
+[info] i  functions: Finished "us-central1-api" in 2927.555958ms {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Finished \"us-central1-api\" in 2927.555958ms"}}
+[debug] [2026-02-10T09:19:09.147Z] [worker-us-central1-api-df4f2705-b51a-47e3-9d97-34fc49dbfe4a]: IDLE {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[worker-us-central1-api-df4f2705-b51a-47e3-9d97-34fc49dbfe4a]: IDLE"}}
+[debug] [2026-02-10T09:19:09.148Z] Finishing up request with event=finish {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Finishing up request with event=finish"}}
+[debug] [2026-02-10T09:19:09.148Z] Finishing up request with event=close {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"Finishing up request with event=close"}}
+[debug] [2026-02-10T09:19:09.148Z] [work-queue] {"queuedWork":[],"queueLength":0,"runningWork":[],"workRunningCount":0}
+[info] >  {"timestamp":"2026-02-10T09:19:09.139Z","level":"INFO","event":"http.request.finish","request_id":"7afd1506-7461-4a0f-8e35-0b22debf5082","method":"POST","path":"/v1/posts/generate","status":200,"duration_ms":2909} {"user":{"timestamp":"2026-02-10T09:19:09.139Z","level":"INFO","event":"http.request.finish","request_id":"7afd1506-7461-4a0f-8e35-0b22debf5082","method":"POST","path":"/v1/posts/generate","status":200,"duration_ms":2909},"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":">  {\"timestamp\":\"2026-02-10T09:19:09.139Z\",\"level\":\"INFO\",\"event\":\"http.request.finish\",\"request_id\":\"7afd1506-7461-4a0f-8e35-0b22debf5082\",\"method\":\"POST\",\"path\":\"/v1/posts/generate\",\"status\":200,\"duration_ms\":2909}"}}
+[debug] [2026-02-10T09:19:10.073Z] Received signal SIGTERM 1
+[info]  
+[info] i  emulators: Received SIGTERM for the first time. Starting a clean shutdown. 
+[info] i  emulators: Please wait for a clean shutdown or send the SIGTERM signal again to stop right now. 
+[info] i  Automatically exporting data using --export-on-exit "/Users/sirishjoshi/Desktop/AI-Post/orecce/infra/local/.firebase-emulator-data" please wait for the export to finish... 
+[debug] [2026-02-10T09:19:10.079Z] >>> [apiv2][query] GET http://127.0.0.1:4400/ [none]
+[debug] [2026-02-10T09:19:10.086Z] *** shutting down gRPC server since JVM is shutting down
+ {"metadata":{"emulator":{"name":"firestore"},"message":"*** shutting down gRPC server since JVM is shutting down\n"}}
+[debug] [2026-02-10T09:19:10.094Z] <<< [apiv2][status] GET http://127.0.0.1:4400/ 200
+[debug] [2026-02-10T09:19:10.094Z] <<< [apiv2][body] GET http://127.0.0.1:4400/ {"version":"14.0.0","origins":["http://127.0.0.1:4400","http://[::1]:4400"],"host":"127.0.0.1","port":4400}
+[info] i  Found running emulator hub for project ai-post-dev at http://127.0.0.1:4400 
+[info] i  Exporting data to: /Users/sirishjoshi/Desktop/AI-Post/orecce/infra/local/.firebase-emulator-data 
+[debug] [2026-02-10T09:19:10.096Z] >>> [apiv2][query] GET http://127.0.0.1:4400/ [none]
+[debug] [2026-02-10T09:19:10.107Z] <<< [apiv2][status] GET http://127.0.0.1:4400/ 200
+[debug] [2026-02-10T09:19:10.107Z] <<< [apiv2][body] GET http://127.0.0.1:4400/ {"version":"14.0.0","origins":["http://127.0.0.1:4400","http://[::1]:4400"],"host":"127.0.0.1","port":4400}
+[debug] [2026-02-10T09:19:10.107Z] >>> [apiv2][query] POST http://127.0.0.1:4400/_admin/export [none]
+[debug] [2026-02-10T09:19:10.107Z] >>> [apiv2][body] POST http://127.0.0.1:4400/_admin/export {"path":"/Users/sirishjoshi/Desktop/AI-Post/orecce/infra/local/.firebase-emulator-data","initiatedBy":"exit"}
+[debug] [2026-02-10T09:19:10.108Z] *** server shut down
+ {"metadata":{"emulator":{"name":"firestore"},"message":"*** server shut down\n"}}
+[info] i  emulators: Received export request. Exporting data to /Users/sirishjoshi/Desktop/AI-Post/orecce/infra/local/.firebase-emulator-data. 
+[debug] [2026-02-10T09:19:10.156Z] >>> [apiv2][query] POST http://127.0.0.1:8080/emulator/v1/projects/ai-post-dev:export [none]
+[debug] [2026-02-10T09:19:10.157Z] >>> [apiv2][body] POST http://127.0.0.1:8080/emulator/v1/projects/ai-post-dev:export {"database":"projects/ai-post-dev/databases/(default)","export_directory":"firebase-export-1770715150155TuEjDi","export_name":"firestore_export"}
+[debug] [2026-02-10T09:19:10.161Z] *** [apiv2] error from fetch(http://127.0.0.1:8080/emulator/v1/projects/ai-post-dev:export, {"headers":{},"method":"POST","body":"{\"database\":\"projects/ai-post-dev/databases/(default)\",\"export_directory\":\"firebase-export-1770715150155TuEjDi\",\"export_name\":\"firestore_export\"}"}): FetchError: request to http://127.0.0.1:8080/emulator/v1/projects/ai-post-dev:export failed, reason: connect ECONNREFUSED 127.0.0.1:8080
+[warn] ⚠  emulators: Export failed: Failed to make request to http://127.0.0.1:8080/emulator/v1/projects/ai-post-dev:export 
+[debug] [2026-02-10T09:19:10.165Z] <<< [apiv2][status] POST http://127.0.0.1:4400/_admin/export 500
+[debug] [2026-02-10T09:19:10.165Z] <<< [apiv2][body] POST http://127.0.0.1:4400/_admin/export {"message":"Failed to make request to http://127.0.0.1:8080/emulator/v1/projects/ai-post-dev:export"}
+[warn] ⚠  FirebaseError: Export request failed, see emulator logs for more information. 
+[warn] ⚠  Automatic export to "/Users/sirishjoshi/Desktop/AI-Post/orecce/infra/local/.firebase-emulator-data" failed, going to exit now... 
+[info] i  emulators: Shutting down emulators. {"metadata":{"emulator":{"name":"hub"},"message":"Shutting down emulators."}}
+[info] i  ui: Stopping Emulator UI {"metadata":{"emulator":{"name":"ui"},"message":"Stopping Emulator UI"}}
+[info] i  functions: Stopping Functions Emulator {"metadata":{"emulator":{"name":"functions"},"message":"Stopping Functions Emulator"}}
+[info] i  firestore: Stopping Firestore Emulator {"metadata":{"emulator":{"name":"firestore"},"message":"Stopping Firestore Emulator"}}
+[debug] [2026-02-10T09:19:10.191Z] [worker-us-central1-api-df4f2705-b51a-47e3-9d97-34fc49dbfe4a]: exited {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[worker-us-central1-api-df4f2705-b51a-47e3-9d97-34fc49dbfe4a]: exited"}}
+[debug] [2026-02-10T09:19:10.191Z] [worker-us-central1-api-df4f2705-b51a-47e3-9d97-34fc49dbfe4a]: FINISHED {"metadata":{"emulator":{"name":"functions"},"function":{"name":"us-central1-api"},"extension":{},"message":"[worker-us-central1-api-df4f2705-b51a-47e3-9d97-34fc49dbfe4a]: FINISHED"}}
+[warn] ⚠  firestore: Fatal error occurred: 
+   Firestore Emulator has exited with code: 143, 
+   stopping all running emulators {"metadata":{"emulator":{"name":"firestore"},"message":"Fatal error occurred: \n   Firestore Emulator has exited with code: 143, \n   stopping all running emulators"}}
+[info] i  firestore: Stopping Firestore Emulator {"metadata":{"emulator":{"name":"firestore"},"message":"Stopping Firestore Emulator"}}
+[info] i  eventarc: Stopping Eventarc Emulator {"metadata":{"emulator":{"name":"eventarc"},"message":"Stopping Eventarc Emulator"}}
+[info] i  eventarc: Stopping Eventarc Emulator {"metadata":{"emulator":{"name":"eventarc"},"message":"Stopping Eventarc Emulator"}}
+[info] i  tasks: Stopping Cloud Tasks Emulator {"metadata":{"emulator":{"name":"tasks"},"message":"Stopping Cloud Tasks Emulator"}}
+[info] i  tasks: Stopping Cloud Tasks Emulator {"metadata":{"emulator":{"name":"tasks"},"message":"Stopping Cloud Tasks Emulator"}}
+[info] i  hub: Stopping emulator hub {"metadata":{"emulator":{"name":"hub"},"message":"Stopping emulator hub"}}
+[info] i  hub: Stopping emulator hub {"metadata":{"emulator":{"name":"hub"},"message":"Stopping emulator hub"}}
+[info] i  logging: Stopping Logging Emulator {"metadata":{"emulator":{"name":"logging"},"message":"Stopping Logging Emulator"}}

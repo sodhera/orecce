@@ -1,15 +1,16 @@
 # Orecce Monorepo Agent Notes
 
 ## Repository layout
-- `mobile/` contains the app code.
-- `web/` contains the local web app for manual testing.
-- `backend/ai-post/` contains the Firebase backend.
+- `apps/mobile/` contains the Expo React Native app.
+- `apps/web/` contains the local web app for manual testing.
+- `services/api/` contains the Firebase backend API.
+- `infra/local/` contains local-only emulator scripts, state, and logs.
 
 ## Separation rule
-- Do not mix changes between `mobile/`, `web/`, and `backend/ai-post/` unless explicitly requested.
+- Do not mix changes between `apps/mobile/`, `apps/web/`, and `services/api/` unless explicitly requested.
 - Keep commits and PRs scoped to one area when possible.
 
 ## Validation by area
-- Mobile checks: `npm --prefix mobile run typecheck`
-- Web checks: `npm --prefix web run build`
-- Backend checks: `./backend/ai-post/scripts/prepush-check.sh`
+- Mobile checks: `npm --prefix apps/mobile run typecheck`
+- Web checks: `npm --prefix apps/web run build`
+- API checks: `./services/api/scripts/prepush-check.sh`

@@ -2,10 +2,12 @@
   "name": "orecce-monorepo",
   "private": true,
   "scripts": {
-    "start:all": "./scripts/start-all-local.sh",
-    "start:all:mock": "MOCK_LLM=true ./scripts/start-all-local.sh",
-    "stop:all": "./scripts/stop-all-local.sh",
-    "web:dev": "npm --prefix web run dev",
-    "backend:emulators": "cd backend/ai-post && ./scripts/start-emulators-local.sh"
+    "start:all": "./infra/local/scripts/start-all-local.sh",
+    "start:all:mock": "MOCK_LLM=true ./infra/local/scripts/start-all-local.sh",
+    "stop:all": "./infra/local/scripts/stop-all-local.sh",
+    "web:dev": "npm --prefix apps/web run dev",
+    "mobile:start": "npm --prefix apps/mobile run start",
+    "backend:emulators": "npm run api:emulators",
+    "api:emulators": "cd services/api && ./scripts/start-emulators-local.sh"
   }
 }

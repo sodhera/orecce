@@ -4,9 +4,10 @@ This guide is for collaborators who just pulled the repo and need everything run
 
 ## 1) What is in this repo
 
-- `mobile/` -> Expo React Native app
-- `web/` -> Web app for local feed testing (consumer-style flow)
-- `backend/ai-post/` -> Firebase Functions + Firestore backend
+- `apps/mobile/` -> Expo React Native app
+- `apps/web/` -> Web app for local feed testing (consumer-style flow)
+- `services/api/` -> Firebase Functions + Firestore backend API
+- `infra/local/` -> local-only emulator scripts/state/logs
 
 ## 2) Prerequisites
 
@@ -41,15 +42,15 @@ git clone https://github.com/sodhera/orecce.git
 cd orecce
 ```
 
-## 4) Backend env setup
+## 4) API env setup
 
-Create backend env file:
+Create API env file:
 
 ```bash
-cp backend/ai-post/functions/.env.example backend/ai-post/functions/.env
+cp services/api/functions/.env.example services/api/functions/.env
 ```
 
-Edit `backend/ai-post/functions/.env`:
+Edit `services/api/functions/.env`:
 
 - Set `OPENAI_API_KEY` if you want real model generation
 - Keep `OPENAI_MODEL=gpt-5-mini` (or your chosen model)
@@ -71,6 +72,14 @@ This starts:
 - Firestore emulator: `http://127.0.0.1:8080`
 - Emulator UI: `http://127.0.0.1:4000`
 
+Local logs are written to:
+
+- `infra/local/.logs/firebase-emulators.log`
+- `infra/local/.logs/start-all.log`
+- `infra/local/.logs/web-dev.log`
+- `infra/local/firebase-debug.log`
+- `infra/local/firestore-debug.log`
+
 Stop all local stack processes:
 
 ```bash
@@ -88,17 +97,31 @@ npm run stop:all && npm run start:all
 Emulator data is stored on disk at:
 
 ```text
-.firebase-emulator-data/
+infra/local/.firebase-emulator-data/
 ```
 
 So local Firestore state survives restarts.
+
+## 6.1) Local log persistence
+
+Backend/web/emulator logs are persisted locally at:
+
+```text
+infra/local/.logs/
+```
+
+Tail logs live:
+
+```bash
+tail -f infra/local/.logs/firebase-emulators.log
+```
 
 ## 7) Manual run options (optional)
 
 Run backend emulators only:
 
 ```bash
-npm run backend:emulators
+npm run api:emulators
 ```
 
 Run web only:
@@ -110,8 +133,8 @@ npm run web:dev
 Run mobile app:
 
 ```bash
-npm --prefix mobile install
-npm --prefix mobile run start
+npm --prefix apps/mobile install
+npm --prefix apps/mobile run start
 ```
 
 ## 8) Validation commands
@@ -119,14 +142,14 @@ npm --prefix mobile run start
 Backend checks:
 
 ```bash
-cd backend/ai-post
+cd services/api
 ./scripts/prepush-check.sh
 ```
 
 Web build check:
 
 ```bash
-npm --prefix web run build
+npm --prefix apps/web run build
 ```
 
 ## 9) Troubleshooting
@@ -154,7 +177,10 @@ npm run start:all
 
 ### C) Model/API issues
 
-- Confirm `OPENAI_API_KEY` in `backend/ai-post/functions/.env`
+- Confirm `OPENAI_API_KEY` in `services/api/functions/.env`
+- Remove accidental quotes around key values (for example, use `OPENAI_API_KEY=sk-...`, not wrapped values)
+- Restart stack after env changes: `npm run stop:all && npm run start:all`
+- If you get `llm_auth_error` (OpenAI 401/403), the key is invalid/expired/wrong project
 - If you want local-only testing without API calls, unset key and use mock mode via:
 
 ```bash

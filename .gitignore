@@ -3,34 +3,39 @@
 .vscode/
 
 # Mobile
-mobile/node_modules/
-mobile/.expo/
-mobile/.turbo/
-mobile/firebase-debug*.log
+apps/mobile/node_modules/
+apps/mobile/.expo/
+apps/mobile/.turbo/
+apps/mobile/firebase-debug*.log
 
 # Web
-web/node_modules/
-web/dist/
-web/.vite/
-web/.env
-web/.env.*
+apps/web/node_modules/
+apps/web/dist/
+apps/web/.vite/
+apps/web/.env
+apps/web/.env.*
 
-# Backend
-backend/ai-post/node_modules/
-backend/ai-post/functions/node_modules/
-backend/ai-post/functions/lib/
-backend/ai-post/.firebase/
-backend/ai-post/firebase-debug*.log
-backend/ai-post/firestore-debug.log
+# API backend
+services/api/node_modules/
+services/api/functions/node_modules/
+services/api/functions/lib/
+services/api/.firebase/
+services/api/firebase-debug*.log
+services/api/firestore-debug.log
+services/api/firebase-export-*
 
 # Env files
 .env
 .env.*
-backend/ai-post/functions/.env
-backend/ai-post/functions/.env.*
+services/api/functions/.env
+services/api/functions/.env.*
 
 # Local test UI for backend
-backend/ai-post/local-dev-ui/
+services/api/local-dev-ui/
 
-# Local emulator persistence
-.firebase-emulator-data/
+# Local emulator artifacts (non-production)
+infra/local/.firebase-emulator-data/
+infra/local/.logs/
+infra/local/firebase-debug*.log
+infra/local/firestore-debug.log
+infra/local/firebase-export-*

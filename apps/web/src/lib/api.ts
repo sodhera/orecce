@@ -1,3 +1,5 @@
+import { auth } from "./firebaseConfig";
+
 const API_BASE = "/api/v1";
 
 // ── Types ───────────────────────────────────────────────────────
@@ -32,10 +34,28 @@ type ApiResult<T> = ApiOk<T> | ApiErr;
 
 // ── Helpers ─────────────────────────────────────────────────────
 
-async function post<T>(path: string, body: Record<string, unknown>): Promise<T> {
+async function getAuthHeaders(): Promise<Record<string, string>> {
+    const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+    };
+
+    const user = auth.currentUser;
+    if (user) {
+        const token = await user.getIdToken();
+        headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    return headers;
+}
+
+async function post<T>(
+    path: string,
+    body: Record<string, unknown>,
+): Promise<T> {
+    const headers = await getAuthHeaders();
     const res = await fetch(`${API_BASE}${path}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify(body),
     });
     const json = (await res.json()) as ApiResult<T>;
@@ -48,13 +68,11 @@ async function post<T>(path: string, body: Record<string, unknown>): Promise<T> 
 // ── Public API ──────────────────────────────────────────────────
 
 export async function generatePost(
-    userId: string,
     mode: string,
     profile: string,
     length: string = "short",
 ): Promise<ApiPost> {
     return post<ApiPost>("/posts/generate", {
-        user_id: userId,
         mode,
         profile,
         length,
@@ -67,14 +85,12 @@ export interface ListPostsResult {
 }
 
 export async function listPosts(
-    userId: string,
     mode: string,
     profile: string,
     pageSize: number = 20,
     cursor?: string,
 ): Promise<ListPostsResult> {
     return post<ListPostsResult>("/posts/list", {
-        user_id: userId,
         mode,
         profile,
         page_size: pageSize,

@@ -1,5 +1,7 @@
 "use client";
 
+import { useAuth } from "@/context/AuthContext";
+
 const navItems = [
     {
         label: "Home",
@@ -77,10 +79,20 @@ const navItems = [
 ];
 
 export default function Sidebar() {
+    const { isAuthenticated, user, setShowAuthModal, logout } = useAuth();
+
     return (
         <aside className="sidebar">
             <div className="sidebar-logo">
-                <span style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.5px' }}>Orecce</span>
+                <span
+                    style={{
+                        fontSize: 22,
+                        fontWeight: 800,
+                        letterSpacing: "-0.5px",
+                    }}
+                >
+                    Orecce
+                </span>
             </div>
 
             <nav className="sidebar-nav">
@@ -96,15 +108,30 @@ export default function Sidebar() {
                 ))}
             </nav>
 
-
-            <div className="sidebar-profile">
-                <div className="profile-avatar">O</div>
-                <div className="profile-info">
-                    <div className="profile-name">Orecce</div>
-                    <div className="profile-handle">@orecce</div>
+            {/* Bottom section: auth-dependent */}
+            {isAuthenticated ? (
+                <div className="sidebar-profile" onClick={logout}>
+                    <div className="profile-avatar">
+                        {user?.name?.charAt(0).toUpperCase() || "O"}
+                    </div>
+                    <div className="profile-info">
+                        <div className="profile-name">
+                            {user?.name || "Orecce"}
+                        </div>
+                        <div className="profile-handle">
+                            @{user?.name?.toLowerCase().replace(/\s+/g, "") || "orecce"}
+                        </div>
+                    </div>
+                    <span className="profile-more">···</span>
                 </div>
-                <span className="profile-more">···</span>
-            </div>
+            ) : (
+                <button
+                    className="sidebar-auth-btn"
+                    onClick={() => setShowAuthModal(true)}
+                >
+                    Log in / Sign up
+                </button>
+            )}
         </aside>
     );
 }

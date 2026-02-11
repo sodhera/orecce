@@ -1,11 +1,15 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useState, useRef, useEffect } from "react";
+import type { ReactNode } from "react";
 import { useAuth } from "@/context/AuthContext";
 
-const navItems = [
+const navItems: Array<{ label: string; icon: ReactNode; href?: string }> = [
     {
         label: "Home",
-        active: true,
+        href: "/",
         icon: (
             <svg viewBox="0 0 24 24">
                 <path d="M21.591 7.146L12.52 1.157c-.316-.21-.724-.21-1.04 0l-9.071 5.99c-.26.173-.409.456-.409.757v13.183c0 .502.418.913.929.913h5.8a.93.93 0 00.929-.913v-7.075h3.68v7.075c0 .502.418.913.929.913h5.8a.93.93 0 00.929-.913V7.903c0-.3-.149-.584-.409-.757z" />
@@ -29,34 +33,11 @@ const navItems = [
         ),
     },
     {
-        label: "Messages",
-        icon: (
-            <svg viewBox="0 0 24 24">
-                <path d="M1.998 5.5c0-1.381 1.119-2.5 2.5-2.5h15c1.381 0 2.5 1.119 2.5 2.5v13c0 1.381-1.119 2.5-2.5 2.5h-15c-1.381 0-2.5-1.119-2.5-2.5v-13zm2.5-.5c-.276 0-.5.224-.5.5v2.764l8 3.638 8-3.636V5.5c0-.276-.224-.5-.5-.5h-15zm15.5 5.463l-8 3.636-8-3.638V18.5c0 .276.224.5.5.5h15c.276 0 .5-.224.5-.5v-8.037z" />
-            </svg>
-        ),
-    },
-    {
-        label: "Bookmarks",
+        label: "Saved",
+        href: "/saved",
         icon: (
             <svg viewBox="0 0 24 24">
                 <path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5zM6.5 4c-.276 0-.5.22-.5.5v14.56l6-4.29 6 4.29V4.5c0-.28-.224-.5-.5-.5h-11z" />
-            </svg>
-        ),
-    },
-    {
-        label: "Communities",
-        icon: (
-            <svg viewBox="0 0 24 24">
-                <path d="M7.501 4.001c-1.38 0-2.5 1.12-2.5 2.5s1.12 2.5 2.5 2.5 2.5-1.12 2.5-2.5-1.12-2.5-2.5-2.5zm0-2c2.49 0 4.5 2.01 4.5 4.5s-2.01 4.5-4.5 4.5-4.5-2.01-4.5-4.5 2.01-4.5 4.5-4.5zm9 2c-1.38 0-2.5 1.12-2.5 2.5s1.12 2.5 2.5 2.5 2.5-1.12 2.5-2.5-1.12-2.5-2.5-2.5zm0-2c2.49 0 4.5 2.01 4.5 4.5s-2.01 4.5-4.5 4.5-4.5-2.01-4.5-4.5 2.01-4.5 4.5-4.5zm-9 12c-2.34 0-7 1.17-7 3.5v2.5h14v-2.5c0-2.33-4.66-3.5-7-3.5zm9 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45v2.5h6v-2.5c0-2.33-4.66-3.5-7-3.5z" />
-            </svg>
-        ),
-    },
-    {
-        label: "Premium",
-        icon: (
-            <svg viewBox="0 0 24 24">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
             </svg>
         ),
     },
@@ -68,18 +49,25 @@ const navItems = [
             </svg>
         ),
     },
-    {
-        label: "More",
-        icon: (
-            <svg viewBox="0 0 24 24">
-                <path d="M3.75 12c0-4.56 3.69-8.25 8.25-8.25s8.25 3.69 8.25 8.25-3.69 8.25-8.25 8.25S3.75 16.56 3.75 12zM12 1.75C6.34 1.75 1.75 6.34 1.75 12S6.34 22.25 12 22.25 22.25 17.66 22.25 12 17.66 1.75 12 1.75zM8.25 12c0 .69-.56 1.25-1.25 1.25S5.75 12.69 5.75 12s.56-1.25 1.25-1.25 1.25.56 1.25 1.25zm5 0c0 .69-.56 1.25-1.25 1.25s-1.25-.56-1.25-1.25.56-1.25 1.25-1.25 1.25.56 1.25 1.25zm3.75 1.25c.69 0 1.25-.56 1.25-1.25s-.56-1.25-1.25-1.25-1.25.56-1.25 1.25.56 1.25 1.25 1.25z" />
-            </svg>
-        ),
-    },
 ];
 
 export default function Sidebar() {
     const { isAuthenticated, user, setShowAuthModal, logout } = useAuth();
+    const pathname = usePathname();
+    const [showProfileModal, setShowProfileModal] = useState(false);
+    const profileRef = useRef<HTMLDivElement>(null);
+
+    // Close modal when clicking outside
+    useEffect(() => {
+        if (!showProfileModal) return;
+        function handleClickOutside(e: MouseEvent) {
+            if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
+                setShowProfileModal(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [showProfileModal]);
 
     return (
         <aside className="sidebar">
@@ -96,33 +84,93 @@ export default function Sidebar() {
             </div>
 
             <nav className="sidebar-nav">
-                {navItems.map((item) => (
-                    <a
-                        key={item.label}
-                        href="#"
-                        className={`nav-item ${item.active ? "active" : ""}`}
-                    >
-                        {item.icon}
-                        <span>{item.label}</span>
-                    </a>
-                ))}
+                {navItems.map((item) => {
+                    const isActive = item.href
+                        ? item.href === "/"
+                            ? pathname === "/"
+                            : pathname.startsWith(item.href)
+                        : false;
+                    const className = `nav-item ${isActive ? "active" : ""}`;
+
+                    return item.href ? (
+                        <Link key={item.label} href={item.href} className={className}>
+                            {item.icon}
+                            <span>{item.label}</span>
+                        </Link>
+                    ) : (
+                        <a key={item.label} href="#" className={className}>
+                            {item.icon}
+                            <span>{item.label}</span>
+                        </a>
+                    );
+                })}
             </nav>
 
             {/* Bottom section: auth-dependent */}
             {isAuthenticated ? (
-                <div className="sidebar-profile" onClick={logout}>
-                    <div className="profile-avatar">
-                        {user?.name?.charAt(0).toUpperCase() || "O"}
-                    </div>
-                    <div className="profile-info">
-                        <div className="profile-name">
-                            {user?.name || "Orecce"}
+                <div className="sidebar-profile-wrapper" ref={profileRef}>
+                    {showProfileModal && (
+                        <div className="profile-modal">
+                            <div className="profile-modal-header">
+                                <div className="profile-modal-avatar">
+                                    {user?.name?.charAt(0).toUpperCase() || "O"}
+                                </div>
+                                <div className="profile-modal-user">
+                                    <div className="profile-modal-name">
+                                        {user?.name || "Orecce"}
+                                    </div>
+                                    <div className="profile-modal-handle">
+                                        @{user?.name?.toLowerCase().replace(/\s+/g, "") || "orecce"}
+                                    </div>
+                                </div>
+                                <svg className="profile-modal-check" viewBox="0 0 24 24">
+                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                                </svg>
+                            </div>
+
+                            <div className="profile-modal-divider" />
+
+                            <div className="profile-modal-email">
+                                <svg viewBox="0 0 24 24" className="profile-modal-email-icon">
+                                    <path d="M1.998 5.5c0-1.381 1.119-2.5 2.5-2.5h15c1.381 0 2.5 1.119 2.5 2.5v13c0 1.381-1.119 2.5-2.5 2.5h-15c-1.381 0-2.5-1.119-2.5-2.5v-13zm2.5-.5c-.276 0-.5.224-.5.5v2.764l8 3.638 8-3.636V5.5c0-.276-.224-.5-.5-.5h-15zm15.5 5.463l-8 3.636-8-3.638V18.5c0 .276.224.5.5.5h15c.276 0 .5-.224.5-.5v-8.037z" />
+                                </svg>
+                                <span>{user?.email || ""}</span>
+                            </div>
+
+                            <div className="profile-modal-divider" />
+
+                            <button
+                                className="profile-modal-item"
+                                onClick={() => {
+                                    setShowProfileModal(false);
+                                    logout();
+                                }}
+                            >
+                                <svg viewBox="0 0 24 24" className="profile-modal-item-icon">
+                                    <path d="M16 13v-2H7V8l-5 4 5 4v-3z" />
+                                    <path d="M20 3h-9c-1.103 0-2 .897-2 2v4h2V5h9v14h-9v-4H9v4c0 1.103.897 2 2 2h9c1.103 0 2-.897 2-2V5c0-1.103-.897-2-2-2z" />
+                                </svg>
+                                Log out @{user?.name?.toLowerCase().replace(/\s+/g, "") || "orecce"}
+                            </button>
                         </div>
-                        <div className="profile-handle">
-                            @{user?.name?.toLowerCase().replace(/\s+/g, "") || "orecce"}
+                    )}
+                    <div
+                        className="sidebar-profile"
+                        onClick={() => setShowProfileModal((v) => !v)}
+                    >
+                        <div className="profile-avatar">
+                            {user?.name?.charAt(0).toUpperCase() || "O"}
                         </div>
+                        <div className="profile-info">
+                            <div className="profile-name">
+                                {user?.name || "Orecce"}
+                            </div>
+                            <div className="profile-handle">
+                                @{user?.name?.toLowerCase().replace(/\s+/g, "") || "orecce"}
+                            </div>
+                        </div>
+                        <span className="profile-more">···</span>
                     </div>
-                    <span className="profile-more">···</span>
                 </div>
             ) : (
                 <button

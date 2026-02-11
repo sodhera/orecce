@@ -12,6 +12,8 @@ import {
     onAuthStateChanged,
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
+    signInWithPopup,
+    GoogleAuthProvider,
     signOut,
     updateProfile,
     User as FirebaseUser,
@@ -34,6 +36,7 @@ interface AuthContextValue {
     setShowAuthModal: (v: boolean) => void;
     login: (email: string, password: string) => Promise<void>;
     signup: (name: string, email: string, password: string) => Promise<void>;
+    loginWithGoogle: () => Promise<void>;
     logout: () => Promise<void>;
     getIdToken: () => Promise<string | null>;
 }
@@ -108,6 +111,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         [],
     );
 
+    const loginWithGoogle = useCallback(async () => {
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(auth, provider);
+        setShowAuthModal(false);
+    }, []);
+
     const logout = useCallback(async () => {
         await signOut(auth);
     }, []);
@@ -127,6 +136,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setShowAuthModal,
                 login,
                 signup,
+                loginWithGoogle,
                 logout,
                 getIdToken,
             }}

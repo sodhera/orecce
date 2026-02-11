@@ -1034,3 +1034,4 @@ i  hub: Stopping emulator hub {"metadata":{"emulator":{"name":"hub"},"message":"
 i  hub: Stopping emulator hub {"metadata":{"emulator":{"name":"hub"},"message":"Stopping emulator hub"}}
 i  logging: Stopping Logging Emulator {"metadata":{"emulator":{"name":"logging"},"message":"Stopping Logging Emulator"}}
 i  logging: Stopping Logging Emulator {"metadata":{"emulator":{"name":"logging"},"message":"Stopping Logging Emulator"}}
+[2026-02-11T10:33:47Z] start-all invoked

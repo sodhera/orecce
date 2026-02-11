@@ -9,6 +9,13 @@ import { MOCK_POSTS } from "@/lib/mockPosts";
 // ── Config ──────────────────────────────────────────────────────
 const VISIBLE_GUEST_POSTS = 3; // posts shown before the gate
 
+const CATEGORIES = [
+    { value: "ALL", label: "All" },
+    { value: "BIOGRAPHY", label: "Biographies" },
+    { value: "TRIVIA", label: "Trivia" },
+    { value: "NICHE", label: "Niche" },
+];
+
 // ── Helpers ─────────────────────────────────────────────────────
 
 function apiPostToPost(p: ApiPost): Post {
@@ -30,9 +37,10 @@ function apiPostToPost(p: ApiPost): Post {
 interface FeedProps {
     mode: string;
     profile: string;
+    onModeChange?: (mode: string) => void;
 }
 
-export default function Feed({ mode, profile }: FeedProps) {
+export default function Feed({ mode, profile, onModeChange }: FeedProps) {
     const { isAuthenticated, setShowAuthModal } = useAuth();
 
     const [activeTab, setActiveTab] = useState<"for-you" | "following">(
@@ -138,42 +146,18 @@ export default function Feed({ mode, profile }: FeedProps) {
                 </div>
             </div>
 
-            {/* Generate button — authenticated only */}
-            {isAuthenticated && (
-                <div
-                    style={{
-                        padding: "12px 16px",
-                        borderBottom: "1px solid var(--border)",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 12,
-                    }}
-                >
+            {/* Category pills — horizontally scrollable */}
+            <div className="feed-categories">
+                {CATEGORIES.map((cat) => (
                     <button
-                        onClick={handleGenerate}
-                        disabled={generating}
-                        style={{
-                            background: generating ? "#1a5c8a" : "#1d9bf0",
-                            color: "#fff",
-                            border: "none",
-                            borderRadius: 9999,
-                            padding: "8px 20px",
-                            fontWeight: 700,
-                            fontSize: 14,
-                            cursor: generating ? "not-allowed" : "pointer",
-                            opacity: generating ? 0.7 : 1,
-                            transition: "all 0.2s",
-                        }}
+                        key={cat.value}
+                        className={`feed-category-pill ${mode === cat.value || (cat.value === "ALL" && mode === "ALL") ? "active" : ""}`}
+                        onClick={() => onModeChange?.(cat.value)}
                     >
-                        {generating ? "Generating…" : "✨ Generate new post"}
+                        {cat.label}
                     </button>
-                    {error && (
-                        <span style={{ color: "#f4212e", fontSize: 13 }}>
-                            {error}
-                        </span>
-                    )}
-                </div>
-            )}
+                ))}
+            </div>
 
             {/* Posts */}
             <div className="feed-posts-container">
@@ -195,8 +179,7 @@ export default function Feed({ mode, profile }: FeedProps) {
                             color: "var(--text-secondary)",
                         }}
                     >
-                        No posts yet. Click &quot;Generate new post&quot; to
-                        create one!
+                        No posts yet.
                     </div>
                 ) : (
                     visiblePosts.map((post, index) => (
@@ -244,3 +227,4 @@ export default function Feed({ mode, profile }: FeedProps) {
         </main>
     );
 }
+

@@ -39,6 +39,7 @@ describe("integration flow (no network)", () => {
     const listed = await repo.listPosts({
       userId: "user-1",
       mode: "TRIVIA",
+      profileRaw: "physics",
       profileKey: normalizeProfileKey("physics"),
       pageSize: 10
     });

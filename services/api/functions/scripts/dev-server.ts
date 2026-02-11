@@ -1,5 +1,7 @@
+import { getDefaultPrefillPostsPerMode } from "../src/config/runtimeConfig";
 import { createApp } from "../src/http/createApp";
 import { OpenAiGateway } from "../src/llm/openAiGateway";
+import { PrefillService } from "../src/services/prefillService";
 import { PostGenerationService } from "../src/services/postGenerationService";
 import { loadDotEnv } from "./loadDotEnv";
 import { InMemoryRepository } from "./inMemoryRepository";
@@ -14,12 +16,20 @@ if (Number.isNaN(port) || port <= 0) {
 const repository = new InMemoryRepository();
 const gateway = new OpenAiGateway();
 const postGenerationService = new PostGenerationService(repository, gateway);
-const app = createApp({ repository, postGenerationService });
+const prefillService = new PrefillService(repository, gateway);
+const app = createApp({
+  repository,
+  postGenerationService,
+  prefillService,
+  requireAuth: false,
+  defaultPrefillPostsPerMode: getDefaultPrefillPostsPerMode()
+});
 
 app.listen(port, () => {
   // eslint-disable-next-line no-console
   console.log(`Local dev server listening on http://127.0.0.1:${port}`);
   // eslint-disable-next-line no-console
-  console.log("Endpoints: /health, /v1/posts/generate, /v1/posts/list, /v1/posts/feedback, /v1/posts/feedback/list");
+  console.log(
+    "Endpoints: /health, /v1/users/me, /v1/posts/list, /v1/posts/generate, /v1/posts/feedback, /v1/posts/feedback/list"
+  );
 });
-

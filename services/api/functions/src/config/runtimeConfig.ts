@@ -50,7 +50,7 @@ export function getOpenAiModel(): string {
   return (
     process.env.OPENAI_MODEL?.trim() ||
     getNestedConfigString(["openai", "model"]) ||
-    "gpt-5-mini"
+    "gpt-5.2-2025-12-11"
   );
 }
 
@@ -68,4 +68,13 @@ function envFlagTrue(value: string | undefined): boolean {
 
 export function isMockLlmEnabled(): boolean {
   return envFlagTrue(process.env.MOCK_LLM_OVERRIDE) || envFlagTrue(process.env.MOCK_LLM);
+}
+
+export function getDefaultPrefillPostsPerMode(): number {
+  const raw = process.env.PREFILL_POSTS_PER_MODE?.trim();
+  const value = Number(raw ?? "8");
+  if (!Number.isFinite(value) || value <= 0) {
+    return 8;
+  }
+  return Math.max(1, Math.min(60, Math.floor(value)));
 }

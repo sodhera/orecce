@@ -25,6 +25,26 @@ export interface PromptPreferences {
   updatedAtMs?: number;
 }
 
+export interface UserProfile {
+  displayName: string | null;
+  photoURL: string | null;
+}
+
+export type UserPrefillStatus = "empty" | "generating" | "ready" | "error";
+
+export interface AppUser {
+  id: string;
+  email: string | null;
+  profile: UserProfile;
+  createdAtMs: number;
+  updatedAtMs: number;
+  prefillStatus: UserPrefillStatus;
+  prefillPostCount: number;
+  prefillChunkCount: number;
+  prefillBytes: number;
+  prefillUpdatedAtMs?: number;
+}
+
 export interface StoredPost extends GeneratedPost {
   id: string;
   userId: string;
@@ -46,4 +66,11 @@ export interface StoredFeedback {
 export interface ListPostsResult {
   items: StoredPost[];
   nextCursor: string | null;
+}
+
+export interface UserPrefillSummary {
+  postCount: number;
+  chunkCount: number;
+  totalBytes: number;
+  generatedAtMs: number;
 }

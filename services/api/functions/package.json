@@ -10,6 +10,7 @@
     "clean": "rm -rf lib",
     "dev:generate": "tsx scripts/dev-generate.ts",
     "dev:server": "tsx scripts/dev-server.ts",
+    "seed:emulator": "tsx scripts/seed-emulator.ts",
     "lint:types": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest"

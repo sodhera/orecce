@@ -1,212 +1,134 @@
-# API Contract (v0)
+# API Contract (Firebase Auth + Prefilled Posts)
 
 Base path: `/v1`
 
-Modes:
-- `BIOGRAPHY`
-- `TRIVIA`
-- `NICHE`
+All `/v1/*` and `/users/*` endpoints require:
+- `Authorization: Bearer <firebase-id-token>`
 
-Lengths:
-- `short` (target 50-110 words)
-- `medium` (target 120-220 words)
-
-Feedback types:
-- `upvote`
-- `downvote`
-- `skip`
+`/health` is public.
 
 ## Health
 `GET /health`
 
 Response:
 ```json
+{ "ok": true }
+```
+
+## User profile
+`GET /v1/users/me`
+- Creates user doc lazily if missing.
+- Ensures shared common prefilled dataset is copied once for this user.
+- Auth-trigger (`onAuthUserCreate`) also attempts this copy at signup time.
+
+`PATCH /v1/users/me`
+```json
 {
-  "ok": true
+  "profile": {
+    "displayName": "Sirish",
+    "photoURL": "https://example.com/me.jpg"
+  }
 }
 ```
 
-## Generate post (non-stream)
-`POST /posts/generate`
-
-Body:
+`POST /v1/users/me/prefills/regenerate`
 ```json
 {
-  "user_id": "u1",
+  "posts_per_mode": 8
+}
+```
+
+Compatibility routes for current mobile client:
+- `GET /users/:userId`
+- `PATCH /users/:userId`
+
+These require `:userId === auth.uid`.
+
+## Prompt preferences
+`POST /v1/prompt-preferences/set`
+```json
+{
+  "biography_instructions": "Focus on public events.",
+  "niche_instructions": "Concise, internet-native style."
+}
+```
+
+`GET /v1/prompt-preferences`
+
+## Posts (prefilled, not generated live)
+Modes:
+- `BIOGRAPHY`
+- `TRIVIA`
+- `NICHE`
+
+Lengths:
+- `short`
+- `medium`
+
+`POST /v1/posts/list`
+```json
+{
+  "mode": "BIOGRAPHY",
+  "profile": "Steve Jobs",
+  "page_size": 10,
+  "cursor": "10"
+}
+```
+
+- Returns pre-generated posts from Firestore user prefill documents.
+- Those user documents are cloned from a shared common dataset once per user.
+- If exact `profile` is missing, backend falls back to mode default generic profile.
+
+`POST /v1/posts/generate`
+```json
+{
   "mode": "BIOGRAPHY",
   "profile": "Steve Jobs",
   "length": "short"
 }
 ```
 
-Success response:
+- Returns next prefilled post (pointer-based), no live LLM call.
+
+`POST /v1/posts/generate/stream`
+- Same request body as above.
+- Emits SSE events:
+  - `start`
+  - `chunk` (chunked stored post text)
+  - `post`
+  - `done`
+  - `error`
+
+## Feedback
+`POST /v1/posts/feedback`
 ```json
 {
-  "ok": true,
-  "data": {
-    "id": "post_123",
-    "userId": "u1",
-    "mode": "BIOGRAPHY",
-    "profile": "Steve Jobs",
-    "profileKey": "steve jobs",
-    "length": "short",
-    "title": "He Bet the Company on One Launch",
-    "body": "....",
-    "post_type": "biography",
-    "tags": ["Steve Jobs", "Apple", "turning point"],
-    "confidence": "medium",
-    "uncertainty_note": null,
-    "createdAtMs": 1739220000000
-  }
-}
-```
-
-## Generate post (streaming SSE)
-`POST /posts/generate/stream`
-
-Headers:
-- `Content-Type: application/json`
-- `Accept: text/event-stream`
-
-Request body is the same as `/posts/generate`.
-
-SSE events:
-- `start` -> request echo (`user_id`, `mode`, `profile`, `length`)
-- `chunk` -> incremental text (`{ "delta": "..." }`)
-- `post` -> final saved post payload (`{ "ok": true, "data": { ... } }`)
-- `done` -> completion marker (`{ "ok": true }`)
-- `error` -> structured error payload (`{ "ok": false, "error": { ... } }`)
-
-## List posts (paginated)
-`POST /posts/list`
-
-Body:
-```json
-{
-  "user_id": "u1",
-  "mode": "BIOGRAPHY",
-  "profile": "Steve Jobs",
-  "page_size": 10,
-  "cursor": "1739220000000"
-}
-```
-
-Success response:
-```json
-{
-  "ok": true,
-  "data": {
-    "items": [],
-    "nextCursor": "1739219900000"
-  }
-}
-```
-
-`nextCursor` is `null` when there are no more pages.
-
-## Save feedback
-`POST /posts/feedback`
-
-Body:
-```json
-{
-  "user_id": "u1",
-  "post_id": "post_123",
+  "post_id": "prefill-biography-1",
   "feedback_type": "upvote"
 }
 ```
 
-Success response:
+`POST /v1/posts/feedback/list`
 ```json
 {
-  "ok": true,
-  "data": {
-    "id": "fb_123",
-    "userId": "u1",
-    "postId": "post_123",
-    "type": "upvote",
-    "createdAtMs": 1739220000000
-  }
-}
-```
-
-## List feedback (paginated)
-`POST /posts/feedback/list`
-
-Body:
-```json
-{
-  "user_id": "u1",
-  "post_id": "optional-post-id",
   "page_size": 20,
   "cursor": "1739220000000"
 }
 ```
 
-Success response:
-```json
-{
-  "ok": true,
-  "data": {
-    "items": [],
-    "nextCursor": null
-  }
-}
-```
-
-## Set prompt preferences
-`POST /prompt-preferences/set`
-
-Body:
-```json
-{
-  "user_id": "u1",
-  "biography_instructions": "Focus on founders and documented events.",
-  "niche_instructions": "2000s nostalgia with internet culture references."
-}
-```
-
-Success response:
-```json
-{
-  "ok": true,
-  "data": {
-    "biographyInstructions": "Focus on founders and documented events.",
-    "nicheInstructions": "2000s nostalgia with internet culture references.",
-    "updatedAtMs": 1739220000000
-  }
-}
-```
-
-## Get prompt preferences
-`GET /prompt-preferences?user_id=u1`
-
-Success response:
-```json
-{
-  "ok": true,
-  "data": {
-    "biographyInstructions": "",
-    "nicheInstructions": "",
-    "updatedAtMs": 1739220000000
-  }
-}
-```
+Feedback types:
+- `upvote`
+- `downvote`
+- `skip`
 
 ## Error shape
-All error responses use this envelope:
 ```json
 {
   "ok": false,
   "error": {
     "code": "bad_request",
-    "message": "Invalid generate request.",
+    "message": "Invalid payload.",
     "details": null
   }
 }
 ```
-
-Typical status codes:
-- `400` bad request payload
-- `500` internal server error
-- `502` LLM upstream/payload issues

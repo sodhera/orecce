@@ -15,6 +15,7 @@ const CATEGORIES = [
     { value: "TRIVIA", label: "Trivia" },
     { value: "NICHE", label: "Niche" },
 ];
+const FEED_MODES = ["BIOGRAPHY", "TRIVIA", "NICHE"] as const;
 
 // ── Helpers ─────────────────────────────────────────────────────
 
@@ -43,9 +44,6 @@ interface FeedProps {
 export default function Feed({ mode, profile, onModeChange }: FeedProps) {
     const { isAuthenticated, setShowAuthModal } = useAuth();
 
-    const [activeTab, setActiveTab] = useState<"for-you" | "following">(
-        "for-you",
-    );
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(true);
     const [generating, setGenerating] = useState(false);
@@ -69,9 +67,51 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
                 setLoading(true);
                 setError(null);
                 setPosts([]);
-                const result = await listPosts(mode, profile, 20);
+
+                const items =
+                    mode === "ALL"
+                        ? await (async () => {
+                            const settled = await Promise.allSettled(
+                                FEED_MODES.map((m) => listPosts(m, profile, 20)),
+                            );
+
+                            const successful = settled
+                                .filter(
+                                    (
+                                        result,
+                                    ): result is PromiseFulfilledResult<{
+                                        items: ApiPost[];
+                                        nextCursor: string | null;
+                                    }> => result.status === "fulfilled",
+                                )
+                                .flatMap((result) => result.value.items);
+
+                            if (successful.length === 0) {
+                                const firstError = settled.find(
+                                    (result): result is PromiseRejectedResult =>
+                                        result.status === "rejected",
+                                );
+                                throw (
+                                    firstError?.reason ??
+                                    new Error("Failed to fetch posts.")
+                                );
+                            }
+
+                            const deduped = new Map<string, ApiPost>();
+                            successful
+                                .sort((a, b) => b.createdAtMs - a.createdAtMs)
+                                .forEach((item) => {
+                                    if (!deduped.has(item.id)) {
+                                        deduped.set(item.id, item);
+                                    }
+                                });
+
+                            return Array.from(deduped.values()).slice(0, 20);
+                        })()
+                        : (await listPosts(mode, profile, 20)).items;
+
                 if (!cancelled) {
-                    setPosts(result.items.map(apiPostToPost));
+                    setPosts(items.map(apiPostToPost));
                 }
             } catch (err) {
                 if (!cancelled) setError((err as Error).message);
@@ -129,20 +169,6 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
             <div className="feed-header">
                 <div className="feed-header-top">
                     <h1>Home</h1>
-                </div>
-                <div className="feed-tabs">
-                    <button
-                        className={`feed-tab ${activeTab === "for-you" ? "active" : ""}`}
-                        onClick={() => setActiveTab("for-you")}
-                    >
-                        For you
-                    </button>
-                    <button
-                        className={`feed-tab ${activeTab === "following" ? "active" : ""}`}
-                        onClick={() => setActiveTab("following")}
-                    >
-                        Following
-                    </button>
                 </div>
             </div>
 
@@ -227,4 +253,3 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
         </main>
     );
 }
-

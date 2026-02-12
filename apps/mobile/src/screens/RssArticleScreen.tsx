@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../styles/colors';
 import { ScreenHeader } from '../components';
 import { RootStackParamList } from '../navigation/RootNavigator';
+import { API_ENDPOINTS } from '../config/api';
 
 type RssArticleRouteProp = RouteProp<RootStackParamList, 'RssArticle'>;
 
@@ -30,8 +31,55 @@ export function RssArticleScreen() {
         link,
         date,
         imageUrl,
-        source
+        source,
+        articleId
     } = route.params;
+
+    const [fullText, setFullText] = React.useState<string | null>(null);
+    const [fullTextLoading, setFullTextLoading] = React.useState(false);
+    const [fullTextError, setFullTextError] = React.useState<string | null>(null);
+
+    React.useEffect(() => {
+        const loadFullText = async () => {
+            if (!articleId) {
+                return;
+            }
+
+            try {
+                setFullTextLoading(true);
+                setFullTextError(null);
+
+                const { auth } = require('../config/firebase');
+                if (!auth.currentUser) {
+                    return;
+                }
+                const token = await auth.currentUser.getIdToken();
+
+                const response = await fetch(API_ENDPOINTS.NEWS_ARTICLE_DETAIL(articleId), {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch article text: ${response.status}`);
+                }
+
+                const payload = await response.json();
+                const article = payload?.data?.article;
+                const fetchedText = typeof article?.fullText === 'string' ? article.fullText.trim() : '';
+                if (fetchedText) {
+                    setFullText(fetchedText);
+                }
+            } catch (error) {
+                setFullTextError(error instanceof Error ? error.message : 'Failed to load full text');
+            } finally {
+                setFullTextLoading(false);
+            }
+        };
+
+        loadFullText();
+    }, [articleId]);
 
     const handleReadFullArticle = async () => {
         try {
@@ -63,6 +111,7 @@ export function RssArticleScreen() {
 
     // Strip HTML tags from summary if present
     const cleanSummary = summary ? summary.replace(/<[^>]*>/g, '').trim() : '';
+    const displayText = fullText && fullText.trim() ? fullText : cleanSummary;
 
     return (
         <View style={styles.container}>
@@ -90,8 +139,12 @@ export function RssArticleScreen() {
 
                     <View style={styles.divider} />
 
-                    {cleanSummary ? (
-                        <Text style={styles.summary}>{cleanSummary}</Text>
+                    {fullTextLoading ? (
+                        <Text style={styles.emptySummary}>Loading full text...</Text>
+                    ) : displayText ? (
+                        <Text style={styles.summary}>{displayText}</Text>
+                    ) : fullTextError ? (
+                        <Text style={styles.emptySummary}>{fullTextError}</Text>
                     ) : (
                         <Text style={styles.emptySummary}>
                             No preview available. Tap below to read the full article.

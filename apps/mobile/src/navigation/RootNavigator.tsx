@@ -20,7 +20,7 @@ export type RootStackParamList = {
     CreateCollection: undefined;
     CollectionDetail: { collectionId: string; collectionName: string };
     RssFeedDetail: { feedId: string; feedName: string };
-    RssArticle: { title: string; summary?: string; link: string; date?: string; imageUrl?: string; source: string };
+    RssArticle: { title: string; summary?: string; link: string; date?: string; imageUrl?: string; source: string; articleId?: string };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();

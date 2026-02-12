@@ -7,15 +7,23 @@ function modeInstructions(mode: LlmGenerationInput["mode"]): string {
         "BIOGRAPHY rules:",
         "- Keep it factual and public-facing.",
         "- No invented dialogue or private thoughts.",
-        "- Pick one documented turning point with real stakes.",
-        "- Use only broadly documented facts; if unsure, stay generic and lower confidence.",
-        "- Make the insight feel earned from the event, not stated as a label."
+        "- Each sentence must add new value.",
+        "- Include a date or number when possible.",
+        "- Prefer short declarative sentences over ornate style.",
+        "- Sentence 2-3 should introduce tension or obstacle.",
+        "- Use only broadly documented facts; if unsure, reduce confidence tone instead of inventing details.",
+        "- Avoid broad praise language.",
+        "- End with concrete consequence, not a moral label."
       ].join("\n");
     case "TRIVIA":
       return [
         "TRIVIA rules:",
-        "- Generate one interesting educational fact.",
-        "- Make it immediately surprising and clear."
+        "- Generate one educational fact.",
+        "- Body must be exactly 1 or 2 sentences (about 18-42 words total).",
+        "- Sentence 1 should be surprising; sentence 2 should explain why it happens.",
+        "- Include at least one concrete number or named detail.",
+        "- Avoid hype words and hedging.",
+        "- Keep wording compact; no long setup."
       ].join("\n");
     case "NICHE":
       return [
@@ -27,6 +35,13 @@ function modeInstructions(mode: LlmGenerationInput["mode"]): string {
 }
 
 export function buildSystemPrompt(input: LlmGenerationInput): string {
+  const bodyLengthTarget =
+    input.mode === "TRIVIA"
+      ? "1-2 sentences, about 18-42 words total."
+      : input.length === "short"
+        ? "50-110 words."
+        : "120-220 words.";
+
   const preferenceBlock =
     input.mode === "BIOGRAPHY" && input.preferences.biographyInstructions
       ? `User biography preference:\n${input.preferences.biographyInstructions.trim()}`
@@ -49,8 +64,10 @@ export function buildSystemPrompt(input: LlmGenerationInput): string {
     "Write for a general audience with short, clear sentences.",
     "Story flow: hook -> tension -> turn -> payoff.",
     "Open with surprise, keep suspense, end with an earned insight (unlabeled).",
+    "Each new post must use a new angle, new event, or new lesson from the same profile.",
+    "If a draft overlaps recent posts, rewrite it with a different core event.",
     "Cut filler. Each sentence must add new value.",
-    `Length target for body: ${input.length === "short" ? "50-110" : "120-220"} words.`,
+    `Length target for body: ${bodyLengthTarget}`,
     modeInstructions(input.mode),
     doNotRepeatBlock,
     preferenceBlock,

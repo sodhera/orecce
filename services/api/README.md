@@ -8,6 +8,7 @@ Minimal Firebase backend for an AI-generated social feed (BIOGRAPHY / TRIVIA / N
   - generated posts
   - feedback (upvote/downvote/skip)
   - user prompt preferences for biography + niche modes
+- Scheduled RSS ingestion for source-attributed external news
 - LLM gateway module (single location for model calls)
 - Tests with mocked LLM (no external API calls)
 - Local throwaway frontend for manual testing (git-ignored)
@@ -26,6 +27,14 @@ Endpoints:
 - `GET /v1/prompt-preferences?user_id=<id>`
 - `GET /health`
 
+Background jobs:
+- `syncNewsEvery3Hours` (Cloud Scheduler: every 3 hours, 60s timeout)
+  - Ingests latest stories from configured RSS sources
+  - Stores normalized records in `newsArticles`
+  - Stores full article text in `newsArticleTextChunks` (chunked, verbatim extraction from source pages)
+  - Stores per-source sync health in `newsSourceState`
+  - Stores run-level audit summaries in `newsSyncRuns`
+
 Detailed API contracts: `docs/API.md`
 Machine-readable OpenAPI spec: `docs/openapi.yaml`
 
@@ -43,6 +52,17 @@ OPENAI_API_KEY=your_key_here
 OPENAI_MODEL=gpt-5-mini
 # optional for local testing without external API calls
 MOCK_LLM=true
+
+# optional news sync tuning
+NEWS_SYNC_ENABLED=true
+NEWS_MAX_SOURCES_PER_RUN=12
+NEWS_MAX_ARTICLES_PER_SOURCE=25
+NEWS_SOURCE_CONCURRENCY=4
+NEWS_FEED_TIMEOUT_MS=8000
+NEWS_FETCH_FULL_TEXT=true
+NEWS_ARTICLE_TIMEOUT_MS=12000
+NEWS_ARTICLE_CONCURRENCY=2
+NEWS_CRAWLER_USER_AGENT="OrecceNewsBot/1.0 (+https://orecce.local/news-ingest)"
 ```
 
 3. (Optional deploy config) Set Firebase runtime config:

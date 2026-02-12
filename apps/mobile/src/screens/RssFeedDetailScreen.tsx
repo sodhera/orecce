@@ -16,12 +16,13 @@ import { API_ENDPOINTS } from '../config/api';
 import { RootStackParamList } from '../navigation/RootNavigator';
 
 interface RssItem {
-    id?: string;
+    id: string;
     title: string;
     link: string;
     date?: string;
     summary?: string;
     imageUrl?: string;
+    fullTextStatus?: string;
 }
 
 interface RssFeedData {
@@ -52,11 +53,11 @@ export function RssFeedDetailScreen() {
             // Get Firebase auth token
             const { auth } = require('../config/firebase');
             if (!auth.currentUser) {
-                throw new Error('You must be signed in to view RSS feeds');
+                throw new Error('You must be signed in to view news');
             }
             const token = await auth.currentUser.getIdToken();
 
-            const url = `${API_ENDPOINTS.RSS_FEED}?id=${encodeURIComponent(feedId)}`;
+            const url = `${API_ENDPOINTS.NEWS_ARTICLES}?source_id=${encodeURIComponent(feedId)}&limit=50`;
 
             const response = await fetch(url, {
                 headers: {
@@ -68,12 +69,20 @@ export function RssFeedDetailScreen() {
                 throw new Error(`Failed to fetch feed: ${response.status}`);
             }
 
-            const data = await response.json();
-            console.log('DEBUG First Item:', data.items?.[0]); // Check if imageUrl exists
-            setItems(data.items || []);
+            const payload = await response.json();
+            const apiItems = payload?.data?.items || [];
+            const mapped: RssItem[] = apiItems.map((item: any) => ({
+                id: String(item.id),
+                title: String(item.title || ''),
+                link: String(item.canonicalUrl || ''),
+                date: typeof item.publishedAtMs === 'number' ? new Date(item.publishedAtMs).toISOString() : undefined,
+                summary: typeof item.summary === 'string' ? item.summary : '',
+                fullTextStatus: item.fullTextStatus ? String(item.fullTextStatus) : undefined
+            }));
+            setItems(mapped);
         } catch (err) {
-            console.error('Error fetching RSS feed items:', err);
-            setError(err instanceof Error ? err.message : 'Failed to load feed items');
+            console.error('Error fetching source articles:', err);
+            setError(err instanceof Error ? err.message : 'Failed to load source articles');
         } finally {
             setLoading(false);
         }
@@ -87,7 +96,8 @@ export function RssFeedDetailScreen() {
             link: item.link,
             date: item.date,
             imageUrl: item.imageUrl,
-            source: feedName
+            source: feedName,
+            articleId: item.id
         });
     };
 
@@ -156,6 +166,9 @@ export function RssFeedDetailScreen() {
                             <Text style={styles.itemTitle}>{item.title}</Text>
                             <View style={styles.metaContainer}>
                                 <Text style={styles.itemDate}>{formatDate(item.date)}</Text>
+                                {item.fullTextStatus === 'ready' ? (
+                                    <Text style={styles.fullTextReady}>Full text</Text>
+                                ) : null}
                             </View>
                             {item.summary ? (
                                 <Text style={styles.itemSummary} numberOfLines={3}>
@@ -252,6 +265,11 @@ const styles = StyleSheet.create({
     itemDate: {
         fontSize: 12,
         color: colors.textSecondary,
+    },
+    fullTextReady: {
+        fontSize: 11,
+        color: colors.primary,
+        fontWeight: '600',
     },
     itemSummary: {
         fontSize: 13,

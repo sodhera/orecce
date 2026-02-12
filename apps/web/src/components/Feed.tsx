@@ -1,8 +1,17 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import PostCard, { type Post } from "./PostCard";
-import { generatePost, listPosts, type ApiPost } from "@/lib/api";
+import {
+    getNewsArticle,
+    listNewsArticles,
+    listNewsSources,
+    listPosts,
+    type ApiPost,
+    type NewsArticleDetail,
+    type NewsArticleListItem,
+    type NewsSource,
+} from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { MOCK_POSTS } from "@/lib/mockPosts";
 
@@ -14,6 +23,7 @@ const CATEGORIES = [
     { value: "BIOGRAPHY", label: "Biographies" },
     { value: "TRIVIA", label: "Trivia" },
     { value: "NICHE", label: "Niche" },
+    { value: "NEWS", label: "News" },
 ];
 const FEED_MODES = ["BIOGRAPHY", "TRIVIA", "NICHE"] as const;
 
@@ -33,6 +43,33 @@ function apiPostToPost(p: ApiPost): Post {
     };
 }
 
+function formatDateFromMs(value?: number): string {
+    if (!value) {
+        return "Unknown date";
+    }
+    return new Date(value).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+    });
+}
+
+type NewsArticleWithText = NewsArticleListItem & { fullText?: string };
+
+function newsArticleToPost(article: NewsArticleWithText): Post {
+    return {
+        id: article.id,
+        topic: article.sourceName || "NEWS",
+        title: article.title,
+        text_content:
+            article.fullText?.trim() ||
+            article.summary ||
+            "No article text available.",
+        date: formatDateFromMs(article.publishedAtMs),
+        sourceUrl: article.canonicalUrl || undefined,
+    };
+}
+
 // ── Component ───────────────────────────────────────────────────
 
 interface FeedProps {
@@ -45,16 +82,52 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
     const { isAuthenticated, setShowAuthModal } = useAuth();
 
     const [posts, setPosts] = useState<Post[]>([]);
+    const [newsSources, setNewsSources] = useState<NewsSource[]>([]);
+    const [newsSourceId, setNewsSourceId] = useState("");
     const [loading, setLoading] = useState(true);
-    const [generating, setGenerating] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showGate, setShowGate] = useState(false);
 
     const gateRef = useRef<HTMLDivElement | null>(null);
 
+    useEffect(() => {
+        if (mode !== "NEWS") {
+            return;
+        }
+
+        let cancelled = false;
+        (async () => {
+            try {
+                const result = await listNewsSources();
+                if (cancelled) {
+                    return;
+                }
+                setNewsSources(result.sources);
+                setNewsSourceId((currentSourceId) => {
+                    if (
+                        currentSourceId &&
+                        result.sources.some(
+                            (source) => source.id === currentSourceId,
+                        )
+                    ) {
+                        return currentSourceId;
+                    }
+                    return result.sources[0]?.id ?? "";
+                });
+            } catch (err) {
+                if (!cancelled) {
+                    setError((err as Error).message);
+                }
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [mode]);
+
     // ── Fetch posts (authenticated) or use mock posts ───────────
     useEffect(() => {
-        if (!isAuthenticated) {
+        if (!isAuthenticated && mode !== "NEWS") {
             setPosts(MOCK_POSTS);
             setLoading(false);
             setShowGate(false);
@@ -67,6 +140,7 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
                 setLoading(true);
                 setError(null);
                 setPosts([]);
+<<<<<<< HEAD
 
                 const items =
                     mode === "ALL"
@@ -110,6 +184,44 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
                         })()
                         : (await listPosts(mode, profile, 20)).items;
 
+=======
+                if (mode === "NEWS") {
+                    if (!newsSourceId) {
+                        setPosts([]);
+                        return;
+                    }
+                    const result = await listNewsArticles(newsSourceId, 20);
+                    if (cancelled) {
+                        return;
+                    }
+
+                    const articlesWithText: NewsArticleWithText[] =
+                        await Promise.all(
+                            result.items.map(
+                                async (item): Promise<NewsArticleWithText> => {
+                                    if (item.fullTextStatus !== "ready") {
+                                        return item;
+                                    }
+                                    try {
+                                        const detail = await getNewsArticle(
+                                            item.id,
+                                        );
+                                        return detail.article as NewsArticleDetail;
+                                    } catch {
+                                        return item;
+                                    }
+                                },
+                            ),
+                        );
+
+                    if (!cancelled) {
+                        setPosts(articlesWithText.map(newsArticleToPost));
+                    }
+                    return;
+                }
+
+                const result = await listPosts(mode, profile, 20);
+>>>>>>> cc691e347f8757d292badc0220d99f14e89bab5d
                 if (!cancelled) {
                     setPosts(items.map(apiPostToPost));
                 }
@@ -122,7 +234,7 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
         return () => {
             cancelled = true;
         };
-    }, [mode, profile, isAuthenticated]);
+    }, [mode, profile, isAuthenticated, newsSourceId]);
 
     // ── Scroll gate observer (guest only) ───────────────────────
     useEffect(() => {
@@ -144,20 +256,6 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
             if (el) observer.unobserve(el);
         };
     }, [isAuthenticated, posts]);
-
-    // ── Generate a new post (authenticated only) ────────────────
-    const handleGenerate = useCallback(async () => {
-        try {
-            setGenerating(true);
-            setError(null);
-            const newPost = await generatePost(mode, profile, "short");
-            setPosts((prev) => [apiPostToPost(newPost), ...prev]);
-        } catch (err) {
-            setError((err as Error).message);
-        } finally {
-            setGenerating(false);
-        }
-    }, [mode, profile]);
 
     // ── Determine which posts to render ─────────────────────────
     const visiblePosts = isAuthenticated
@@ -184,6 +282,29 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
                     </button>
                 ))}
             </div>
+            {mode === "NEWS" && (
+                <div className="feed-news-toolbar">
+                    <label htmlFor="news-source-select">Source</label>
+                    <select
+                        id="news-source-select"
+                        className="feed-news-select"
+                        value={newsSourceId}
+                        onChange={(e) => setNewsSourceId(e.target.value)}
+                    >
+                        {newsSources.map((source) => (
+                            <option key={source.id} value={source.id}>
+                                {source.name} ({source.articleCount})
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            )}
+            {mode === "NEWS" && !loading && newsSources.length === 0 && (
+                    <div className="feed-news-empty">
+                        No ingested news sources found in the emulator database
+                        yet.
+                    </div>
+                )}
 
             {/* Posts */}
             <div className="feed-posts-container">
@@ -205,7 +326,7 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
                             color: "var(--text-secondary)",
                         }}
                     >
-                        No posts yet.
+                        {error ? `Error: ${error}` : "No posts yet."}
                     </div>
                 ) : (
                     visiblePosts.map((post, index) => (

@@ -1,7 +1,7 @@
 import { LlmGateway, Repository } from "../types/contracts";
-import { FeedMode, PostLength, StoredPost } from "../types/domain";
+import { FeedMode, GeneratedPost, PostLength, StoredPost } from "../types/domain";
 import { logError, logInfo } from "../utils/logging";
-import { normalizeProfileKey } from "../utils/text";
+import { countWords, normalizeProfileKey } from "../utils/text";
 
 interface GenerateNextPostInput {
   userId: string;
@@ -43,7 +43,7 @@ export class PostGenerationService {
         userId: input.userId,
         mode: input.mode,
         profileKey,
-        limit: 3
+        limit: 5
       }),
       this.repository.getPromptPreferences(input.userId)
     ]);
@@ -58,9 +58,10 @@ export class PostGenerationService {
 
     const llmStartedAtMs = Date.now();
     try {
-      const generated = onChunk
+      const generatedRaw = onChunk
         ? await this.llmGateway.generatePostStream(generationInput, onChunk)
         : await this.llmGateway.generatePost(generationInput);
+      const generated = this.sanitizeGeneratedPost(generatedRaw, input.mode);
 
       const stored = await this.repository.savePost({
         userId: input.userId,
@@ -96,5 +97,47 @@ export class PostGenerationService {
       });
       throw error;
     }
+  }
+
+  private sanitizeGeneratedPost(post: GeneratedPost, mode: FeedMode): GeneratedPost {
+    if (mode !== "TRIVIA") {
+      return post;
+    }
+
+    return {
+      ...post,
+      body: this.compactTriviaBody(post.body)
+    };
+  }
+
+  private compactTriviaBody(rawBody: string): string {
+    const sentences = this.splitSentences(rawBody);
+    const selectedSentences = sentences.slice(0, 2);
+    let compact = selectedSentences.join(" ").replace(/\s+/g, " ").trim();
+
+    if (!compact) {
+      compact = String(rawBody ?? "").replace(/\s+/g, " ").trim();
+    }
+
+    const maxWords = 42;
+    if (countWords(compact) > maxWords) {
+      compact = compact.split(/\s+/).slice(0, maxWords).join(" ").trim();
+    }
+
+    if (compact && !/[.!?]$/.test(compact)) {
+      compact = `${compact}.`;
+    }
+
+    return compact;
+  }
+
+  private splitSentences(rawText: string): string[] {
+    const normalized = String(rawText ?? "").replace(/\s+/g, " ").trim();
+    if (!normalized) {
+      return [];
+    }
+
+    const matches = normalized.match(/[^.!?]+[.!?]+|[^.!?]+$/g);
+    return (matches ?? []).map((sentence) => sentence.trim()).filter(Boolean);
   }
 }

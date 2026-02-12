@@ -16,8 +16,7 @@ import {
 } from "react-icons/io5";
 import { MdExplore, MdOutlineExplore } from "react-icons/md";
 import { useAuth } from "@/context/AuthContext";
-
-type ThemeMode = "dark" | "light";
+import { useTheme } from "@/context/ThemeContext";
 
 const navItems: Array<{
     label: string;
@@ -53,25 +52,14 @@ const navItems: Array<{
 
 export default function Sidebar() {
     const { isAuthenticated, user, setShowAuthModal, logout } = useAuth();
+    const { themeMode, toggleTheme } = useTheme();
     const pathname = usePathname();
     const [showProfileModal, setShowProfileModal] = useState(false);
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     const [showSecurityTip, setShowSecurityTip] = useState(true);
-    const [themeMode, setThemeMode] = useState<ThemeMode>("dark");
     const userMenuRef = useRef<HTMLDivElement | null>(null);
-
-    useEffect(() => {
-        const saved = localStorage.getItem("orecce-theme");
-        const initialTheme: ThemeMode = saved === "light" ? "light" : "dark";
-        setThemeMode(initialTheme);
-    }, []);
-
-    useEffect(() => {
-        document.body.dataset.theme = themeMode;
-        localStorage.setItem("orecce-theme", themeMode);
-    }, [themeMode]);
 
     useEffect(() => {
         if (!showUserMenu) return;
@@ -85,6 +73,13 @@ export default function Sidebar() {
         };
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [showUserMenu]);
+
+    useEffect(() => {
+        document.body.classList.toggle("sidebar-user-menu-open", showUserMenu);
+        return () => {
+            document.body.classList.remove("sidebar-user-menu-open");
+        };
     }, [showUserMenu]);
 
     const openProfileScreen = () => {
@@ -181,11 +176,7 @@ export default function Sidebar() {
                             <button
                                 type="button"
                                 className="profile-modal-item"
-                                onClick={() =>
-                                    setThemeMode((prev) =>
-                                        prev === "dark" ? "light" : "dark",
-                                    )
-                                }
+                                onClick={toggleTheme}
                             >
                                 {themeMode === "dark" ? (
                                     <IoSunnyOutline
@@ -216,8 +207,14 @@ export default function Sidebar() {
                     )}
                     <button
                         type="button"
-                        className="sidebar-profile"
-                        onClick={() => setShowUserMenu((prev) => !prev)}
+                        className={`sidebar-profile ${showUserMenu ? "menu-open" : ""}`}
+                        onClick={(event) => {
+                            const nextOpen = !showUserMenu;
+                            setShowUserMenu(nextOpen);
+                            if (nextOpen) {
+                                event.currentTarget.blur();
+                            }
+                        }}
                     >
                         <div className="profile-avatar">
                             {user?.name?.charAt(0).toUpperCase() || "O"}

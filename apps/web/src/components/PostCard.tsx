@@ -23,28 +23,16 @@ export default function PostCard({ post }: { post: Post }) {
 
     return (
         <article className="post-card">
-            <div className="post-body" style={{ flex: 1 }}>
+            <div className="post-body">
                 <div className="post-header">
-                    <span
-                        className="post-topic-badge"
-                    >
+                    <span className="post-topic-badge">
                         {post.topic}
                     </span>
                     <span className="post-dot">·</span>
                     <span className="post-time">{post.date}</span>
                 </div>
                 {post.title && (
-                    <div
-                        className="post-title"
-                        style={{
-                            fontWeight: 700,
-                            fontSize: 16,
-                            marginTop: 6,
-                            color: "#e7e9ea",
-                        }}
-                    >
-                        {post.title}
-                    </div>
+                    <div className="post-title">{post.title}</div>
                 )}
                 <div className="post-content">{post.text_content}</div>
                 {post.sourceUrl && (

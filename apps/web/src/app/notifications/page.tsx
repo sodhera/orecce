@@ -1,6 +1,12 @@
-import Sidebar from "@/components/Sidebar";
+"use client";
 
-const NOTIFICATIONS = [
+import { useState } from "react";
+import Sidebar from "@/components/Sidebar";
+import NotificationItem, {
+    type NotificationItemData,
+} from "@/components/NotificationItem";
+
+const NOTIFICATIONS: NotificationItemData[] = [
     {
         id: "n-1",
         title: "Your saved collection reached 100 reads",
@@ -32,6 +38,23 @@ const NOTIFICATIONS = [
 ];
 
 export default function NotificationsPage() {
+    const [notifications, setNotifications] =
+        useState<NotificationItemData[]>(NOTIFICATIONS);
+
+    const handleMarkRead = (notificationId: string) => {
+        setNotifications((currentNotifications) =>
+            currentNotifications.map((notification) =>
+                notification.id === notificationId
+                    ? { ...notification, unread: false }
+                    : notification,
+            ),
+        );
+    };
+
+    const handleClearAll = () => {
+        setNotifications([]);
+    };
+
     return (
         <div className="app-layout">
             <Sidebar />
@@ -48,30 +71,31 @@ export default function NotificationsPage() {
 
                 <div className="utility-page-body">
                     <section className="utility-card">
-                        <h2 className="utility-card-title">Recent activity</h2>
+                        <div className="utility-card-header">
+                            <h2 className="utility-card-title">Recent activity</h2>
+                            <button
+                                type="button"
+                                className="utility-card-action"
+                                onClick={handleClearAll}
+                                disabled={notifications.length === 0}
+                            >
+                                Clear all
+                            </button>
+                        </div>
                         <div className="notification-list">
-                            {NOTIFICATIONS.map((notification) => (
-                                <article
-                                    key={notification.id}
-                                    className={`notification-item ${
-                                        notification.unread ? "unread" : ""
-                                    }`}
-                                >
-                                    <span
-                                        className="notification-dot"
-                                        aria-hidden={!notification.unread}
+                            {notifications.length === 0 ? (
+                                <p className="notification-empty">
+                                    No notifications right now.
+                                </p>
+                            ) : (
+                                notifications.map((notification) => (
+                                    <NotificationItem
+                                        key={notification.id}
+                                        notification={notification}
+                                        onMarkRead={handleMarkRead}
                                     />
-                                    <div className="notification-content">
-                                        <p className="notification-item-title">
-                                            {notification.title}
-                                        </p>
-                                        <p className="notification-item-meta">
-                                            {notification.context} •{" "}
-                                            {notification.time}
-                                        </p>
-                                    </div>
-                                </article>
-                            ))}
+                                ))
+                            )}
                         </div>
                     </section>
                 </div>

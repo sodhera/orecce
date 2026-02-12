@@ -1,0 +1,148 @@
+:root {
+  color-scheme: dark;
+  --bg-primary: #000000;
+  --bg-secondary: #16181c;
+  --bg-hover: #1d1f23;
+  --bg-border: #2f3336;
+  --text-primary: #e7e9ea;
+  --text-secondary: #71767b;
+  --text-tertiary: #536471;
+  --accent: #1d9bf0;
+  --accent-hover: #1a8cd8;
+  --accent-darker: #0e6ebd;
+  --danger: #f4212e;
+  --success: #00ba7c;
+  --repost: #00ba7c;
+  --like: #f91880;
+  --text-on-accent: #ffffff;
+  --border: var(--bg-border);
+  --feed-header-bg: rgba(0, 0, 0, 0.65);
+  --profile-modal-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.12),
+    0 8px 22px rgba(255, 255, 255, 0.1),
+    0 18px 46px rgba(0, 0, 0, 0.78);
+  --danger-soft-bg: rgba(244, 33, 46, 0.12);
+  --accent-soft-bg: rgba(29, 155, 240, 0.1);
+  --accent-soft-bg-strong: rgba(29, 155, 240, 0.08);
+  --auth-overlay-bg: rgba(91, 112, 131, 0.4);
+  --auth-modal-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
+  --logout-overlay-bg: rgba(33, 46, 59, 0.72);
+  --logout-modal-bg: #000000;
+  --logout-modal-border: #23262d;
+  --logout-modal-shadow: 0 30px 80px rgba(0, 0, 0, 0.75);
+  --logout-brand-border: #2f3336;
+  --logout-title: #f7f9f9;
+  --logout-body: #71767b;
+  --logout-primary-bg: #eff3f4;
+  --logout-primary-fg: #0f1419;
+  --logout-primary-hover: #d9ddde;
+  --logout-secondary-border: #2f3336;
+  --logout-secondary-fg: #eff3f4;
+  --logout-secondary-hover: #0d0f12;
+  --profile-overlay-bg: rgba(0, 0, 0, 0.58);
+  --settings-modal-bg: linear-gradient(180deg, #1f2024 0%, #1a1b1e 100%);
+  --settings-modal-border: #34353a;
+  --settings-modal-shadow: 0 28px 90px rgba(0, 0, 0, 0.68);
+  --settings-nav-bg: linear-gradient(180deg, #202125 0%, #1a1b1f 100%);
+  --settings-nav-border: #32343a;
+  --settings-close-bg: #4d4f53;
+  --settings-close-hover: #5a5d62;
+  --settings-close-fg: #e7e9ea;
+  --settings-nav-item-fg: #f2f3f4;
+  --settings-nav-item-active-bg: #3a3c41;
+  --settings-nav-item-hover-bg: #2d2f34;
+  --settings-title-fg: #f3f5f7;
+  --settings-title-border: #353740;
+  --settings-card-bg: #15171a;
+  --settings-card-border: #2a2c33;
+  --settings-icon-border: #3f424a;
+  --settings-icon-fg: #f3f5f7;
+  --settings-muted-fg: #bcc0c5;
+  --settings-ghost-border: #3a3d45;
+  --settings-ghost-hover-bg: #23262d;
+  --settings-ghost-hover-border: #4a4d56;
+  --settings-row-border: #30333a;
+  --settings-row-fg: #f2f3f4;
+  --settings-row-secondary-fg: #d5d8dd;
+  --settings-row-subtext: #a7abb2;
+  --settings-signout-hover-bg: #262932;
+  --google-btn-hover-bg: rgba(255, 255, 255, 0.05);
+  --google-btn-hover-border: rgba(255, 255, 255, 0.3);
+  --scroll-gate-bg: linear-gradient(to bottom,
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0.7) 30%,
+      rgba(0, 0, 0, 0.95) 100%);
+  --post-avatar-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+:root[data-theme="light"],
+body[data-theme="light"] {
+  color-scheme: light;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f7f9f9;
+  --bg-hover: #eff3f4;
+  --bg-border: #cfd9de;
+  --text-primary: #0f1419;
+  --text-secondary: #536471;
+  --text-tertiary: #667784;
+  --accent: #1d9bf0;
+  --accent-hover: #1a8cd8;
+  --accent-darker: #0e6ebd;
+  --danger: #cf222e;
+  --success: #137333;
+  --repost: #137333;
+  --like: #c41d7f;
+  --feed-header-bg: rgba(255, 255, 255, 0.82);
+  --profile-modal-shadow: 0 8px 22px rgba(15, 20, 25, 0.16);
+  --danger-soft-bg: rgba(207, 34, 46, 0.12);
+  --accent-soft-bg: rgba(29, 155, 240, 0.14);
+  --accent-soft-bg-strong: rgba(29, 155, 240, 0.1);
+  --auth-overlay-bg: rgba(15, 20, 25, 0.3);
+  --auth-modal-shadow: 0 24px 64px rgba(15, 20, 25, 0.18);
+  --logout-overlay-bg: rgba(15, 20, 25, 0.4);
+  --logout-modal-bg: #ffffff;
+  --logout-modal-border: #d3dce1;
+  --logout-modal-shadow: 0 26px 70px rgba(15, 20, 25, 0.22);
+  --logout-brand-border: #cfd9de;
+  --logout-title: #0f1419;
+  --logout-body: #536471;
+  --logout-primary-bg: #0f1419;
+  --logout-primary-fg: #ffffff;
+  --logout-primary-hover: #1f252b;
+  --logout-secondary-border: #cfd9de;
+  --logout-secondary-fg: #0f1419;
+  --logout-secondary-hover: #eff3f4;
+  --profile-overlay-bg: rgba(15, 20, 25, 0.34);
+  --settings-modal-bg: linear-gradient(180deg, #ffffff 0%, #f6f8fa 100%);
+  --settings-modal-border: #d6dee3;
+  --settings-modal-shadow: 0 24px 72px rgba(15, 20, 25, 0.18);
+  --settings-nav-bg: linear-gradient(180deg, #ffffff 0%, #f4f7f9 100%);
+  --settings-nav-border: #d6dee3;
+  --settings-close-bg: #e2e8ec;
+  --settings-close-hover: #d6dde2;
+  --settings-close-fg: #0f1419;
+  --settings-nav-item-fg: #0f1419;
+  --settings-nav-item-active-bg: #e2e8ec;
+  --settings-nav-item-hover-bg: #edf2f5;
+  --settings-title-fg: #0f1419;
+  --settings-title-border: #d6dee3;
+  --settings-card-bg: #ffffff;
+  --settings-card-border: #d6dee3;
+  --settings-icon-border: #cdd6dc;
+  --settings-icon-fg: #0f1419;
+  --settings-muted-fg: #536471;
+  --settings-ghost-border: #c5d0d7;
+  --settings-ghost-hover-bg: #eef3f6;
+  --settings-ghost-hover-border: #b8c4cc;
+  --settings-row-border: #d8e0e5;
+  --settings-row-fg: #0f1419;
+  --settings-row-secondary-fg: #405566;
+  --settings-row-subtext: #667784;
+  --settings-signout-hover-bg: #eef2f5;
+  --google-btn-hover-bg: rgba(15, 20, 25, 0.06);
+  --google-btn-hover-border: rgba(15, 20, 25, 0.18);
+  --scroll-gate-bg: linear-gradient(to bottom,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.74) 30%,
+      rgba(255, 255, 255, 0.96) 100%);
+}

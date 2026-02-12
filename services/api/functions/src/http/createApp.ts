@@ -189,8 +189,12 @@ function inferLocalUserId(req: Request): string {
   return "local-user";
 }
 
-async function ensureUserHasPrefills(deps: CreateAppDeps, userId: string): Promise<void> {
-  const user = await deps.repository.getOrCreateUser({ userId });
+async function ensureUserHasPrefills(
+  deps: CreateAppDeps,
+  userId: string,
+  email?: string | null
+): Promise<void> {
+  const user = await deps.repository.getOrCreateUser({ userId, email: email ?? null });
   if (user.prefillPostCount > 0 && user.prefillStatus === "ready") {
     return;
   }
@@ -287,7 +291,7 @@ export function createApp(deps: CreateAppDeps): express.Express {
 
   const handleGetUser = withAsync(async (_req, res) => {
     const identity = getAuthIdentity(res);
-    await ensureUserHasPrefills(deps, identity.uid);
+    await ensureUserHasPrefills(deps, identity.uid, identity.email);
     const user = await deps.repository.getOrCreateUser({
       userId: identity.uid,
       email: identity.email,
@@ -305,7 +309,7 @@ export function createApp(deps: CreateAppDeps): express.Express {
       if (req.params.userId !== identity.uid) {
         throw new ApiError(403, "forbidden", "Cannot access another user's profile.");
       }
-      await ensureUserHasPrefills(deps, identity.uid);
+      await ensureUserHasPrefills(deps, identity.uid, identity.email);
       const user = await deps.repository.getOrCreateUser({
         userId: identity.uid,
         email: identity.email,
@@ -431,7 +435,7 @@ export function createApp(deps: CreateAppDeps): express.Express {
       const body = parsed.data;
       assertUserIdCompatible(body.user_id, identity.uid);
 
-      await ensureUserHasPrefills(deps, identity.uid);
+      await ensureUserHasPrefills(deps, identity.uid, identity.email);
       const post = await deps.repository.getNextPrefillPost({
         userId: identity.uid,
         mode: body.mode,
@@ -459,7 +463,7 @@ export function createApp(deps: CreateAppDeps): express.Express {
     const identity = getAuthIdentity(res);
     try {
       assertUserIdCompatible(body.user_id, identity.uid);
-      await ensureUserHasPrefills(deps, identity.uid);
+      await ensureUserHasPrefills(deps, identity.uid, identity.email);
       const post = await deps.repository.getNextPrefillPost({
         userId: identity.uid,
         mode: body.mode,

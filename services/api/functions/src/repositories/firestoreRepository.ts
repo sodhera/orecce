@@ -47,17 +47,31 @@ function parseFeedMode(raw: unknown): FeedMode | null {
   return null;
 }
 
+function normalizeUserEmailDocId(email: string | null | undefined): string | null {
+  const normalized = String(email ?? "").trim().toLowerCase();
+  if (!normalized) {
+    return null;
+  }
+  return normalized.replace(/\//g, "_");
+}
+
+function isSharedDatasetUserId(userId: string): boolean {
+  return userId === "common_prefill_dataset";
+}
+
 export class FirestoreRepository implements Repository {
   private readonly postsCollection = "posts";
   private readonly feedbackCollection = "feedback";
   private readonly preferencesCollection = "promptPreferences";
   private readonly usersCollection = "users";
   private readonly userPrefillChunksCollection = "userPrefillChunks";
+  private readonly userAuthUidField = "authUid";
 
   constructor(private readonly db: Firestore) {}
 
   async getUser(userId: string): Promise<AppUser | null> {
-    const snap = await this.db.collection(this.usersCollection).doc(userId).get();
+    const userDocId = await this.resolveUserDocId(userId);
+    const snap = await this.db.collection(this.usersCollection).doc(userDocId).get();
     if (!snap.exists) {
       return null;
     }
@@ -65,17 +79,79 @@ export class FirestoreRepository implements Repository {
   }
 
   async getOrCreateUser(input: EnsureUserInput): Promise<AppUser> {
-    const ref = this.db.collection(this.usersCollection).doc(input.userId);
-    const existing = await ref.get();
+    const now = Timestamp.now();
+    const emailDocId = normalizeUserEmailDocId(input.email);
+    const resolvedUserDocId = await this.resolveUserDocId(input.userId);
+    const userDocId =
+      !isSharedDatasetUserId(input.userId) && emailDocId
+        ? emailDocId
+        : resolvedUserDocId;
+
+    const userRef = this.db.collection(this.usersCollection).doc(userDocId);
+    const legacyUidRef =
+      input.userId !== userDocId ? this.db.collection(this.usersCollection).doc(input.userId) : null;
+    const [existing, legacyUidSnap] = await Promise.all([
+      userRef.get(),
+      legacyUidRef ? legacyUidRef.get() : Promise.resolve(null)
+    ]);
+
     if (existing.exists) {
-      return this.mapUserDoc(existing.id, existing.data() ?? {});
+      const patch: Record<string, unknown> = {};
+      if (!isSharedDatasetUserId(input.userId)) {
+        patch[this.userAuthUidField] = input.userId;
+      }
+      if (emailDocId) {
+        patch.email = emailDocId;
+      } else if (input.email === null) {
+        patch.email = null;
+      }
+      if (typeof input.displayName === "string") {
+        patch.displayName = input.displayName;
+      }
+      if (typeof input.photoURL === "string") {
+        patch.photoURL = input.photoURL;
+      }
+      if (Object.keys(patch).length > 0) {
+        patch.updatedAt = now;
+        await userRef.set(patch, { merge: true });
+      }
+
+      if (legacyUidSnap?.exists && legacyUidRef) {
+        await this.migrateUserScopedDocuments(input.userId, userDocId, input.userId);
+        await legacyUidRef.delete();
+      }
+      const refreshed = await userRef.get();
+      return this.mapUserDoc(refreshed.id, refreshed.data() ?? {});
     }
 
-    const now = Timestamp.now();
-    await ref.set({
-      email: input.email ?? null,
+    if (legacyUidSnap?.exists && legacyUidRef) {
+      const legacyData = legacyUidSnap.data() ?? {};
+      await userRef.set(
+        {
+          ...legacyData,
+          email: emailDocId ?? (typeof legacyData.email === "string" ? legacyData.email : null),
+          displayName:
+            input.displayName ??
+            (typeof legacyData.displayName === "string" ? legacyData.displayName : null),
+          photoURL:
+            input.photoURL ??
+            (typeof legacyData.photoURL === "string" ? legacyData.photoURL : null),
+          [this.userAuthUidField]: isSharedDatasetUserId(input.userId) ? null : input.userId,
+          updatedAt: now
+        },
+        { merge: true }
+      );
+      await this.migrateUserScopedDocuments(input.userId, userDocId, input.userId);
+      await legacyUidRef.delete();
+      const createdFromLegacy = await userRef.get();
+      return this.mapUserDoc(createdFromLegacy.id, createdFromLegacy.data() ?? {});
+    }
+
+    await userRef.set({
+      email: emailDocId ?? input.email ?? null,
       displayName: input.displayName ?? null,
       photoURL: input.photoURL ?? null,
+      [this.userAuthUidField]: isSharedDatasetUserId(input.userId) ? null : input.userId,
       prefillStatus: "empty",
       prefillPostCount: 0,
       prefillChunkCount: 0,
@@ -88,7 +164,7 @@ export class FirestoreRepository implements Repository {
 
     return {
       id: input.userId,
-      email: input.email ?? null,
+      email: emailDocId ?? input.email ?? null,
       profile: {
         displayName: input.displayName ?? null,
         photoURL: input.photoURL ?? null
@@ -104,8 +180,9 @@ export class FirestoreRepository implements Repository {
   }
 
   async updateUserProfile(userId: string, input: UpdateUserProfileInput): Promise<AppUser> {
-    const ref = this.db.collection(this.usersCollection).doc(userId);
     const user = await this.getOrCreateUser({ userId });
+    const userDocId = await this.resolveUserDocId(userId);
+    const ref = this.db.collection(this.usersCollection).doc(userDocId);
     const now = Timestamp.now();
 
     const displayName = input.displayName === undefined ? user.profile.displayName : input.displayName;
@@ -136,7 +213,8 @@ export class FirestoreRepository implements Repository {
     summary?: Partial<UserPrefillSummary>
   ): Promise<AppUser> {
     const user = await this.getOrCreateUser({ userId });
-    const ref = this.db.collection(this.usersCollection).doc(userId);
+    const userDocId = await this.resolveUserDocId(userId);
+    const ref = this.db.collection(this.usersCollection).doc(userDocId);
     const now = Timestamp.now();
 
     const patch: Record<string, unknown> = {
@@ -169,6 +247,7 @@ export class FirestoreRepository implements Repository {
 
   async replaceUserPrefillPosts(input: ReplaceUserPrefillPostsInput): Promise<UserPrefillSummary> {
     const now = Timestamp.now();
+    const userDocId = await this.resolveUserDocId(input.userId);
     const preparedPosts = input.posts.map((post, index) => ({
       id: String(post.id || `prefill-${index + 1}`),
       userId: input.userId,
@@ -185,10 +264,10 @@ export class FirestoreRepository implements Repository {
       createdAtMs: Number(post.createdAtMs) || Date.now() + index
     }));
 
-    const chunks = this.chunkPostsByDocumentSize(input.userId, preparedPosts);
+    const chunks = this.chunkPostsByDocumentSize(userDocId, preparedPosts);
     const existingChunks = await this.db
       .collection(this.userPrefillChunksCollection)
-      .where("userId", "==", input.userId)
+      .where("userId", "==", userDocId)
       .get();
 
     const batch = this.db.batch();
@@ -197,10 +276,11 @@ export class FirestoreRepository implements Repository {
     }
 
     chunks.forEach((chunk, index) => {
-      const docId = `${input.userId}_${String(index + 1).padStart(4, "0")}`;
+      const docId = `${userDocId}_${String(index + 1).padStart(4, "0")}`;
       const ref = this.db.collection(this.userPrefillChunksCollection).doc(docId);
       batch.set(ref, {
-        userId: input.userId,
+        userId: userDocId,
+        [this.userAuthUidField]: isSharedDatasetUserId(input.userId) ? null : input.userId,
         chunkIndex: index,
         sizeBytes: chunk.sizeBytes,
         posts: chunk.posts,
@@ -221,9 +301,10 @@ export class FirestoreRepository implements Repository {
 
     await this.db
       .collection(this.usersCollection)
-      .doc(input.userId)
+      .doc(userDocId)
       .set(
         {
+          [this.userAuthUidField]: isSharedDatasetUserId(input.userId) ? null : input.userId,
           prefillStatus: "ready",
           prefillPostCount: summary.postCount,
           prefillChunkCount: summary.chunkCount,
@@ -246,7 +327,8 @@ export class FirestoreRepository implements Repository {
       return null;
     }
 
-    const ref = this.db.collection(this.usersCollection).doc(query.userId);
+    const userDocId = await this.resolveUserDocId(query.userId);
+    const ref = this.db.collection(this.usersCollection).doc(userDocId);
     const snap = await ref.get();
     const data = snap.data() ?? {};
     const pointers =
@@ -394,7 +476,8 @@ export class FirestoreRepository implements Repository {
   }
 
   async getPromptPreferences(userId: string): Promise<PromptPreferences> {
-    const ref = this.db.collection(this.preferencesCollection).doc(userId);
+    const userDocId = await this.resolveUserDocId(userId);
+    const ref = this.db.collection(this.preferencesCollection).doc(userDocId);
     const snap = await ref.get();
     if (!snap.exists) {
       return {
@@ -412,7 +495,8 @@ export class FirestoreRepository implements Repository {
   }
 
   async setPromptPreferences(userId: string, input: Partial<PromptPreferences>): Promise<PromptPreferences> {
-    const ref = this.db.collection(this.preferencesCollection).doc(userId);
+    const userDocId = await this.resolveUserDocId(userId);
+    const ref = this.db.collection(this.preferencesCollection).doc(userDocId);
     const current = await this.getPromptPreferences(userId);
 
     const next: PromptPreferences = {
@@ -438,8 +522,12 @@ export class FirestoreRepository implements Repository {
   }
 
   private mapUserDoc(userId: string, data: Record<string, unknown>): AppUser {
+    const authUid =
+      typeof data[this.userAuthUidField] === "string" && String(data[this.userAuthUidField]).trim()
+        ? String(data[this.userAuthUidField]).trim()
+        : userId;
     return {
-      id: userId,
+      id: authUid,
       email: typeof data.email === "string" ? data.email : null,
       profile: {
         displayName: typeof data.displayName === "string" ? data.displayName : null,
@@ -500,9 +588,10 @@ export class FirestoreRepository implements Repository {
   }
 
   async listAllPrefillPosts(userId: string): Promise<StoredPost[]> {
+    const userDocId = await this.resolveUserDocId(userId);
     const snapshot = await this.db
       .collection(this.userPrefillChunksCollection)
-      .where("userId", "==", userId)
+      .where("userId", "==", userDocId)
       .orderBy("chunkIndex", "asc")
       .get();
 
@@ -542,6 +631,74 @@ export class FirestoreRepository implements Repository {
     }
 
     return posts.sort((a, b) => b.createdAtMs - a.createdAtMs);
+  }
+
+  private async resolveUserDocId(userId: string): Promise<string> {
+    if (isSharedDatasetUserId(userId)) {
+      return userId;
+    }
+
+    const normalizedEmailId = normalizeUserEmailDocId(userId);
+    if (normalizedEmailId && normalizedEmailId === userId.toLowerCase()) {
+      return normalizedEmailId;
+    }
+
+    const directSnap = await this.db.collection(this.usersCollection).doc(userId).get();
+    if (directSnap.exists) {
+      return userId;
+    }
+
+    const byAuthUidSnap = await this.db
+      .collection(this.usersCollection)
+      .where(this.userAuthUidField, "==", userId)
+      .limit(1)
+      .get();
+    if (!byAuthUidSnap.empty) {
+      return byAuthUidSnap.docs[0].id;
+    }
+
+    return userId;
+  }
+
+  private async migrateUserScopedDocuments(fromUserDocId: string, toUserDocId: string, authUid: string): Promise<void> {
+    if (fromUserDocId === toUserDocId) {
+      return;
+    }
+
+    const now = Timestamp.now();
+    const [preferencesSnap, chunkSnap] = await Promise.all([
+      this.db.collection(this.preferencesCollection).doc(fromUserDocId).get(),
+      this.db.collection(this.userPrefillChunksCollection).where("userId", "==", fromUserDocId).get()
+    ]);
+
+    const batch = this.db.batch();
+    if (preferencesSnap.exists) {
+      const targetPreferencesRef = this.db.collection(this.preferencesCollection).doc(toUserDocId);
+      batch.set(targetPreferencesRef, preferencesSnap.data() ?? {}, { merge: true });
+      batch.delete(preferencesSnap.ref);
+    }
+
+    for (const sourceChunk of chunkSnap.docs) {
+      const data = sourceChunk.data();
+      const chunkIndex = typeof data.chunkIndex === "number" ? Math.max(0, data.chunkIndex) : 0;
+      const targetDocId = `${toUserDocId}_${String(chunkIndex + 1).padStart(4, "0")}`;
+      const targetRef = this.db.collection(this.userPrefillChunksCollection).doc(targetDocId);
+      batch.set(
+        targetRef,
+        {
+          ...data,
+          userId: toUserDocId,
+          [this.userAuthUidField]: authUid,
+          updatedAt: now
+        },
+        { merge: true }
+      );
+      if (sourceChunk.id !== targetDocId) {
+        batch.delete(sourceChunk.ref);
+      }
+    }
+
+    await batch.commit();
   }
 
   private filterPostsWithFallback(posts: StoredPost[], mode: FeedMode, profileKey: string): StoredPost[] {

@@ -3,136 +3,115 @@ import {
     StyleSheet,
     Text,
     View,
+    FlatList,
     TouchableOpacity,
-    ScrollView,
-    ActivityIndicator
+    ActivityIndicator,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../styles/colors';
 import { ScreenHeader } from '../components';
 import { API_ENDPOINTS } from '../config/api';
 
-interface RssFeedConfig {
+interface NewsItem {
     id: string;
-    name: string;
-    url?: string;
-    group?: string;
-    articleCount?: number;
-}
-
-interface FeedGroup {
+    sourceName: string;
     title: string;
-    data: RssFeedConfig[];
-    expanded: boolean;
+    link: string;
+    date?: string;
+    summary?: string;
+    fullText?: string;
+    fullTextStatus?: string;
 }
 
 export function RssScreen() {
     const navigation = useNavigation();
-    const [feeds, setFeeds] = useState<RssFeedConfig[]>([]);
+    const [items, setItems] = useState<NewsItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
     useEffect(() => {
-        fetchFeeds();
+        fetchLatestNews();
     }, []);
 
-    const fetchFeeds = async () => {
+    const fetchLatestNews = async () => {
         try {
             setLoading(true);
             setError(null);
 
-            // Get Firebase auth token
             const { auth } = require('../config/firebase');
             if (!auth.currentUser) {
-                throw new Error('You must be signed in to view news sources');
+                throw new Error('You must be signed in to view news');
             }
-
             const token = await auth.currentUser.getIdToken();
 
-            const response = await fetch(API_ENDPOINTS.NEWS_SOURCES, {
+            const response = await fetch(`${API_ENDPOINTS.NEWS_ARTICLES}?limit=50`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 },
             });
 
             if (!response.ok) {
-                throw new Error(`Failed to fetch feeds: ${response.status}`);
+                throw new Error(`Failed to fetch latest news: ${response.status}`);
             }
 
             const payload = await response.json();
-            const sources = payload?.data?.sources || [];
-            const mappedFeeds: RssFeedConfig[] = sources.map((source: any) => ({
-                id: String(source.id),
-                name: String(source.name || source.id),
-                url: source.homepageUrl ? String(source.homepageUrl) : undefined,
-                group: source.countryCode
-                    ? String(source.countryCode)
-                    : source.language
-                        ? String(source.language).toUpperCase()
-                        : 'Other',
-                articleCount: typeof source.articleCount === 'number' ? source.articleCount : undefined
+            const apiItems = payload?.data?.items || [];
+            const mapped: NewsItem[] = apiItems.map((item: any) => ({
+                id: String(item.id),
+                sourceName: String(item.sourceName || 'News'),
+                title: String(item.title || ''),
+                link: String(item.canonicalUrl || ''),
+                date:
+                    typeof item.publishedAtMs === 'number'
+                        ? new Date(item.publishedAtMs).toISOString()
+                        : undefined,
+                summary: typeof item.summary === 'string' ? item.summary : '',
+                fullText: typeof item.fullText === 'string' ? item.fullText : undefined,
+                fullTextStatus: item.fullTextStatus ? String(item.fullTextStatus) : undefined,
             }));
-            setFeeds(mappedFeeds);
+            setItems(mapped);
         } catch (err) {
-            console.error('Error fetching news sources:', err);
-            setError(err instanceof Error ? err.message : 'Failed to load news sources');
+            console.error('Error fetching latest news:', err);
+            setError(err instanceof Error ? err.message : 'Failed to load latest news');
         } finally {
             setLoading(false);
         }
     };
 
-    // Group feeds by category
-    const groupedFeeds = React.useMemo(() => {
-        const groups = new Map<string, RssFeedConfig[]>();
-
-        feeds.forEach((feed) => {
-            const group = feed.group || 'Other';
-            if (!groups.has(group)) {
-                groups.set(group, []);
-            }
-            groups.get(group)!.push(feed);
-        });
-
-        // Convert to array and sort alphabetically
-        return Array.from(groups.entries())
-            .sort(([a], [b]) => a.localeCompare(b))
-            .map(([title, data]) => ({
-                title,
-                data,
-                expanded: expandedGroups.has(title),
-            }));
-    }, [feeds, expandedGroups]);
-
-    const toggleGroup = (groupTitle: string) => {
-        setExpandedGroups((prev) => {
-            const next = new Set(prev);
-            if (next.has(groupTitle)) {
-                next.delete(groupTitle);
-            } else {
-                next.add(groupTitle);
-            }
-            return next;
+    const handleItemPress = (item: NewsItem) => {
+        // @ts-ignore - navigation types need update
+        navigation.navigate('RssArticle', {
+            title: item.title,
+            summary: item.summary,
+            fullText: item.fullText,
+            link: item.link,
+            date: item.date,
+            source: item.sourceName,
+            articleId: item.id,
         });
     };
 
-    const handleFeedPress = async (feed: RssFeedConfig) => {
-        // Navigate to the detail screen to show feed items
-        // @ts-ignore - navigation types need update
-        navigation.navigate('RssFeedDetail', {
-            feedId: feed.id,
-            feedName: feed.name
-        });
+    const formatDate = (dateString?: string) => {
+        if (!dateString) return '';
+        try {
+            return new Date(dateString).toLocaleDateString(undefined, {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+            });
+        } catch {
+            return dateString;
+        }
     };
 
     if (loading) {
         return (
             <View style={styles.container}>
-                <ScreenHeader title="News Sources" onClose={() => navigation.goBack()} />
+                <ScreenHeader title="Latest News" onClose={() => navigation.goBack()} />
                 <View style={styles.centerContainer}>
                     <ActivityIndicator size="large" color={colors.primary} />
-                    <Text style={styles.loadingText}>Loading news sources...</Text>
+                    <Text style={styles.loadingText}>Loading latest news...</Text>
                 </View>
             </View>
         );
@@ -141,12 +120,12 @@ export function RssScreen() {
     if (error) {
         return (
             <View style={styles.container}>
-                <ScreenHeader title="News Sources" onClose={() => navigation.goBack()} />
+                <ScreenHeader title="Latest News" onClose={() => navigation.goBack()} />
                 <View style={styles.centerContainer}>
                     <Ionicons name="alert-circle-outline" size={64} color={colors.error} />
-                    <Text style={styles.errorTitle}>Failed to Load Sources</Text>
+                    <Text style={styles.errorTitle}>Failed to Load News</Text>
                     <Text style={styles.errorText}>{error}</Text>
-                    <TouchableOpacity style={styles.retryButton} onPress={fetchFeeds}>
+                    <TouchableOpacity style={styles.retryButton} onPress={fetchLatestNews}>
                         <Text style={styles.retryButtonText}>Retry</Text>
                     </TouchableOpacity>
                 </View>
@@ -156,63 +135,36 @@ export function RssScreen() {
 
     return (
         <View style={styles.container}>
-            <ScreenHeader title="News Sources" onClose={() => navigation.goBack()} />
-
-            <ScrollView style={styles.content}>
-                {groupedFeeds.map((group) => (
-                    <View key={group.title} style={styles.groupContainer}>
-                        <TouchableOpacity
-                            style={styles.groupHeader}
-                            onPress={() => toggleGroup(group.title)}
-                        >
-                            <Ionicons
-                                name={group.expanded ? 'chevron-down' : 'chevron-forward'}
-                                size={20}
-                                color={colors.textSecondary}
-                                style={styles.groupIcon}
-                            />
-                            <Text style={styles.groupTitle}>{group.title}</Text>
-                            <View style={styles.groupBadge}>
-                                <Text style={styles.groupCount}>{group.data.length}</Text>
+            <ScreenHeader title="Latest News" onClose={() => navigation.goBack()} />
+            <FlatList
+                data={items}
+                keyExtractor={(item, index) => item.id || item.link || String(index)}
+                contentContainerStyle={styles.listContent}
+                renderItem={({ item }) => (
+                    <TouchableOpacity style={styles.itemContainer} onPress={() => handleItemPress(item)}>
+                        <View style={styles.itemContent}>
+                            <Text style={styles.sourceName}>{item.sourceName}</Text>
+                            <Text style={styles.itemTitle}>{item.title}</Text>
+                            <View style={styles.metaContainer}>
+                                <Text style={styles.itemDate}>{formatDate(item.date)}</Text>
+                                {item.fullTextStatus === 'ready' ? (
+                                    <Text style={styles.fullTextReady}>Full text</Text>
+                                ) : null}
                             </View>
-                        </TouchableOpacity>
-
-                        {group.expanded && (
-                            <View style={styles.feedList}>
-                                {group.data.map((feed) => (
-                                    <TouchableOpacity
-                                        key={feed.id}
-                                        style={styles.feedItem}
-                                        onPress={() => handleFeedPress(feed)}
-                                    >
-                                        <Ionicons
-                                            name="logo-rss"
-                                            size={18}
-                                            color={colors.textMuted}
-                                            style={styles.feedIcon}
-                                        />
-                                        <Text style={styles.feedName}>{feed.name}</Text>
-                                        {typeof feed.articleCount === 'number' ? (
-                                            <Text style={styles.feedCount}>{feed.articleCount}</Text>
-                                        ) : null}
-                                        <Ionicons
-                                            name="chevron-forward"
-                                            size={16}
-                                            color={colors.textMuted}
-                                        />
-                                    </TouchableOpacity>
-                                ))}
-                            </View>
-                        )}
+                            {item.summary ? (
+                                <Text style={styles.itemSummary} numberOfLines={3}>
+                                    {item.summary.replace(/<[^>]*>/g, '').trim()}
+                                </Text>
+                            ) : null}
+                        </View>
+                    </TouchableOpacity>
+                )}
+                ListEmptyComponent={
+                    <View style={styles.centerContainer}>
+                        <Text style={styles.emptyText}>No recent news found.</Text>
                     </View>
-                ))}
-
-                <View style={styles.footer}>
-                    <Text style={styles.footerText}>
-                        {feeds.length} sources across {groupedFeeds.length} groups
-                    </Text>
-                </View>
-            </ScrollView>
+                }
+            />
         </View>
     );
 }
@@ -222,14 +174,14 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: colors.background,
     },
-    content: {
-        flex: 1,
-    },
     centerContainer: {
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
         padding: 20,
+    },
+    listContent: {
+        padding: 16,
     },
     loadingText: {
         marginTop: 16,
@@ -260,67 +212,56 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '600',
     },
-    groupContainer: {
-        marginBottom: 4,
-    },
-    groupHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 14,
-        paddingHorizontal: 16,
+    itemContainer: {
         backgroundColor: colors.background,
+        borderRadius: 12,
+        marginBottom: 12,
+        borderWidth: 1,
+        borderColor: colors.border,
+        overflow: 'hidden',
+        flexDirection: 'row',
     },
-    groupIcon: {
-        marginRight: 8,
-    },
-    groupTitle: {
+    itemContent: {
         flex: 1,
-        fontSize: 16,
-        fontWeight: '600',
-        color: colors.textPrimary,
+        padding: 12,
     },
-    groupBadge: {
-        backgroundColor: colors.border,
-        paddingHorizontal: 8,
-        paddingVertical: 2,
-        borderRadius: 10,
-    },
-    groupCount: {
+    sourceName: {
         fontSize: 12,
-        fontWeight: '600',
-        color: colors.textSecondary,
+        fontWeight: '700',
+        color: colors.primary,
+        marginBottom: 6,
+        textTransform: 'uppercase',
     },
-    feedList: {
-        backgroundColor: colors.background,
-    },
-    feedItem: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        paddingLeft: 44,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.border,
-    },
-    feedIcon: {
-        marginRight: 12,
-    },
-    feedName: {
-        flex: 1,
+    itemTitle: {
         fontSize: 15,
+        fontWeight: '600',
         color: colors.textPrimary,
+        marginBottom: 6,
+        lineHeight: 20,
     },
-    feedCount: {
+    metaContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 6,
+    },
+    itemDate: {
         fontSize: 12,
         color: colors.textSecondary,
-        marginRight: 8,
     },
-    footer: {
-        padding: 20,
-        alignItems: 'center',
+    fullTextReady: {
+        fontSize: 11,
+        color: colors.primary,
+        fontWeight: '600',
     },
-    footerText: {
+    itemSummary: {
         fontSize: 13,
-        color: colors.textMuted,
+        color: colors.textSecondary,
+        lineHeight: 18,
+    },
+    emptyText: {
+        fontSize: 16,
+        color: colors.textSecondary,
+        textAlign: 'center',
     },
 });

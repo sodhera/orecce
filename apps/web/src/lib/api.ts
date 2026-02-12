@@ -152,6 +152,7 @@ export interface NewsArticleListItem {
     canonicalUrl: string;
     publishedAtMs?: number;
     fullTextStatus?: string;
+    fullText?: string;
 }
 
 export interface ListNewsArticlesResult {
@@ -174,13 +175,15 @@ export async function listNewsSources(): Promise<ListNewsSourcesResult> {
 }
 
 export async function listNewsArticles(
-    sourceId: string,
+    sourceId?: string,
     limit: number = 20,
 ): Promise<ListNewsArticlesResult> {
-    return get<ListNewsArticlesResult>("/news/articles", {
-        source_id: sourceId,
-        limit,
-    });
+    return get<ListNewsArticlesResult>(
+        "/news/articles",
+        sourceId
+            ? { source_id: sourceId, limit }
+            : { limit },
+    );
 }
 
 export async function getNewsArticle(

@@ -3,14 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import PostCard, { type Post } from "./PostCard";
 import {
-    getNewsArticle,
     listNewsArticles,
-    listNewsSources,
     listPosts,
     type ApiPost,
-    type NewsArticleDetail,
     type NewsArticleListItem,
-    type NewsSource,
 } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { MOCK_POSTS } from "@/lib/mockPosts";
@@ -82,50 +78,11 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
     const { isAuthenticated, setShowAuthModal } = useAuth();
 
     const [posts, setPosts] = useState<Post[]>([]);
-    const [newsSources, setNewsSources] = useState<NewsSource[]>([]);
-    const [newsSourceId, setNewsSourceId] = useState("");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [showGate, setShowGate] = useState(false);
 
     const gateRef = useRef<HTMLDivElement | null>(null);
-
-    useEffect(() => {
-        if (mode !== "NEWS" || !isAuthenticated) {
-            setNewsSources([]);
-            setNewsSourceId("");
-            return;
-        }
-
-        let cancelled = false;
-        (async () => {
-            try {
-                const result = await listNewsSources();
-                if (cancelled) {
-                    return;
-                }
-                setNewsSources(result.sources);
-                setNewsSourceId((currentSourceId) => {
-                    if (
-                        currentSourceId &&
-                        result.sources.some(
-                            (source) => source.id === currentSourceId,
-                        )
-                    ) {
-                        return currentSourceId;
-                    }
-                    return result.sources[0]?.id ?? "";
-                });
-            } catch (err) {
-                if (!cancelled) {
-                    setError((err as Error).message);
-                }
-            }
-        })();
-        return () => {
-            cancelled = true;
-        };
-    }, [mode, isAuthenticated]);
 
     // ── Fetch posts (authenticated) or use mock posts ───────────
     useEffect(() => {
@@ -151,36 +108,17 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
                 setError(null);
                 setPosts([]);
                 if (mode === "NEWS") {
-                    if (!newsSourceId) {
-                        setPosts([]);
-                        return;
-                    }
-                    const result = await listNewsArticles(newsSourceId, 20);
+                    const result = await listNewsArticles(undefined, 20);
                     if (cancelled) {
                         return;
                     }
 
-                    const articlesWithText: NewsArticleWithText[] =
-                        await Promise.all(
-                            result.items.map(
-                                async (item): Promise<NewsArticleWithText> => {
-                                    if (item.fullTextStatus !== "ready") {
-                                        return item;
-                                    }
-                                    try {
-                                        const detail = await getNewsArticle(
-                                            item.id,
-                                        );
-                                        return detail.article as NewsArticleDetail;
-                                    } catch {
-                                        return item;
-                                    }
-                                },
+                    if (!cancelled) {
+                        setPosts(
+                            (result.items as NewsArticleWithText[]).map(
+                                newsArticleToPost,
                             ),
                         );
-
-                    if (!cancelled) {
-                        setPosts(articlesWithText.map(newsArticleToPost));
                     }
                     return;
                 }
@@ -243,7 +181,7 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
         return () => {
             cancelled = true;
         };
-    }, [mode, profile, isAuthenticated, newsSourceId]);
+    }, [mode, profile, isAuthenticated]);
 
     // ── Scroll gate observer (guest only) ───────────────────────
     useEffect(() => {
@@ -291,29 +229,6 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
                     </button>
                 ))}
             </div>
-            {mode === "NEWS" && (
-                <div className="feed-news-toolbar">
-                    <label htmlFor="news-source-select">Source</label>
-                    <select
-                        id="news-source-select"
-                        className="feed-news-select"
-                        value={newsSourceId}
-                        onChange={(e) => setNewsSourceId(e.target.value)}
-                    >
-                        {newsSources.map((source) => (
-                            <option key={source.id} value={source.id}>
-                                {source.name} ({source.articleCount})
-                            </option>
-                        ))}
-                    </select>
-                </div>
-            )}
-            {mode === "NEWS" && !loading && newsSources.length === 0 && (
-                    <div className="feed-news-empty">
-                        No news sources available right now.
-                    </div>
-                )}
-
             {/* Posts */}
             <div className="feed-posts-container">
                 {loading ? (
@@ -355,7 +270,7 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
                         {error
                             ? `Error: ${error}`
                             : mode === "NEWS"
-                              ? "No news articles yet for this source."
+                              ? "No news articles available right now."
                               : "No posts yet."}
                     </div>
                 ) : (

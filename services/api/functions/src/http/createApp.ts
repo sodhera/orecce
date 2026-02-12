@@ -609,13 +609,12 @@ export function createApp(deps: CreateAppDeps): express.Express {
       }
 
       const sourceId = String(req.query.source_id ?? "").trim();
-      if (!sourceId) {
-        throw new ApiError(400, "bad_request", "Missing required query param source_id.");
-      }
       const limitRaw = Number(req.query.limit ?? "30");
       const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(100, Math.floor(limitRaw))) : 30;
 
-      const items = await deps.newsReadService.listArticlesBySource(sourceId, limit);
+      const items = sourceId
+        ? await deps.newsReadService.listArticlesBySource(sourceId, limit)
+        : await deps.newsReadService.listLatestArticles(limit);
       res.json({
         ok: true,
         data: {

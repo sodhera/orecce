@@ -28,6 +28,7 @@ export function RssArticleScreen() {
     const {
         title,
         summary,
+        fullText: fullTextFromList,
         link,
         date,
         imageUrl,
@@ -35,12 +36,15 @@ export function RssArticleScreen() {
         articleId
     } = route.params;
 
-    const [fullText, setFullText] = React.useState<string | null>(null);
+    const [fullText, setFullText] = React.useState<string | null>(fullTextFromList ?? null);
     const [fullTextLoading, setFullTextLoading] = React.useState(false);
     const [fullTextError, setFullTextError] = React.useState<string | null>(null);
 
     React.useEffect(() => {
         const loadFullText = async () => {
+            if (fullTextFromList && fullTextFromList.trim()) {
+                return;
+            }
             if (!articleId) {
                 return;
             }
@@ -79,7 +83,7 @@ export function RssArticleScreen() {
         };
 
         loadFullText();
-    }, [articleId]);
+    }, [articleId, fullTextFromList]);
 
     const handleReadFullArticle = async () => {
         try {

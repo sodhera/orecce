@@ -29,6 +29,7 @@ export interface NewsArticleListItem {
   canonicalUrl: string;
   publishedAtMs?: number;
   fullTextStatus?: string;
+  fullText?: string;
 }
 
 export interface NewsArticleDetail extends NewsArticleListItem {
@@ -97,7 +98,22 @@ export class NewsReadService {
       .limit(boundedLimit)
       .get();
 
-    return snap.docs.map((doc) => this.mapNewsArticle(doc.id, doc.data() ?? {}));
+    return Promise.all(
+      snap.docs.map((doc) => this.mapNewsArticle(doc.id, doc.data() ?? {}, true))
+    );
+  }
+
+  async listLatestArticles(limit: number): Promise<NewsArticleListItem[]> {
+    const boundedLimit = Math.max(1, Math.min(100, Math.floor(limit)));
+    const snap = await this.db
+      .collection(this.newsArticlesCollection)
+      .orderBy("publishedAt", "desc")
+      .limit(boundedLimit)
+      .get();
+
+    return Promise.all(
+      snap.docs.map((doc) => this.mapNewsArticle(doc.id, doc.data() ?? {}, true))
+    );
   }
 
   async getArticleDetail(articleId: string): Promise<NewsArticleDetail | null> {
@@ -107,17 +123,8 @@ export class NewsReadService {
       return null;
     }
 
-    const base = this.mapNewsArticle(articleSnap.id, articleSnap.data() ?? {});
-    const chunksSnap = await this.db
-      .collection(this.newsArticleTextChunksCollection)
-      .where("articleId", "==", articleId)
-      .get();
-
-    const fullText = chunksSnap.docs
-      .map((doc) => doc.data() ?? {})
-      .sort((a, b) => Number(a.chunkIndex ?? 0) - Number(b.chunkIndex ?? 0))
-      .map((chunk) => String(chunk.text ?? ""))
-      .join("");
+    const base = await this.mapNewsArticle(articleSnap.id, articleSnap.data() ?? {}, true);
+    const fullText = base.fullText ?? "";
 
     const data = articleSnap.data() ?? {};
     return {
@@ -129,7 +136,17 @@ export class NewsReadService {
     };
   }
 
-  private mapNewsArticle(id: string, data: Record<string, unknown>): NewsArticleListItem {
+  private async mapNewsArticle(
+    id: string,
+    data: Record<string, unknown>,
+    includeFullText: boolean
+  ): Promise<NewsArticleListItem> {
+    const fullTextStatus = data.fullTextStatus ? String(data.fullTextStatus) : undefined;
+    let fullText: string | undefined;
+    if (includeFullText && fullTextStatus === "ready") {
+      fullText = await this.readArticleFullText(id);
+    }
+
     return {
       id,
       sourceId: String(data.sourceId ?? ""),
@@ -138,7 +155,28 @@ export class NewsReadService {
       summary: String(data.summary ?? ""),
       canonicalUrl: String(data.canonicalUrl ?? ""),
       publishedAtMs: toMillis(data.publishedAt),
-      fullTextStatus: data.fullTextStatus ? String(data.fullTextStatus) : undefined
+      fullTextStatus,
+      fullText
     };
+  }
+
+  private async readArticleFullText(articleId: string): Promise<string | undefined> {
+    const chunksSnap = await this.db
+      .collection(this.newsArticleTextChunksCollection)
+      .where("articleId", "==", articleId)
+      .get();
+
+    if (chunksSnap.empty) {
+      return undefined;
+    }
+
+    const fullText = chunksSnap.docs
+      .map((doc) => doc.data() ?? {})
+      .sort((a, b) => Number(a.chunkIndex ?? 0) - Number(b.chunkIndex ?? 0))
+      .map((chunk) => String(chunk.text ?? ""))
+      .join("")
+      .trim();
+
+    return fullText || undefined;
   }
 }

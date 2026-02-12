@@ -60,6 +60,7 @@ body {
 a {
   color: inherit;
   text-decoration: none;
+  cursor: pointer;
 }
 
 button {
@@ -68,6 +69,11 @@ button {
   border: none;
   background: none;
   color: inherit;
+}
+
+button:disabled,
+a[aria-disabled="true"] {
+  cursor: not-allowed;
 }
 
 img {
@@ -296,6 +302,18 @@ img {
   flex-shrink: 0;
 }
 
+.profile-modal-item-danger {
+  color: var(--danger);
+}
+
+.profile-modal-item-danger:hover {
+  background: rgba(244, 33, 46, 0.12);
+}
+
+.profile-modal-item-icon-danger {
+  fill: var(--danger);
+}
+
 .sidebar-profile {
   display: flex;
   align-items: center;
@@ -382,6 +400,161 @@ img {
 .feed-header-top h1 {
   font-size: 20px;
   font-weight: 700;
+}
+
+.utility-page-intro {
+  margin-top: 4px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.utility-page-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.utility-card {
+  border: 1px solid var(--bg-border);
+  border-radius: 16px;
+  background: var(--bg-secondary);
+  overflow: hidden;
+}
+
+.utility-card-title {
+  font-size: 16px;
+  font-weight: 700;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--bg-border);
+}
+
+.discover-chip-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 16px;
+}
+
+.discover-chip {
+  padding: 8px 14px;
+  border-radius: 9999px;
+  border: 1px solid var(--bg-border);
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+
+.discover-chip:hover {
+  background: var(--bg-hover);
+}
+
+.discover-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.discover-list-item {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--bg-border);
+}
+
+.discover-list-item:last-child {
+  border-bottom: none;
+}
+
+.discover-item-title {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.discover-item-meta {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-top: 1px;
+}
+
+.discover-item-summary {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.utility-link {
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.utility-link:hover {
+  text-decoration: underline;
+}
+
+.notification-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.notification-item {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--bg-border);
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notification-item.unread {
+  background: rgba(29, 155, 240, 0.08);
+}
+
+.notification-dot {
+  margin-top: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.notification-content {
+  min-width: 0;
+}
+
+.notification-item-title {
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.notification-item-meta {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+.page-side-note {
+  padding: 16px;
+}
+
+.page-side-note-title {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.page-side-note-text {
+  margin-top: 8px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.5;
 }
 
 .feed-tabs {
@@ -722,7 +895,7 @@ img {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-secondary);
+  color: var(--bg-border);
   padding: 4px;
   border: none;
   background: transparent;
@@ -736,28 +909,20 @@ img {
   fill: currentColor;
 }
 
-.post-vote-up:hover {
-  color: var(--success);
-}
-
-.post-vote-down:hover {
-  color: var(--danger);
+.post-like:hover {
+  color: #ed4956;
 }
 
 .post-save:hover {
-  color: var(--accent);
+  color: #60a5fa;
 }
 
-.post-vote-up.active {
-  color: var(--success);
-}
-
-.post-vote-down.active {
-  color: var(--danger);
+.post-like.active {
+  color: #ed4956;
 }
 
 .post-save.active {
-  color: var(--accent);
+  color: #60a5fa;
 }
 
 /* ── Right Sidebar ── */
@@ -1017,6 +1182,84 @@ img {
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6);
   animation: authSlideUp 0.3s ease-out;
   border: 1px solid var(--bg-border);
+}
+
+.logout-confirm-overlay {
+  background: rgba(33, 46, 59, 0.72);
+  z-index: 2300;
+}
+
+.logout-confirm-modal {
+  width: min(360px, calc(100vw - 32px));
+  background: #000;
+  border-radius: 22px;
+  border: 1px solid #23262d;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.75);
+  padding: 20px 20px 18px;
+  animation: authSlideUp 0.22s ease-out;
+}
+
+.logout-confirm-brand {
+  width: 34px;
+  height: 34px;
+  margin: 0 auto 12px;
+  border-radius: 50%;
+  border: 1px solid #2f3336;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.logout-confirm-title {
+  font-size: 22px;
+  line-height: 1.2;
+  font-weight: 800;
+  color: #f7f9f9;
+  letter-spacing: -0.2px;
+}
+
+.logout-confirm-text {
+  margin-top: 10px;
+  color: #71767b;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.logout-confirm-btn {
+  width: 100%;
+  border-radius: 999px;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 14px 0;
+  margin-top: 12px;
+  transition: opacity 0.2s, background 0.2s;
+}
+
+.logout-confirm-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.logout-confirm-btn-primary {
+  background: #eff3f4;
+  color: #0f1419;
+}
+
+.logout-confirm-btn-primary:hover {
+  background: #d9ddde;
+}
+
+.logout-confirm-btn-secondary {
+  border: 1px solid #2f3336;
+  color: #eff3f4;
+}
+
+.logout-confirm-btn-secondary:hover {
+  background: #0d0f12;
 }
 
 .profile-settings-overlay {
@@ -1628,6 +1871,15 @@ img {
     width: auto;
   }
 
+  .utility-page-body {
+    padding: 12px;
+  }
+
+  .discover-list-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .sidebar-auth-btn {
     width: 50px;
     height: 50px;
@@ -1646,6 +1898,19 @@ img {
   .auth-modal {
     margin: 16px;
     padding: 32px 20px 24px;
+  }
+
+  .logout-confirm-title {
+    font-size: 20px;
+  }
+
+  .logout-confirm-text {
+    font-size: 14px;
+  }
+
+  .logout-confirm-btn {
+    font-size: 17px;
+    padding: 13px 0;
   }
 
   .profile-settings-modal {

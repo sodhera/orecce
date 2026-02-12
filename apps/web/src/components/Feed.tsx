@@ -91,7 +91,9 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
     const gateRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
-        if (mode !== "NEWS") {
+        if (mode !== "NEWS" || !isAuthenticated) {
+            setNewsSources([]);
+            setNewsSourceId("");
             return;
         }
 
@@ -123,11 +125,19 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
         return () => {
             cancelled = true;
         };
-    }, [mode]);
+    }, [mode, isAuthenticated]);
 
     // ── Fetch posts (authenticated) or use mock posts ───────────
     useEffect(() => {
-        if (!isAuthenticated && mode !== "NEWS") {
+        if (!isAuthenticated) {
+            if (mode === "NEWS") {
+                setPosts([]);
+                setLoading(false);
+                setShowGate(false);
+                setError(null);
+                return;
+            }
+
             setPosts(MOCK_POSTS);
             setLoading(false);
             setShowGate(false);
@@ -300,8 +310,7 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
             )}
             {mode === "NEWS" && !loading && newsSources.length === 0 && (
                     <div className="feed-news-empty">
-                        No ingested news sources found in the emulator database
-                        yet.
+                        No news sources available right now.
                     </div>
                 )}
 
@@ -317,6 +326,24 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
                     >
                         Loading posts…
                     </div>
+                ) : mode === "NEWS" && !isAuthenticated ? (
+                    <div
+                        style={{
+                            padding: 40,
+                            textAlign: "center",
+                            color: "var(--text-secondary)",
+                        }}
+                    >
+                        <p style={{ marginBottom: 14 }}>
+                            Sign in to view the live News feed.
+                        </p>
+                        <button
+                            className="right-new-btn"
+                            onClick={() => setShowAuthModal(true)}
+                        >
+                            Sign in
+                        </button>
+                    </div>
                 ) : visiblePosts.length === 0 ? (
                     <div
                         style={{
@@ -325,7 +352,11 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
                             color: "var(--text-secondary)",
                         }}
                     >
-                        {error ? `Error: ${error}` : "No posts yet."}
+                        {error
+                            ? `Error: ${error}`
+                            : mode === "NEWS"
+                              ? "No news articles yet for this source."
+                              : "No posts yet."}
                     </div>
                 ) : (
                     visiblePosts.map((post, index) => (

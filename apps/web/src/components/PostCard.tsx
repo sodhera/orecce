@@ -15,22 +15,6 @@ export default function PostCard({ post }: { post: Post }) {
     const [vote, setVote] = useState<"up" | "down" | null>(null);
     const [saved, setSaved] = useState(false);
 
-    const topicColors: Record<string, string> = {
-        BIOGRAPHY: "#7856ff",
-        TRIVIA: "#1d9bf0",
-        NICHE: "#ff6b35",
-        NEWS: "#17bf63",
-        AI: "#7856ff",
-        Frontend: "#1d9bf0",
-        Startups: "#ff6b35",
-        Design: "#f91880",
-        Backend: "#00ba7c",
-        DevOps: "#ffcc00",
-        "Open Source": "#e44d26",
-        Career: "#3ecf8e",
-    };
-    const badgeColor = topicColors[post.topic] || "#1d9bf0";
-
     const toggleVote = (type: "up" | "down") => {
         setVote((current) => (current === type ? null : type));
     };
@@ -41,15 +25,6 @@ export default function PostCard({ post }: { post: Post }) {
                 <div className="post-header">
                     <span
                         className="post-topic-badge"
-                        style={{
-                            background: badgeColor,
-                            color: "#fff",
-                            padding: "2px 10px",
-                            borderRadius: 9999,
-                            fontSize: 12,
-                            fontWeight: 700,
-                            letterSpacing: "0.3px",
-                        }}
                     >
                         {post.topic}
                     </span>
@@ -115,7 +90,11 @@ export default function PostCard({ post }: { post: Post }) {
                         title={saved ? "Unsave" : "Save"}
                     >
                         <svg viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="M6 3h12a2 2 0 0 1 2 2v16l-8-5.6L4 21V5a2 2 0 0 1 2-2zm0 2v12.15l6-4.2 6 4.2V5H6z" />
+                            {saved ? (
+                                <path d="M6 3h12a2 2 0 0 1 2 2v16l-8-5.6L4 21V5a2 2 0 0 1 2-2z" />
+                            ) : (
+                                <path d="M6 3h12a2 2 0 0 1 2 2v16l-8-5.6L4 21V5a2 2 0 0 1 2-2zm0 2v12.15l6-4.2 6 4.2V5H6z" />
+                            )}
                         </svg>
                     </button>
                 </div>

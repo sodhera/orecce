@@ -4,45 +4,41 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { AiFillHome, AiOutlineHome } from "react-icons/ai";
+import { BsBookmark, BsBookmarkFill } from "react-icons/bs";
+import { IoNotifications, IoNotificationsOutline } from "react-icons/io5";
+import { MdOutlineTravelExplore, MdTravelExplore } from "react-icons/md";
 import { useAuth } from "@/context/AuthContext";
 
 type ThemeMode = "dark" | "light";
 
-const navItems: Array<{ label: string; icon: ReactNode; href?: string }> = [
+const navItems: Array<{
+    label: string;
+    href?: string;
+    iconOutline: ReactNode;
+    iconFilled?: ReactNode;
+}> = [
     {
         label: "Home",
         href: "/",
-        icon: (
-            <svg viewBox="0 0 24 24">
-                <path d="M21.591 7.146L12.52 1.157c-.316-.21-.724-.21-1.04 0l-9.071 5.99c-.26.173-.409.456-.409.757v13.183c0 .502.418.913.929.913h5.8a.93.93 0 00.929-.913v-7.075h3.68v7.075c0 .502.418.913.929.913h5.8a.93.93 0 00.929-.913V7.903c0-.3-.149-.584-.409-.757z" />
-            </svg>
-        ),
+        iconOutline: <AiOutlineHome aria-hidden="true" />,
+        iconFilled: <AiFillHome aria-hidden="true" />,
     },
     {
         label: "Discover",
-        icon: (
-            <svg viewBox="0 0 24 24">
-                <path d="M10.5 10.5l7.5-3.5-3.5 7.5-7.5 3.5 3.5-7.5zm1.1 1.1l-1.8 3.9 3.9-1.8 1.8-3.9-3.9 1.8z" />
-                <path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 2a8 8 0 110 16 8 8 0 010-16z" />
-            </svg>
-        ),
+        iconOutline: <MdOutlineTravelExplore aria-hidden="true" />,
+        iconFilled: <MdTravelExplore aria-hidden="true" />,
     },
     {
         label: "Saved",
         href: "/saved",
-        icon: (
-            <svg viewBox="0 0 24 24">
-                <path d="M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5zM6.5 4c-.276 0-.5.22-.5.5v14.56l6-4.29 6 4.29V4.5c0-.28-.224-.5-.5-.5h-11z" />
-            </svg>
-        ),
+        iconOutline: <BsBookmark aria-hidden="true" />,
+        iconFilled: <BsBookmarkFill aria-hidden="true" />,
     },
     {
         label: "Notifications",
-        icon: (
-            <svg viewBox="0 0 24 24">
-                <path d="M19.993 9.042C19.48 5.017 16.054 2 11.996 2s-7.49 3.021-7.999 7.051L2.866 18H7.1c.463 2.282 2.481 4 4.9 4s4.437-1.718 4.9-4h4.236l-1.143-8.958zM12 20c-1.306 0-2.417-.835-2.829-2h5.658c-.412 1.165-1.523 2-2.829 2zm-6.866-4l.847-6.698C6.364 6.272 8.941 4 11.996 4s5.627 2.268 6.013 5.295L18.858 16H5.134z" />
-            </svg>
-        ),
+        iconOutline: <IoNotificationsOutline aria-hidden="true" />,
+        iconFilled: <IoNotifications aria-hidden="true" />,
     },
 ];
 
@@ -112,15 +108,19 @@ export default function Sidebar() {
                             : pathname.startsWith(item.href)
                         : false;
                     const className = `nav-item ${isActive ? "active" : ""}`;
+                    const icon =
+                        isActive && item.iconFilled
+                            ? item.iconFilled
+                            : item.iconOutline;
 
                     return item.href ? (
                         <Link key={item.label} href={item.href} className={className}>
-                            {item.icon}
+                            {icon}
                             <span>{item.label}</span>
                         </Link>
                     ) : (
                         <a key={item.label} href="#" className={className}>
-                            {item.icon}
+                            {icon}
                             <span>{item.label}</span>
                         </a>
                     );

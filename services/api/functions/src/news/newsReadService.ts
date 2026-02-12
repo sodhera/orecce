@@ -1,4 +1,5 @@
 import { Firestore, Timestamp } from "firebase-admin/firestore";
+import { DEFAULT_NEWS_SOURCES } from "./newsSources";
 
 function toMillis(value: unknown): number | undefined {
   if (value instanceof Timestamp) {
@@ -46,28 +47,40 @@ export class NewsReadService {
 
   async listSources(): Promise<NewsSourceSummary[]> {
     const sourcesSnap = await this.db.collection(this.newsSourceStateCollection).orderBy("sourceName", "asc").get();
-    if (sourcesSnap.empty) {
-      return [];
+    const stateById = new Map<string, Record<string, unknown>>();
+    for (const doc of sourcesSnap.docs) {
+      const data = (doc.data() ?? {}) as Record<string, unknown>;
+      const sourceId = String(data.sourceId ?? doc.id);
+      stateById.set(sourceId, data);
     }
 
+    // Fallback to configured sources so the feature remains visible even
+    // before the first scheduled/manual sync populates source state docs.
+    const configuredById = new Map(DEFAULT_NEWS_SOURCES.map((source) => [source.id, source] as const));
+    const sourceIds = new Set<string>([...configuredById.keys(), ...stateById.keys()]);
+
     const sources = await Promise.all(
-      sourcesSnap.docs.map(async (doc) => {
-        const data = doc.data() ?? {};
-        const sourceId = String(data.sourceId ?? doc.id);
+      Array.from(sourceIds).map(async (sourceId) => {
+        const state = stateById.get(sourceId);
+        const configured = configuredById.get(sourceId);
         const articleCount = (
           await this.db.collection(this.newsArticlesCollection).where("sourceId", "==", sourceId).count().get()
         ).data().count;
 
         return {
           id: sourceId,
-          name: String(data.sourceName ?? sourceId),
-          homepageUrl: String(data.homepageUrl ?? ""),
-          language: String(data.language ?? ""),
-          countryCode: data.countryCode ? String(data.countryCode) : undefined,
+          name: String(state?.sourceName ?? configured?.name ?? sourceId),
+          homepageUrl: String(state?.homepageUrl ?? configured?.homepageUrl ?? ""),
+          language: String(state?.language ?? configured?.language ?? ""),
+          countryCode: state?.countryCode
+            ? String(state.countryCode)
+            : configured?.countryCode
+              ? String(configured.countryCode)
+              : undefined,
           articleCount,
-          lastStatus: data.lastStatus ? String(data.lastStatus) : undefined,
-          lastRunAtMs: toMillis(data.lastRunAt),
-          lastSuccessAtMs: toMillis(data.lastSuccessAt)
+          lastStatus: state?.lastStatus ? String(state.lastStatus) : undefined,
+          lastRunAtMs: toMillis(state?.lastRunAt),
+          lastSuccessAtMs: toMillis(state?.lastSuccessAt)
         } satisfies NewsSourceSummary;
       })
     );

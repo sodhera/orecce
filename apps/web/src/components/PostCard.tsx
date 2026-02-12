@@ -1,6 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import {
+    BsBookmark,
+    BsBookmarkFill,
+    BsHeart,
+    BsHeartFill,
+} from "react-icons/bs";
 
 export interface Post {
     id: string;
@@ -12,12 +18,8 @@ export interface Post {
 }
 
 export default function PostCard({ post }: { post: Post }) {
-    const [vote, setVote] = useState<"up" | "down" | null>(null);
+    const [liked, setLiked] = useState(false);
     const [saved, setSaved] = useState(false);
-
-    const toggleVote = (type: "up" | "down") => {
-        setVote((current) => (current === type ? null : type));
-    };
 
     return (
         <article className="post-card">
@@ -60,25 +62,16 @@ export default function PostCard({ post }: { post: Post }) {
                     <div className="post-vote-group">
                         <button
                             type="button"
-                            className={`post-action post-vote-up ${vote === "up" ? "active" : ""}`}
-                            onClick={() => toggleVote("up")}
-                            aria-label="Upvote post"
-                            title="Upvote"
+                            className={`post-action post-like ${liked ? "active" : ""}`}
+                            onClick={() => setLiked((current) => !current)}
+                            aria-label={liked ? "Unlike post" : "Like post"}
+                            title={liked ? "Unlike" : "Like"}
                         >
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M12 4l7 8h-4v8H9v-8H5l7-8z" />
-                            </svg>
-                        </button>
-                        <button
-                            type="button"
-                            className={`post-action post-vote-down ${vote === "down" ? "active" : ""}`}
-                            onClick={() => toggleVote("down")}
-                            aria-label="Downvote post"
-                            title="Downvote"
-                        >
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M12 20l-7-8h4V4h6v8h4l-7 8z" />
-                            </svg>
+                            {liked ? (
+                                <BsHeartFill aria-hidden="true" />
+                            ) : (
+                                <BsHeart aria-hidden="true" />
+                            )}
                         </button>
                     </div>
 
@@ -89,13 +82,11 @@ export default function PostCard({ post }: { post: Post }) {
                         aria-label={saved ? "Unsave post" : "Save post"}
                         title={saved ? "Unsave" : "Save"}
                     >
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                            {saved ? (
-                                <path d="M6 3h12a2 2 0 0 1 2 2v16l-8-5.6L4 21V5a2 2 0 0 1 2-2z" />
-                            ) : (
-                                <path d="M6 3h12a2 2 0 0 1 2 2v16l-8-5.6L4 21V5a2 2 0 0 1 2-2zm0 2v12.15l6-4.2 6 4.2V5H6z" />
-                            )}
-                        </svg>
+                        {saved ? (
+                            <BsBookmarkFill aria-hidden="true" />
+                        ) : (
+                            <BsBookmark aria-hidden="true" />
+                        )}
                     </button>
                 </div>
             </div>

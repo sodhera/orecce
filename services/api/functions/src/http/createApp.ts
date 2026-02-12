@@ -287,6 +287,7 @@ export function createApp(deps: CreateAppDeps): express.Express {
 
   const handleGetUser = withAsync(async (_req, res) => {
     const identity = getAuthIdentity(res);
+    await ensureUserHasPrefills(deps, identity.uid);
     const user = await deps.repository.getOrCreateUser({
       userId: identity.uid,
       email: identity.email,
@@ -304,6 +305,7 @@ export function createApp(deps: CreateAppDeps): express.Express {
       if (req.params.userId !== identity.uid) {
         throw new ApiError(403, "forbidden", "Cannot access another user's profile.");
       }
+      await ensureUserHasPrefills(deps, identity.uid);
       const user = await deps.repository.getOrCreateUser({
         userId: identity.uid,
         email: identity.email,

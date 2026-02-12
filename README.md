@@ -3,9 +3,8 @@
 This repo is split into clean monorepo domains:
 
 - `apps/mobile/` - Expo React Native app
-- `apps/web/` - Web app for local backend testing
+- `apps/web/` - Web app (runs locally, points to cloud backend by default)
 - `services/api/` - Firebase Functions + Firestore backend API
-- `infra/local/` - local-only emulator scripts/state/logs
 
 ## For collaborators
 ### First-time setup
@@ -26,11 +25,24 @@ This repo is split into clean monorepo domains:
 - `git checkout main`
 - `git pull origin main`
 
-## Run everything (one command)
-- `npm run start:all`
-- Web UI: `http://127.0.0.1:5173`
-- API emulator base: `http://127.0.0.1:5001/ai-post-dev/us-central1/api`
-- Stop stack: `npm run stop:all`
+## Cloud backend workflow
+- Re-auth Firebase CLI (only needed for direct `firebase ...` commands):
+  - `firebase login --reauth`
+- Place the service-account JSON at:
+  - `/Users/sirishjoshi/Desktop/AI-Post/audit-3a7ec-4313afabeaac.json`
+  - or set `GOOGLE_APPLICATION_CREDENTIALS` to your JSON path
+- Deploy Functions + Firestore rules/indexes:
+  - `npm run api:deploy:cloud`
+- Migrate Auth users from emulator export to cloud:
+  - `npm run api:migrate:auth:cloud`
+- Migrate Firestore docs from emulator to cloud:
+  - Start Firestore emulator with existing export data
+  - `npm run api:migrate:firestore:cloud`
+- Populate the shared cloud prefill dataset (biography/trivia/niche):
+  - `npm run api:populate:common:cloud`
+
+Default cloud API base:
+- `https://us-central1-audit-3a7ec.cloudfunctions.net/api`
 
 ## Run app clients separately
 ### Mobile app
@@ -43,14 +55,6 @@ This repo is split into clean monorepo domains:
 
 ### API checks
 - `./services/api/scripts/prepush-check.sh`
-
-## Local data and logs
-- Firestore emulator data: `infra/local/.firebase-emulator-data/`
-- Aggregated logs: `infra/local/.logs/`
-- Firebase debug logs: `infra/local/firebase-debug.log`, `infra/local/firestore-debug.log`
-- If ports are busy, run:
-  - `npm run stop:all`
-  - `npm run start:all`
 
 ## Integration docs
 - API contract: `services/api/docs/API.md`

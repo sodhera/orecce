@@ -11,17 +11,7 @@ import { auth } from '../config/firebase';
 // CONFIGURATION
 // =============================================================================
 
-// API Base URLs
-const API_BASE_URL_PROD = 'https://us-central1-audit-3a7ec.cloudfunctions.net/agent';
-
-// For local development with iOS simulator, localhost doesn't work.
-// Options:
-// 1. Use your Mac's actual IP address (e.g., 'http://192.168.1.x:4000/agent')
-// 2. Use production API (recommended for mobile development)
-// 3. Run Android emulator which supports 10.0.2.2 for localhost
-//
-// We default to production API for mobile dev since it's simpler and more reliable.
-const API_BASE_URL = API_BASE_URL_PROD;
+const API_BASE_URL = 'https://us-central1-audit-3a7ec.cloudfunctions.net/api';
 
 // =============================================================================
 // TYPES

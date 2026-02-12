@@ -6,11 +6,13 @@ info:
     Firebase Functions backend for AI-generated feed posts.
     v0 has no auth and is intended for prototype integration.
 servers:
+  - url: https://us-central1-audit-3a7ec.cloudfunctions.net/api
+    description: Firebase cloud functions
   - url: http://127.0.0.1:5001/{projectId}/us-central1/api
-    description: Firebase emulator
+    description: Firebase emulator (optional)
     variables:
       projectId:
-        default: ai-post-dev
+        default: audit-3a7ec
   - url: http://127.0.0.1:8787
     description: Local in-memory dev server
 tags:

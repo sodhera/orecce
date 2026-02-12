@@ -67,7 +67,11 @@ function envFlagTrue(value: string | undefined): boolean {
 }
 
 function parseBoundedInt(raw: string | undefined, fallback: number, min: number, max: number): number {
-  const value = Number(raw?.trim() ?? "");
+  const normalized = raw?.trim();
+  if (!normalized) {
+    return fallback;
+  }
+  const value = Number(normalized);
   if (!Number.isFinite(value)) {
     return fallback;
   }

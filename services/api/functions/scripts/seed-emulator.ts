@@ -46,7 +46,7 @@ function printHelp(): void {
       "  npm --prefix functions run seed:emulator -- --emails demo1@orecce.local,demo2@orecce.local",
       "",
       "Options:",
-      "  --project-id <id>         Firebase project id (default: audit-3a7ec)",
+      "  --project-id <id>         Firebase project id (default: ai-post-dev)",
       "  --emails <csv>            Comma-separated emulator auth users",
       "  --password <value>        Emulator password for all seeded users",
       "  --posts-per-mode <n>      Generic prefill post count per mode",
@@ -79,7 +79,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  const projectId = String(args["project-id"] ?? process.env.FIREBASE_PROJECT_ID ?? "audit-3a7ec");
+  const projectId = String(args["project-id"] ?? process.env.FIREBASE_PROJECT_ID ?? "ai-post-dev");
   const firestoreHost = String(args["firestore-host"] ?? process.env.FIRESTORE_EMULATOR_HOST ?? "127.0.0.1:8080");
   const authHost = String(args["auth-host"] ?? process.env.FIREBASE_AUTH_EMULATOR_HOST ?? "127.0.0.1:9099");
   const password = String(args.password ?? process.env.EMULATOR_DEMO_PASSWORD ?? "Passw0rd!");

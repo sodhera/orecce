@@ -1,11 +1,5 @@
-// API Configuration
-// NOTE: iOS Simulator cannot access localhost directly.
-// Set this to your machine IP when using Firebase emulator.
-const DEV_MACHINE_IP = '10.228.254.113';
-const FIREBASE_PROJECT_ID = 'ai-post-dev';
-const API_BASE_URL = __DEV__
-    ? `http://${DEV_MACHINE_IP}:5001/${FIREBASE_PROJECT_ID}/us-central1/api`
-    : 'https://us-central1-ai-post-dev.cloudfunctions.net/api';
+// API configuration (local app -> cloud backend)
+const API_BASE_URL = 'https://us-central1-audit-3a7ec.cloudfunctions.net/api';
 
 export const API_ENDPOINTS = {
     NEWS_SOURCES: `${API_BASE_URL}/v1/news/sources`,

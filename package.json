@@ -2,12 +2,11 @@
   "name": "orecce-monorepo",
   "private": true,
   "scripts": {
-    "start:all": "./infra/local/scripts/start-all-local.sh",
-    "start:all:mock": "MOCK_LLM=true ./infra/local/scripts/start-all-local.sh",
-    "stop:all": "./infra/local/scripts/stop-all-local.sh",
     "web:dev": "npm --prefix apps/web run dev",
     "mobile:start": "npm --prefix apps/mobile run start",
-    "backend:emulators": "npm run api:emulators",
-    "api:emulators": "cd services/api && ./scripts/start-emulators-local.sh"
+    "api:deploy:cloud": "./services/api/scripts/deploy-cloud.sh",
+    "api:migrate:auth:cloud": "npm --prefix services/api/functions run migrate:auth:cloud --",
+    "api:migrate:firestore:cloud": "npm --prefix services/api/functions run migrate:firestore:cloud --",
+    "api:populate:common:cloud": "npm --prefix services/api/functions run populate:common:cloud --"
   }
 }

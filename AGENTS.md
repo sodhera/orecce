@@ -4,7 +4,6 @@
 - `apps/mobile/` contains the Expo React Native app.
 - `apps/web/` contains the local web app for manual testing.
 - `services/api/` contains the Firebase backend API.
-- `infra/local/` contains local-only emulator scripts, state, and logs.
 
 ## Separation rule
 - Do not mix changes between `apps/mobile/`, `apps/web/`, and `services/api/` unless explicitly requested.

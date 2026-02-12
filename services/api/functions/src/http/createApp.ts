@@ -2,6 +2,7 @@ import cors from "cors";
 import { randomUUID } from "crypto";
 import express, { NextFunction, Request, Response } from "express";
 import { AuthIdentity, AuthVerifier } from "../auth/firebaseAuthVerifier";
+import { NewsReadService } from "../news/newsReadService";
 import { PrefillService } from "../services/prefillService";
 import { PostGenerationService } from "../services/postGenerationService";
 import { Repository } from "../types/contracts";
@@ -22,6 +23,7 @@ interface CreateAppDeps {
   repository: Repository;
   postGenerationService: PostGenerationService;
   prefillService?: PrefillService;
+  newsReadService?: NewsReadService;
   authVerifier?: AuthVerifier;
   requireAuth: boolean;
   defaultPrefillPostsPerMode: number;
@@ -119,6 +121,12 @@ function summarizeBody(path: string, body: unknown): Record<string, unknown> | n
     return {
       biography_instructions_chars: biography.length,
       niche_instructions_chars: niche.length
+    };
+  }
+
+  if (path.startsWith("/v1/news/articles")) {
+    return {
+      source_id: (body as Record<string, unknown>).source_id ?? null
     };
   }
 
@@ -567,6 +575,72 @@ export function createApp(deps: CreateAppDeps): express.Express {
       });
 
       res.json({ ok: true, data: result });
+    })
+  );
+
+  app.get(
+    "/v1/news/sources",
+    withAsync(async (_req, res) => {
+      if (!deps.newsReadService) {
+        throw new ApiError(500, "server_misconfigured", "News read service is not configured.");
+      }
+
+      const sources = await deps.newsReadService.listSources();
+      res.json({
+        ok: true,
+        data: {
+          sources
+        }
+      });
+    })
+  );
+
+  app.get(
+    "/v1/news/articles",
+    withAsync(async (req, res) => {
+      if (!deps.newsReadService) {
+        throw new ApiError(500, "server_misconfigured", "News read service is not configured.");
+      }
+
+      const sourceId = String(req.query.source_id ?? "").trim();
+      if (!sourceId) {
+        throw new ApiError(400, "bad_request", "Missing required query param source_id.");
+      }
+      const limitRaw = Number(req.query.limit ?? "30");
+      const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(100, Math.floor(limitRaw))) : 30;
+
+      const items = await deps.newsReadService.listArticlesBySource(sourceId, limit);
+      res.json({
+        ok: true,
+        data: {
+          items
+        }
+      });
+    })
+  );
+
+  app.get(
+    "/v1/news/articles/:articleId",
+    withAsync(async (req, res) => {
+      if (!deps.newsReadService) {
+        throw new ApiError(500, "server_misconfigured", "News read service is not configured.");
+      }
+
+      const articleId = String(req.params.articleId ?? "").trim();
+      if (!articleId) {
+        throw new ApiError(400, "bad_request", "Missing required article id.");
+      }
+
+      const article = await deps.newsReadService.getArticleDetail(articleId);
+      if (!article) {
+        throw new ApiError(404, "not_found", "News article not found.");
+      }
+      res.json({
+        ok: true,
+        data: {
+          article
+        }
+      });
     })
   );
 

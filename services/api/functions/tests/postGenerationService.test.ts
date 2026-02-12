@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PostGenerationService } from "../src/services/postGenerationService";
+import { countWords } from "../src/utils/text";
 import { FakeGateway, InMemoryRepository } from "./testDoubles";
 
 describe("PostGenerationService", () => {
@@ -63,5 +64,37 @@ describe("PostGenerationService", () => {
       mode: "BIOGRAPHY",
       profile: "Bill Gates"
     });
+  });
+
+  it("compacts trivia body to one or two short sentences", async () => {
+    const repo = new InMemoryRepository();
+    const gateway = new FakeGateway([
+      {
+        title: "Wild octopus fact",
+        body: [
+          "Octopuses have three hearts and blue blood, which already feels unreal.",
+          "Two hearts move blood to the gills while the third keeps circulation going for the rest of the body.",
+          "When they swim, that system becomes less efficient and they tire faster.",
+          "This is why many octopuses prefer crawling over constant swimming."
+        ].join(" "),
+        post_type: "fact",
+        tags: ["biology"],
+        confidence: "high",
+        uncertainty_note: null
+      }
+    ]);
+
+    const service = new PostGenerationService(repo, gateway);
+    const post = await service.generateNextPost({
+      userId: "u1",
+      mode: "TRIVIA",
+      profile: "biology",
+      length: "short"
+    });
+
+    const sentences = post.body.match(/[^.!?]+[.!?]+|[^.!?]+$/g) ?? [];
+    expect(sentences.length).toBeLessThanOrEqual(2);
+    expect(countWords(post.body)).toBeLessThanOrEqual(42);
+    expect(post.body).not.toContain("This is why many octopuses prefer crawling");
   });
 });

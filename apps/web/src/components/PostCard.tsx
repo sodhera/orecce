@@ -8,6 +8,7 @@ export interface Post {
     title?: string;
     text_content: string;
     date: string;
+    sourceUrl?: string;
 }
 
 export default function PostCard({ post }: { post: Post }) {
@@ -18,6 +19,7 @@ export default function PostCard({ post }: { post: Post }) {
         BIOGRAPHY: "#7856ff",
         TRIVIA: "#1d9bf0",
         NICHE: "#ff6b35",
+        NEWS: "#17bf63",
         AI: "#7856ff",
         Frontend: "#1d9bf0",
         Startups: "#ff6b35",
@@ -68,6 +70,16 @@ export default function PostCard({ post }: { post: Post }) {
                     </div>
                 )}
                 <div className="post-content">{post.text_content}</div>
+                {post.sourceUrl && (
+                    <a
+                        className="post-source-link"
+                        href={post.sourceUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                    >
+                        Read original source
+                    </a>
+                )}
 
                 <div className="post-actions">
                     <div className="post-vote-group">

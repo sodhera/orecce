@@ -5,10 +5,7 @@ import {
     View,
     TouchableOpacity,
     ScrollView,
-    ActivityIndicator,
-    SectionList,
-    Linking,
-    Alert
+    ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -19,8 +16,9 @@ import { API_ENDPOINTS } from '../config/api';
 interface RssFeedConfig {
     id: string;
     name: string;
-    url: string;
+    url?: string;
     group?: string;
+    articleCount?: number;
 }
 
 interface FeedGroup {
@@ -48,12 +46,12 @@ export function RssScreen() {
             // Get Firebase auth token
             const { auth } = require('../config/firebase');
             if (!auth.currentUser) {
-                throw new Error('You must be signed in to view RSS feeds');
+                throw new Error('You must be signed in to view news sources');
             }
 
             const token = await auth.currentUser.getIdToken();
 
-            const response = await fetch(API_ENDPOINTS.RSS_FEEDS, {
+            const response = await fetch(API_ENDPOINTS.NEWS_SOURCES, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 },
@@ -63,11 +61,23 @@ export function RssScreen() {
                 throw new Error(`Failed to fetch feeds: ${response.status}`);
             }
 
-            const data = await response.json();
-            setFeeds(data.feeds || []);
+            const payload = await response.json();
+            const sources = payload?.data?.sources || [];
+            const mappedFeeds: RssFeedConfig[] = sources.map((source: any) => ({
+                id: String(source.id),
+                name: String(source.name || source.id),
+                url: source.homepageUrl ? String(source.homepageUrl) : undefined,
+                group: source.countryCode
+                    ? String(source.countryCode)
+                    : source.language
+                        ? String(source.language).toUpperCase()
+                        : 'Other',
+                articleCount: typeof source.articleCount === 'number' ? source.articleCount : undefined
+            }));
+            setFeeds(mappedFeeds);
         } catch (err) {
-            console.error('Error fetching RSS feeds:', err);
-            setError(err instanceof Error ? err.message : 'Failed to load RSS feeds');
+            console.error('Error fetching news sources:', err);
+            setError(err instanceof Error ? err.message : 'Failed to load news sources');
         } finally {
             setLoading(false);
         }
@@ -119,10 +129,10 @@ export function RssScreen() {
     if (loading) {
         return (
             <View style={styles.container}>
-                <ScreenHeader title="RSS Feeds" onClose={() => navigation.goBack()} />
+                <ScreenHeader title="News Sources" onClose={() => navigation.goBack()} />
                 <View style={styles.centerContainer}>
                     <ActivityIndicator size="large" color={colors.primary} />
-                    <Text style={styles.loadingText}>Loading feeds...</Text>
+                    <Text style={styles.loadingText}>Loading news sources...</Text>
                 </View>
             </View>
         );
@@ -131,10 +141,10 @@ export function RssScreen() {
     if (error) {
         return (
             <View style={styles.container}>
-                <ScreenHeader title="RSS Feeds" onClose={() => navigation.goBack()} />
+                <ScreenHeader title="News Sources" onClose={() => navigation.goBack()} />
                 <View style={styles.centerContainer}>
                     <Ionicons name="alert-circle-outline" size={64} color={colors.error} />
-                    <Text style={styles.errorTitle}>Failed to Load Feeds</Text>
+                    <Text style={styles.errorTitle}>Failed to Load Sources</Text>
                     <Text style={styles.errorText}>{error}</Text>
                     <TouchableOpacity style={styles.retryButton} onPress={fetchFeeds}>
                         <Text style={styles.retryButtonText}>Retry</Text>
@@ -146,7 +156,7 @@ export function RssScreen() {
 
     return (
         <View style={styles.container}>
-            <ScreenHeader title="RSS Feeds" onClose={() => navigation.goBack()} />
+            <ScreenHeader title="News Sources" onClose={() => navigation.goBack()} />
 
             <ScrollView style={styles.content}>
                 {groupedFeeds.map((group) => (
@@ -182,6 +192,9 @@ export function RssScreen() {
                                             style={styles.feedIcon}
                                         />
                                         <Text style={styles.feedName}>{feed.name}</Text>
+                                        {typeof feed.articleCount === 'number' ? (
+                                            <Text style={styles.feedCount}>{feed.articleCount}</Text>
+                                        ) : null}
                                         <Ionicons
                                             name="chevron-forward"
                                             size={16}
@@ -196,7 +209,7 @@ export function RssScreen() {
 
                 <View style={styles.footer}>
                     <Text style={styles.footerText}>
-                        {feeds.length} feeds across {groupedFeeds.length} categories
+                        {feeds.length} sources across {groupedFeeds.length} groups
                     </Text>
                 </View>
             </ScrollView>
@@ -296,6 +309,11 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: 15,
         color: colors.textPrimary,
+    },
+    feedCount: {
+        fontSize: 12,
+        color: colors.textSecondary,
+        marginRight: 8,
     },
     footer: {
         padding: 20,

@@ -66,6 +66,14 @@ function envFlagTrue(value: string | undefined): boolean {
   return String(value ?? "").trim().toLowerCase() === "true";
 }
 
+function parseBoundedInt(raw: string | undefined, fallback: number, min: number, max: number): number {
+  const value = Number(raw?.trim() ?? "");
+  if (!Number.isFinite(value)) {
+    return fallback;
+  }
+  return Math.max(min, Math.min(max, Math.floor(value)));
+}
+
 export function isMockLlmEnabled(): boolean {
   return envFlagTrue(process.env.MOCK_LLM_OVERRIDE) || envFlagTrue(process.env.MOCK_LLM);
 }
@@ -77,4 +85,52 @@ export function getDefaultPrefillPostsPerMode(): number {
     return 8;
   }
   return Math.max(1, Math.min(60, Math.floor(value)));
+}
+
+export function isNewsSyncEnabled(): boolean {
+  const raw = process.env.NEWS_SYNC_ENABLED?.trim();
+  if (!raw) {
+    return true;
+  }
+  return raw.toLowerCase() !== "false";
+}
+
+export function getNewsMaxSourcesPerRun(): number {
+  return parseBoundedInt(process.env.NEWS_MAX_SOURCES_PER_RUN, 12, 1, 50);
+}
+
+export function getNewsMaxArticlesPerSource(): number {
+  return parseBoundedInt(process.env.NEWS_MAX_ARTICLES_PER_SOURCE, 25, 1, 200);
+}
+
+export function getNewsSourceConcurrency(): number {
+  return parseBoundedInt(process.env.NEWS_SOURCE_CONCURRENCY, 4, 1, 10);
+}
+
+export function getNewsFeedTimeoutMs(): number {
+  return parseBoundedInt(process.env.NEWS_FEED_TIMEOUT_MS, 8000, 1000, 30000);
+}
+
+export function getNewsArticleTimeoutMs(): number {
+  return parseBoundedInt(process.env.NEWS_ARTICLE_TIMEOUT_MS, 12000, 1000, 45000);
+}
+
+export function getNewsArticleConcurrency(): number {
+  return parseBoundedInt(process.env.NEWS_ARTICLE_CONCURRENCY, 2, 1, 6);
+}
+
+export function shouldFetchNewsFullText(): boolean {
+  const raw = process.env.NEWS_FETCH_FULL_TEXT?.trim();
+  if (!raw) {
+    return true;
+  }
+  return raw.toLowerCase() !== "false";
+}
+
+export function getNewsCrawlerUserAgent(): string {
+  const value = process.env.NEWS_CRAWLER_USER_AGENT?.trim();
+  if (value) {
+    return value;
+  }
+  return "OrecceNewsBot/1.0 (+https://orecce.local/news-ingest)";
 }

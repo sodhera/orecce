@@ -5,6 +5,7 @@ ROOT_DIR="$(cd "$(dirname "$0")/../../.." && pwd)"
 API_DIR="$ROOT_DIR/services/api"
 FUNCTIONS_DIR="$API_DIR/functions"
 WEB_DIR="$ROOT_DIR/apps/web"
+WEB_PORT="${PORT:-3000}"
 ENV_FILE="$FUNCTIONS_DIR/.env"
 ENV_EXAMPLE_FILE="$FUNCTIONS_DIR/.env.example"
 BACKEND_HEALTH_URL="${BACKEND_HEALTH_URL:-http://127.0.0.1:5001/ai-post-dev/us-central1/api/health}"
@@ -42,7 +43,7 @@ if [[ ! -d "$FUNCTIONS_DIR/node_modules" ]]; then
   npm --prefix "$FUNCTIONS_DIR" ci
 fi
 
-if [[ ! -d "$WEB_DIR/node_modules" ]]; then
+if [[ ! -d "$WEB_DIR/node_modules" ]] || ! npm --prefix "$WEB_DIR" ls next --depth=0 >/dev/null 2>&1; then
   echo "Installing web dependencies..."
   npm --prefix "$WEB_DIR" install
 fi
@@ -59,7 +60,7 @@ fi
 
 echo "Starting local stack..."
 echo "Backend emulator data: $DATA_DIR"
-echo "Web URL: http://127.0.0.1:5173"
+echo "Web URL: http://127.0.0.1:$WEB_PORT"
 echo "Backend URL: http://127.0.0.1:5001/ai-post-dev/us-central1/api"
 echo "Log directory: $LOG_DIR"
 echo "Stack log: $STACK_LOG_FILE"

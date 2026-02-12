@@ -65,6 +65,35 @@ async function post<T>(
     return json.data;
 }
 
+async function get<T>(
+    path: string,
+    query?: Record<string, string | number | undefined>,
+): Promise<T> {
+    const headers = await getAuthHeaders();
+    const params = new URLSearchParams();
+    if (query) {
+        for (const [key, value] of Object.entries(query)) {
+            if (value !== undefined) {
+                params.set(key, String(value));
+            }
+        }
+    }
+    const queryString = params.toString();
+    const fullPath = queryString
+        ? `${API_BASE}${path}?${queryString}`
+        : `${API_BASE}${path}`;
+
+    const res = await fetch(fullPath, {
+        method: "GET",
+        headers,
+    });
+    const json = (await res.json()) as ApiResult<T>;
+    if (!json.ok) {
+        throw new Error(json.error?.message ?? "API error");
+    }
+    return json.data;
+}
+
 // ── Public API ──────────────────────────────────────────────────
 
 export async function generatePost(
@@ -96,4 +125,68 @@ export async function listPosts(
         page_size: pageSize,
         ...(cursor ? { cursor } : {}),
     });
+}
+
+export interface NewsSource {
+    id: string;
+    name: string;
+    homepageUrl: string;
+    language: string;
+    countryCode?: string;
+    articleCount: number;
+    lastStatus?: string;
+    lastRunAtMs?: number;
+    lastSuccessAtMs?: number;
+}
+
+export interface ListNewsSourcesResult {
+    sources: NewsSource[];
+}
+
+export interface NewsArticleListItem {
+    id: string;
+    sourceId: string;
+    sourceName: string;
+    title: string;
+    summary: string;
+    canonicalUrl: string;
+    publishedAtMs?: number;
+    fullTextStatus?: string;
+}
+
+export interface ListNewsArticlesResult {
+    items: NewsArticleListItem[];
+}
+
+export interface NewsArticleDetail extends NewsArticleListItem {
+    fullText?: string;
+    fullTextError?: string;
+    fullTextLength?: number;
+    fullTextChunkCount?: number;
+}
+
+export interface GetNewsArticleResult {
+    article: NewsArticleDetail;
+}
+
+export async function listNewsSources(): Promise<ListNewsSourcesResult> {
+    return get<ListNewsSourcesResult>("/news/sources");
+}
+
+export async function listNewsArticles(
+    sourceId: string,
+    limit: number = 20,
+): Promise<ListNewsArticlesResult> {
+    return get<ListNewsArticlesResult>("/news/articles", {
+        source_id: sourceId,
+        limit,
+    });
+}
+
+export async function getNewsArticle(
+    articleId: string,
+): Promise<GetNewsArticleResult> {
+    return get<GetNewsArticleResult>(
+        `/news/articles/${encodeURIComponent(articleId)}`,
+    );
 }

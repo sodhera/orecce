@@ -140,51 +140,6 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
                 setLoading(true);
                 setError(null);
                 setPosts([]);
-<<<<<<< HEAD
-
-                const items =
-                    mode === "ALL"
-                        ? await (async () => {
-                            const settled = await Promise.allSettled(
-                                FEED_MODES.map((m) => listPosts(m, profile, 20)),
-                            );
-
-                            const successful = settled
-                                .filter(
-                                    (
-                                        result,
-                                    ): result is PromiseFulfilledResult<{
-                                        items: ApiPost[];
-                                        nextCursor: string | null;
-                                    }> => result.status === "fulfilled",
-                                )
-                                .flatMap((result) => result.value.items);
-
-                            if (successful.length === 0) {
-                                const firstError = settled.find(
-                                    (result): result is PromiseRejectedResult =>
-                                        result.status === "rejected",
-                                );
-                                throw (
-                                    firstError?.reason ??
-                                    new Error("Failed to fetch posts.")
-                                );
-                            }
-
-                            const deduped = new Map<string, ApiPost>();
-                            successful
-                                .sort((a, b) => b.createdAtMs - a.createdAtMs)
-                                .forEach((item) => {
-                                    if (!deduped.has(item.id)) {
-                                        deduped.set(item.id, item);
-                                    }
-                                });
-
-                            return Array.from(deduped.values()).slice(0, 20);
-                        })()
-                        : (await listPosts(mode, profile, 20)).items;
-
-=======
                 if (mode === "NEWS") {
                     if (!newsSourceId) {
                         setPosts([]);
@@ -220,8 +175,52 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
                     return;
                 }
 
-                const result = await listPosts(mode, profile, 20);
->>>>>>> cc691e347f8757d292badc0220d99f14e89bab5d
+                const items =
+                    mode === "ALL"
+                        ? await (async () => {
+                              const settled = await Promise.allSettled(
+                                  FEED_MODES.map((m) =>
+                                      listPosts(m, profile, 20),
+                                  ),
+                              );
+
+                              const successful = settled
+                                  .filter(
+                                      (
+                                          result,
+                                      ): result is PromiseFulfilledResult<{
+                                          items: ApiPost[];
+                                          nextCursor: string | null;
+                                      }> => result.status === "fulfilled",
+                                  )
+                                  .flatMap((result) => result.value.items);
+
+                              if (successful.length === 0) {
+                                  const firstError = settled.find(
+                                      (
+                                          result,
+                                      ): result is PromiseRejectedResult =>
+                                          result.status === "rejected",
+                                  );
+                                  throw (
+                                      firstError?.reason ??
+                                      new Error("Failed to fetch posts.")
+                                  );
+                              }
+
+                              const deduped = new Map<string, ApiPost>();
+                              successful
+                                  .sort((a, b) => b.createdAtMs - a.createdAtMs)
+                                  .forEach((item) => {
+                                      if (!deduped.has(item.id)) {
+                                          deduped.set(item.id, item);
+                                      }
+                                  });
+
+                              return Array.from(deduped.values()).slice(0, 20);
+                          })()
+                        : (await listPosts(mode, profile, 20)).items;
+
                 if (!cancelled) {
                     setPosts(items.map(apiPostToPost));
                 }

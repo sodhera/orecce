@@ -1636,7 +1636,6 @@ img {
     margin: 16px;
     padding: 32px 20px 24px;
   }
-<<<<<<< HEAD
 
   .profile-settings-modal {
     width: calc(100vw - 16px);
@@ -1678,6 +1677,4 @@ img {
   .profile-settings-row {
     min-height: 62px;
   }
-=======
->>>>>>> cc691e347f8757d292badc0220d99f14e89bab5d
 }

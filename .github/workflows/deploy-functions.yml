@@ -21,49 +21,26 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Validate GCP auth config
-        # Exactly one auth path must be configured for google-github-actions/auth.
+      - name: Validate GCP service account key
         env:
           GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-          GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          GCP_SERVICE_ACCOUNT: ${{ vars.GCP_SERVICE_ACCOUNT }}
         run: |
-          has_key="false"
-          has_wif="false"
-
-          if [ -n "$GCP_SA_KEY" ]; then
-            has_key="true"
-          fi
-          if [ -n "$GCP_WORKLOAD_IDENTITY_PROVIDER" ] && [ -n "$GCP_SERVICE_ACCOUNT" ]; then
-            has_wif="true"
-          fi
-
-          if [ "$has_key" = "false" ] && [ "$has_wif" = "false" ]; then
-            echo "Missing GCP auth config. Set either:"
-            echo "1) secret GCP_SA_KEY (service account JSON), or"
-            echo "2) vars GCP_WORKLOAD_IDENTITY_PROVIDER + GCP_SERVICE_ACCOUNT."
+          if [ -z "$GCP_SA_KEY" ]; then
+            echo "Missing required secret: GCP_SA_KEY"
             exit 1
           fi
 
-      - name: Authenticate to Google Cloud (Service Account Key)
-        if: ${{ secrets.GCP_SA_KEY != '' }}
+      - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Authenticate to Google Cloud (Workload Identity)
-        if: ${{ secrets.GCP_SA_KEY == '' && vars.GCP_WORKLOAD_IDENTITY_PROVIDER != '' && vars.GCP_SERVICE_ACCOUNT != '' }}
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
-
       - name: Setup gcloud CLI
         uses: google-github-actions/setup-gcloud@v2
         with:
-          project_id: ${{ vars.FIREBASE_PROJECT_ID || 'audit-3a7ec' }}
+          project_id: audit-3a7ec
 
       - name: Deploy API Functions + Firestore config
         env:
-          FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID || 'audit-3a7ec' }}
+          FIREBASE_PROJECT_ID: audit-3a7ec
         run: npm run api:deploy:cloud

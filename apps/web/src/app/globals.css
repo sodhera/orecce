@@ -397,8 +397,9 @@ img {
   gap: 12px;
 }
 
-.sports-login-block {
+.sports-login-panel {
   padding: 20px 16px;
+  border-bottom: 1px solid var(--bg-border);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -420,8 +421,14 @@ img {
   font-weight: 700;
 }
 
-.sports-state {
+.sports-feed {
+  display: flex;
+  flex-direction: column;
+}
+
+.sports-feed-state {
   padding: 16px;
+  border-bottom: 1px solid var(--bg-border);
   color: var(--text-secondary);
   font-size: 14px;
 }
@@ -430,85 +437,23 @@ img {
   color: #d93025;
 }
 
-.sports-card {
-  overflow: visible;
+.sports-post {
+  cursor: default;
 }
 
-.sports-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--bg-border);
+.sports-post:hover {
+  background: transparent;
 }
 
-.sports-card-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--text-secondary);
-  font-size: 13px;
-}
-
-.sports-badge {
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.sports-separator {
-  color: var(--text-secondary);
-}
-
-.sports-score {
-  color: var(--text-secondary);
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.sports-card-content {
-  padding: 14px 16px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.sports-title {
-  font-size: 20px;
-  line-height: 1.3;
-  font-weight: 800;
-  color: var(--text-primary);
-}
-
-.sports-bullets {
+.sports-inline-bullets {
+  margin-top: 8px;
   margin-left: 18px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   color: var(--text-primary);
   font-size: 15px;
   line-height: 1.45;
-}
-
-.sports-article {
-  color: var(--text-primary);
-  font-size: 15px;
-  line-height: 1.6;
-  white-space: pre-wrap;
-}
-
-.sports-card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 10px;
-  border-top: 1px solid var(--bg-border);
-  padding-top: 12px;
-}
-
-.sports-footer-note {
-  color: var(--text-secondary);
-  font-size: 12px;
 }
 
 .utility-card {

@@ -66,76 +66,57 @@ export default function SportsPage() {
                 </div>
 
                 {!isAuthenticated && !loading ? (
-                    <div className="utility-page-body">
-                        <section className="utility-card">
-                            <div className="sports-login-block">
-                                <p className="sports-login-title">Sign in to view sports stories</p>
-                                <button
-                                    type="button"
-                                    className="sports-login-btn"
-                                    onClick={() => setShowAuthModal(true)}
-                                >
-                                    Log in / Sign up
-                                </button>
-                            </div>
-                        </section>
+                    <div className="sports-login-panel">
+                        <p className="sports-login-title">Sign in to view sports stories</p>
+                        <button
+                            type="button"
+                            className="sports-login-btn"
+                            onClick={() => setShowAuthModal(true)}
+                        >
+                            Log in / Sign up
+                        </button>
                     </div>
                 ) : null}
 
                 {isAuthenticated ? (
-                    <div className="utility-page-body">
+                    <div className="sports-feed">
                         {fetching ? (
-                            <section className="utility-card">
-                                <div className="sports-state">Loading latest sports stories...</div>
-                            </section>
+                            <div className="sports-feed-state">Loading latest sports stories...</div>
                         ) : null}
 
                         {error ? (
-                            <section className="utility-card">
-                                <div className="sports-state sports-state-error">{error}</div>
-                            </section>
+                            <div className="sports-feed-state sports-state-error">{error}</div>
                         ) : null}
 
                         {!fetching && !error && stories.length === 0 ? (
-                            <section className="utility-card">
-                                <div className="sports-state">No sports stories available right now.</div>
-                            </section>
+                            <div className="sports-feed-state">No sports stories available right now.</div>
                         ) : null}
 
                         {stories.map((story) => (
-                            <article key={story.id} className="utility-card sports-card">
-                                <div className="sports-card-header">
-                                    <div className="sports-card-meta">
-                                        <span className="sports-badge">{story.sourceName}</span>
-                                        <span className="sports-separator">·</span>
-                                        <span>{formatDateFromMs(story.publishedAtMs)}</span>
+                            <article key={story.id} className="post-card sports-post">
+                                <div className="post-body">
+                                    <div className="post-header">
+                                        <span className="post-topic-badge">{story.sourceName}</span>
+                                        <span className="post-dot">·</span>
+                                        <span className="post-time">{formatDateFromMs(story.publishedAtMs)}</span>
+                                        <span className="post-dot">·</span>
+                                        <span className="post-time">Score {story.importanceScore}</span>
                                     </div>
-                                    <span className="sports-score">Score {story.importanceScore}</span>
-                                </div>
-
-                                <div className="sports-card-content">
-                                    <h2 className="sports-title">{story.title}</h2>
-                                    <ul className="sports-bullets">
+                                    <h2 className="post-title">{story.title}</h2>
+                                    <ul className="sports-inline-bullets">
                                         {story.bulletPoints.map((point, index) => (
                                             <li key={`${story.id}-point-${index}`}>{point}</li>
                                         ))}
                                     </ul>
-                                    <p className="sports-article">{story.reconstructedArticle}</p>
-                                    <div className="sports-card-footer">
-                                        <span className="sports-footer-note">
-                                            {story.summarySource === "llm"
-                                                ? "Reconstructed with GPT-5-mini"
-                                                : "Fallback summary"}
-                                        </span>
-                                        <a
-                                            href={story.canonicalUrl}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="utility-link"
-                                        >
-                                            Read original source
-                                        </a>
-                                    </div>
+                                    <p className="post-content">{story.reconstructedArticle}</p>
+                                    <a
+                                        href={story.canonicalUrl}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="post-source-link"
+                                    >
+                                        Read original source
+                                    </a>
                                 </div>
                             </article>
                         ))}

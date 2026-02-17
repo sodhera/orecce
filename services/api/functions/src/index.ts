@@ -2,6 +2,7 @@ import { initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import * as functionsV1 from "firebase-functions/v1";
 import { onRequest } from "firebase-functions/v2/https";
+import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { FirebaseAuthVerifier } from "./auth/firebaseAuthVerifier";
 import {
@@ -26,7 +27,7 @@ import { SportsNewsService } from "./news/sportsNewsService";
 import { FirestoreUserSportsNewsRepository } from "./news/userSportsNewsRepository";
 import { UserSportsNewsService } from "./news/userSportsNewsService";
 import { FirestoreRepository } from "./repositories/firestoreRepository";
-import { logInfo } from "./utils/logging";
+import { logError, logInfo } from "./utils/logging";
 import { PrefillService } from "./services/prefillService";
 import { PostGenerationService } from "./services/postGenerationService";
 
@@ -125,5 +126,64 @@ export const syncNewsEvery3Hours = onSchedule(
       total_inserted: result.totalInsertedCount,
       total_updated: result.totalUpdatedCount
     });
+  }
+);
+
+export const processSportsRefreshJob = onDocumentWritten(
+  {
+    region: "us-central1",
+    document: "userSportsNewsRefreshJobs/{jobId}",
+    timeoutSeconds: 540,
+    memory: "1GiB",
+    maxInstances: 5
+  },
+  async (event) => {
+    const after = event.data?.after;
+    if (!after?.exists) {
+      return;
+    }
+
+    const data = (after.data() ?? {}) as Record<string, unknown>;
+    const status = String(data.status ?? "");
+    const userId = String(data.userId ?? "").trim();
+    const sport = String(data.sport ?? "").trim().toLowerCase();
+
+    if (status !== "queued" || !userId || sport !== "football") {
+      return;
+    }
+
+    const claimed = await userSportsNewsRepository.claimRefreshForUser(userId, "football");
+    if (!claimed) {
+      return;
+    }
+
+    try {
+      await userSportsNewsService.refreshUserStories({
+        userId,
+        sport,
+        limit: 60,
+        userAgent: "OrecceSportsAgent/1.0 (+https://orecce.local/news-sports)",
+        feedTimeoutMs: 8_000,
+        articleTimeoutMs: 12_000
+      });
+      await userSportsNewsRepository.finishRefreshForUser(userId, "football", {
+        success: true
+      });
+      logInfo("news.sports.refresh.job.complete", {
+        user_id: userId,
+        sport
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      await userSportsNewsRepository.finishRefreshForUser(userId, "football", {
+        success: false,
+        errorMessage: message
+      });
+      logError("news.sports.refresh.job.failed", {
+        user_id: userId,
+        sport,
+        message
+      });
+    }
   }
 );

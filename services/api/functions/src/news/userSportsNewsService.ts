@@ -57,6 +57,26 @@ export class UserSportsNewsService {
     await this.repository.replaceSyncStateForUser(userId, sport, state);
   }
 
+  async requestRefresh(userId: string, sport: string): Promise<{ sport: SportId }> {
+    const normalized = UserSportsNewsService.normalizeSport(sport);
+    const existingState = await this.repository.getSyncStateForUser(userId, normalized);
+    if (!existingState || existingState.status !== "running") {
+      const now = Date.now();
+      await this.updateSyncState(userId, normalized, {
+        status: "running",
+        step: "looking_games",
+        message: "Queued sports refresh.",
+        totalGames: existingState?.totalGames ?? 0,
+        processedGames: existingState?.processedGames ?? 0,
+        foundGames: existingState?.foundGames ?? [],
+        startedAtMs: now,
+        updatedAtMs: now
+      });
+    }
+    await this.repository.enqueueRefreshForUser(userId, normalized);
+    return { sport: normalized };
+  }
+
   async refreshUserStories(input: RefreshUserSportsStoriesInput): Promise<{ sport: SportId; stories: SportsStory[] }> {
     const sport = UserSportsNewsService.normalizeSport(input.sport);
     const timeZone = "America/New_York";

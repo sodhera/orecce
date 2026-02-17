@@ -32,6 +32,6 @@ export MOCK_LLM_OVERRIDE=false
 npx --yes "firebase-tools@${FIREBASE_TOOLS_VERSION}" deploy \
   --project "$PROJECT_ID" \
   --config "$API_DIR/firebase.json" \
-  --only "functions:api,functions:onAuthUserCreate,functions:syncNewsEvery3Hours,firestore:indexes,firestore:rules" \
+  --only "functions:api,functions:onAuthUserCreate,functions:syncNewsEvery3Hours,functions:processSportsRefreshJob,firestore:indexes,firestore:rules" \
   --token "$TOKEN" \
   --force

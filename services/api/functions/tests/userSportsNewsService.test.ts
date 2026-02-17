@@ -7,6 +7,21 @@ class InMemoryUserSportsNewsRepository implements UserSportsNewsRepository {
   private readonly rows = new Map<string, SportsStory[]>();
   public readonly draftRows = new Map<string, SportsGameDraft[]>();
   public readonly syncRows = new Map<string, UserSportsSyncState>();
+  public queuedRefreshes: Array<{ userId: string; sport: "football" }> = [];
+
+  async enqueueRefreshForUser(userId: string, sport: "football"): Promise<void> {
+    this.queuedRefreshes.push({ userId, sport });
+  }
+
+  async claimRefreshForUser(_userId: string, _sport: "football"): Promise<boolean> {
+    return true;
+  }
+
+  async finishRefreshForUser(
+    _userId: string,
+    _sport: "football",
+    _input: { success: boolean; errorMessage?: string }
+  ): Promise<void> {}
 
   async replaceSyncStateForUser(userId: string, sport: "football", state: UserSportsSyncState): Promise<void> {
     this.syncRows.set(`${userId}:${sport}`, { ...state, foundGames: [...state.foundGames] });

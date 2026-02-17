@@ -15,6 +15,9 @@ function toMillis(value: unknown): number | undefined {
 }
 
 export interface UserSportsNewsRepository {
+  enqueueRefreshForUser(userId: string, sport: SportId): Promise<void>;
+  claimRefreshForUser(userId: string, sport: SportId): Promise<boolean>;
+  finishRefreshForUser(userId: string, sport: SportId, input: { success: boolean; errorMessage?: string }): Promise<void>;
   replaceSyncStateForUser(userId: string, sport: SportId, state: UserSportsSyncState): Promise<void>;
   getSyncStateForUser(userId: string, sport: SportId): Promise<UserSportsSyncState | null>;
   replaceGameDraftsForUser(userId: string, sport: SportId, gameDateKey: string, drafts: SportsGameDraft[]): Promise<void>;
@@ -47,8 +50,126 @@ export class FirestoreUserSportsNewsRepository implements UserSportsNewsReposito
   private readonly storiesCollection = "userSportsNewsStories";
   private readonly gameDraftsCollection = "userSportsNewsGameDrafts";
   private readonly syncStateCollection = "userSportsNewsSyncState";
+  private readonly refreshJobsCollection = "userSportsNewsRefreshJobs";
 
   constructor(private readonly db: Firestore) {}
+
+  private refreshDocRef(userId: string, sport: SportId): FirebaseFirestore.DocumentReference {
+    const docId = hashText(`${userId}:${sport}:refresh`);
+    return this.db.collection(this.refreshJobsCollection).doc(docId);
+  }
+
+  async enqueueRefreshForUser(userId: string, sport: SportId): Promise<void> {
+    const ref = this.refreshDocRef(userId, sport);
+    await this.db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      const now = Timestamp.now();
+      const current = (snap.data() ?? {}) as Record<string, unknown>;
+      const status = String(current.status ?? "idle");
+
+      if (status === "processing") {
+        tx.set(
+          ref,
+          {
+            userId,
+            sport,
+            status: "processing",
+            pending: true,
+            requestedAt: now,
+            updatedAt: now
+          },
+          { merge: true }
+        );
+        return;
+      }
+
+      tx.set(
+        ref,
+        {
+          userId,
+          sport,
+          status: "queued",
+          pending: false,
+          requestedAt: now,
+          updatedAt: now,
+          errorMessage: null
+        },
+        { merge: true }
+      );
+    });
+  }
+
+  async claimRefreshForUser(userId: string, sport: SportId): Promise<boolean> {
+    const ref = this.refreshDocRef(userId, sport);
+    return this.db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists) {
+        return false;
+      }
+
+      const data = (snap.data() ?? {}) as Record<string, unknown>;
+      if (String(data.status ?? "") !== "queued") {
+        return false;
+      }
+
+      const now = Timestamp.now();
+      tx.set(
+        ref,
+        {
+          status: "processing",
+          pending: false,
+          startedAt: now,
+          updatedAt: now,
+          errorMessage: null
+        },
+        { merge: true }
+      );
+      return true;
+    });
+  }
+
+  async finishRefreshForUser(
+    userId: string,
+    sport: SportId,
+    input: { success: boolean; errorMessage?: string }
+  ): Promise<void> {
+    const ref = this.refreshDocRef(userId, sport);
+    await this.db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      if (!snap.exists) {
+        return;
+      }
+      const data = (snap.data() ?? {}) as Record<string, unknown>;
+      const pending = Boolean(data.pending);
+      const now = Timestamp.now();
+
+      if (pending) {
+        tx.set(
+          ref,
+          {
+            status: "queued",
+            pending: false,
+            updatedAt: now,
+            errorMessage: null
+          },
+          { merge: true }
+        );
+        return;
+      }
+
+      tx.set(
+        ref,
+        {
+          status: input.success ? "idle" : "error",
+          pending: false,
+          completedAt: now,
+          updatedAt: now,
+          errorMessage: input.success ? null : input.errorMessage ?? "Unknown refresh error"
+        },
+        { merge: true }
+      );
+    });
+  }
 
   async replaceSyncStateForUser(userId: string, sport: SportId, state: UserSportsSyncState): Promise<void> {
     const docId = hashText(`${userId}:${sport}:sync`);

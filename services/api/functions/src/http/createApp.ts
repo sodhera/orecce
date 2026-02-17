@@ -603,55 +603,41 @@ export function createApp(deps: CreateAppDeps): express.Express {
       const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(20, Math.floor(limitRaw))) : 8;
       const refresh = String(req.query.refresh ?? "").trim().toLowerCase() === "true";
       const identity = getAuthIdentity(res);
-      let refreshError: string | null = null;
 
       if (refresh) {
-        try {
-          await deps.userSportsNewsService.refreshUserStories({
-            userId: identity.uid,
-            sport,
-            limit: 60,
-            userAgent: "OrecceSportsAgent/1.0 (+https://orecce.local/news-sports)",
-            feedTimeoutMs: 8_000,
-            articleTimeoutMs: 12_000
-          });
-        } catch (error) {
-          refreshError = error instanceof Error ? error.message : String(error);
-          logError("news.sports.refresh.failed", {
-            user_id: identity.uid,
-            sport,
-            message: refreshError
-          });
-        }
+        await deps.userSportsNewsService.requestRefresh(identity.uid, sport);
       }
 
       let data = await deps.userSportsNewsService.listUserStories(identity.uid, sport, limit);
       if (!data.stories.length) {
-        try {
-          await deps.userSportsNewsService.refreshUserStories({
-            userId: identity.uid,
-            sport,
-            limit: 60,
-            userAgent: "OrecceSportsAgent/1.0 (+https://orecce.local/news-sports)",
-            feedTimeoutMs: 8_000,
-            articleTimeoutMs: 12_000
-          });
-        } catch (error) {
-          refreshError = refreshError ?? (error instanceof Error ? error.message : String(error));
-          logError("news.sports.refresh.bootstrap_failed", {
-            user_id: identity.uid,
-            sport,
-            message: refreshError
-          });
-        }
+        await deps.userSportsNewsService.requestRefresh(identity.uid, sport);
         data = await deps.userSportsNewsService.listUserStories(identity.uid, sport, limit);
       }
 
       res.json({
         ok: true,
-        data,
-        meta: {
-          refreshError
+        data
+      });
+    })
+  );
+
+  app.post(
+    "/v1/news/sports/refresh",
+    withAsync(async (req, res) => {
+      if (!deps.userSportsNewsService) {
+        throw new ApiError(500, "server_misconfigured", "User sports news service is not configured.");
+      }
+      const sport = String(req.body?.sport ?? req.query.sport ?? "").trim();
+      if (!sport) {
+        throw new ApiError(400, "bad_request", "Missing sport.");
+      }
+      const identity = getAuthIdentity(res);
+      await deps.userSportsNewsService.requestRefresh(identity.uid, sport);
+      res.json({
+        ok: true,
+        data: {
+          sport,
+          queued: true
         }
       });
     })

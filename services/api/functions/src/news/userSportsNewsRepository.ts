@@ -1,7 +1,7 @@
 import { createHash } from "crypto";
 import { Firestore, Timestamp } from "firebase-admin/firestore";
 import { SportId } from "./sportsNewsSources";
-import { SportsStory } from "./sportsNewsService";
+import { SportsGameDraft, SportsStory } from "./sportsNewsService";
 
 function hashText(value: string): string {
   return createHash("sha256").update(value).digest("hex");
@@ -15,18 +15,66 @@ function toMillis(value: unknown): number | undefined {
 }
 
 export interface UserSportsNewsRepository {
+  replaceGameDraftsForUser(userId: string, sport: SportId, gameDateKey: string, drafts: SportsGameDraft[]): Promise<void>;
   replaceStoriesForUser(userId: string, sport: SportId, stories: SportsStory[]): Promise<void>;
   listStoriesForUser(userId: string, sport: SportId, limit: number): Promise<SportsStory[]>;
 }
 
 export class FirestoreUserSportsNewsRepository implements UserSportsNewsRepository {
-  private readonly collection = "userSportsNewsStories";
+  private readonly storiesCollection = "userSportsNewsStories";
+  private readonly gameDraftsCollection = "userSportsNewsGameDrafts";
 
   constructor(private readonly db: Firestore) {}
 
+  async replaceGameDraftsForUser(
+    userId: string,
+    sport: SportId,
+    gameDateKey: string,
+    drafts: SportsGameDraft[]
+  ): Promise<void> {
+    const existing = await this.db
+      .collection(this.gameDraftsCollection)
+      .where("userId", "==", userId)
+      .where("sport", "==", sport)
+      .get();
+
+    const batch = this.db.batch();
+    for (const doc of existing.docs) {
+      batch.delete(doc.ref);
+    }
+
+    const now = Timestamp.now();
+    const expiresAt = Timestamp.fromMillis(now.toMillis() + 48 * 60 * 60 * 1000);
+    for (const draft of drafts) {
+      const docId = hashText(`${userId}:${sport}:${draft.gameId}`);
+      const ref = this.db.collection(this.gameDraftsCollection).doc(docId);
+      batch.set(ref, {
+        userId,
+        sport,
+        gameId: draft.gameId,
+        gameName: draft.gameName,
+        gameDateKey: draft.gameDateKey || gameDateKey,
+        articleCount: draft.articleRefs.length,
+        articles: draft.articleRefs.map((item) => ({
+          itemIndex: item.itemIndex,
+          sourceId: item.sourceId,
+          sourceName: item.sourceName,
+          title: item.title,
+          canonicalUrl: item.canonicalUrl,
+          publishedAt: typeof item.publishedAtMs === "number" ? Timestamp.fromMillis(item.publishedAtMs) : null
+        })),
+        createdAt: now,
+        updatedAt: now,
+        expiresAt
+      });
+    }
+
+    await batch.commit();
+  }
+
   async replaceStoriesForUser(userId: string, sport: SportId, stories: SportsStory[]): Promise<void> {
     const existing = await this.db
-      .collection(this.collection)
+      .collection(this.storiesCollection)
       .where("userId", "==", userId)
       .where("sport", "==", sport)
       .get();
@@ -38,8 +86,8 @@ export class FirestoreUserSportsNewsRepository implements UserSportsNewsReposito
 
     const now = Timestamp.now();
     stories.forEach((story, index) => {
-      const docId = hashText(`${userId}:${sport}:${story.canonicalUrl.toLowerCase()}`);
-      const ref = this.db.collection(this.collection).doc(docId);
+      const docId = hashText(`${userId}:${sport}:${story.gameDateKey}:${story.gameId}`);
+      const ref = this.db.collection(this.storiesCollection).doc(docId);
       batch.set(ref, {
         userId,
         sport,
@@ -48,6 +96,9 @@ export class FirestoreUserSportsNewsRepository implements UserSportsNewsReposito
         title: story.title,
         canonicalUrl: story.canonicalUrl,
         publishedAt: typeof story.publishedAtMs === "number" ? Timestamp.fromMillis(story.publishedAtMs) : null,
+        gameId: story.gameId,
+        gameName: story.gameName,
+        gameDateKey: story.gameDateKey,
         importanceScore: story.importanceScore,
         bulletPoints: story.bulletPoints,
         reconstructedArticle: story.reconstructedArticle,
@@ -66,7 +117,7 @@ export class FirestoreUserSportsNewsRepository implements UserSportsNewsReposito
   async listStoriesForUser(userId: string, sport: SportId, limit: number): Promise<SportsStory[]> {
     const boundedLimit = Math.max(1, Math.min(40, Math.floor(limit)));
     const snap = await this.db
-      .collection(this.collection)
+      .collection(this.storiesCollection)
       .where("userId", "==", userId)
       .where("sport", "==", sport)
       .get();
@@ -81,6 +132,9 @@ export class FirestoreUserSportsNewsRepository implements UserSportsNewsReposito
         title: String(data.title ?? ""),
         canonicalUrl: String(data.canonicalUrl ?? ""),
         publishedAtMs: toMillis(data.publishedAt),
+        gameId: String(data.gameId ?? ""),
+        gameName: String(data.gameName ?? ""),
+        gameDateKey: String(data.gameDateKey ?? ""),
         importanceScore: typeof data.importanceScore === "number" ? data.importanceScore : 0,
         bulletPoints: Array.isArray(data.bulletPoints) ? data.bulletPoints.map((item) => String(item)) : [],
         reconstructedArticle: String(data.reconstructedArticle ?? ""),

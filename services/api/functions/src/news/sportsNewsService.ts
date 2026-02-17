@@ -1,8 +1,9 @@
+import { createHash } from "crypto";
+import { getOpenAiApiKey, getOpenAiBaseUrl } from "../config/runtimeConfig";
 import { fetchArticleFullText } from "./articleTextFetcher";
 import { parseFeedXml } from "./feedParser";
-import { ParsedFeedArticle } from "./types";
 import { SportFeedSource, SportId, SPORT_NEWS_SOURCES } from "./sportsNewsSources";
-import { getOpenAiApiKey, getOpenAiBaseUrl } from "../config/runtimeConfig";
+import { ParsedFeedArticle } from "./types";
 
 interface FetchFeedOptions {
   timeoutMs: number;
@@ -17,13 +18,32 @@ interface FeedFetchResult {
 type FeedFetcher = (url: string, options: FetchFeedOptions) => Promise<FeedFetchResult>;
 type FeedParser = (xml: string) => ParsedFeedArticle[];
 type ArticleTextFetcher = (url: string, options: FetchFeedOptions) => Promise<string>;
-type StoryBuilder = (input: BuildStoryInput) => Promise<StoryDraft>;
+type GameClusterBuilder = (input: GameClusterBuilderInput) => Promise<SportsGameDraft[]>;
+type GameStoryBuilder = (input: GameStoryBuilderInput) => Promise<GameStoryDraft>;
 
 interface SportsNewsServiceDeps {
   feedFetcher?: FeedFetcher;
   feedParser?: FeedParser;
   articleTextFetcher?: ArticleTextFetcher;
-  storyBuilder?: StoryBuilder;
+  gameClusterBuilder?: GameClusterBuilder;
+  gameStoryBuilder?: GameStoryBuilder;
+}
+
+export interface GameArticleReference {
+  itemIndex: number;
+  sourceId: string;
+  sourceName: string;
+  title: string;
+  summary: string;
+  canonicalUrl: string;
+  publishedAtMs?: number;
+}
+
+export interface SportsGameDraft {
+  gameId: string;
+  gameName: string;
+  gameDateKey: string;
+  articleRefs: GameArticleReference[];
 }
 
 export interface SportsStory {
@@ -34,6 +54,9 @@ export interface SportsStory {
   title: string;
   canonicalUrl: string;
   publishedAtMs?: number;
+  gameId: string;
+  gameName: string;
+  gameDateKey: string;
   importanceScore: number;
   bulletPoints: string[];
   reconstructedArticle: string;
@@ -48,28 +71,47 @@ export interface FetchSportsStoriesInput {
   userAgent: string;
   feedTimeoutMs: number;
   articleTimeoutMs: number;
+  timeZone?: string;
+}
+
+export interface FetchSportsStoriesResult {
+  sport: SportId;
+  gameDateKey: string;
+  gameDrafts: SportsGameDraft[];
+  stories: SportsStory[];
 }
 
 interface CandidateStoryItem extends ParsedFeedArticle {
   source: SportFeedSource;
+  itemIndex: number;
 }
 
-interface BuildStoryInput {
-  title: string;
-  sourceName: string;
-  canonicalUrl: string;
-  publishedAtMs?: number;
+interface GameClusterBuilderInput {
+  sport: SportId;
+  gameDateKey: string;
+  articles: GameArticleReference[];
+}
+
+interface GameStoryArticleInput extends GameArticleReference {
   rawText: string;
+  fullTextStatus: "ready" | "fallback";
 }
 
-interface StoryDraft {
+interface GameStoryBuilderInput {
+  sport: SportId;
+  gameName: string;
+  gameDateKey: string;
+  articles: GameStoryArticleInput[];
+}
+
+interface GameStoryDraft {
   importanceScore: number;
   bulletPoints: string[];
   reconstructedArticle: string;
   summarySource: "llm" | "fallback";
 }
 
-interface OpenAiSummaryResponse {
+interface OpenAiResponse {
   output_text?: string;
   output?: Array<{
     type?: string;
@@ -98,6 +140,10 @@ async function defaultFeedFetcher(url: string, options: FetchFeedOptions): Promi
   };
 }
 
+function hashText(value: string): string {
+  return createHash("sha256").update(value).digest("hex");
+}
+
 function normalizeWhitespace(value: string): string {
   return value.replace(/\s+/g, " ").trim();
 }
@@ -121,123 +167,109 @@ function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
 
-function computeRecencyScore(publishedAtMs: number | undefined): number {
-  if (!publishedAtMs) {
-    return 35;
+function validTimeZone(value: string | undefined): string {
+  const candidate = String(value ?? "").trim();
+  if (!candidate) {
+    return "America/New_York";
   }
-  const hoursOld = Math.max(0, (Date.now() - publishedAtMs) / 3_600_000);
-  if (hoursOld <= 2) {
-    return 95;
+  try {
+    Intl.DateTimeFormat("en-US", { timeZone: candidate }).format(new Date());
+    return candidate;
+  } catch {
+    return "America/New_York";
   }
-  if (hoursOld <= 6) {
-    return 85;
-  }
-  if (hoursOld <= 24) {
-    return 72;
-  }
-  if (hoursOld <= 48) {
-    return 60;
-  }
-  return 45;
 }
 
-function computeTopicWeight(text: string): number {
-  const lower = text.toLowerCase();
-  let score = 0;
-  const highPriority = [
-    "breaking",
-    "sacked",
-    "injury",
-    "transfer",
-    "final",
-    "champions league",
-    "world cup",
-    "title race",
-    "relegation"
-  ];
-  const mediumPriority = ["goal", "manager", "derby", "ban", "contract", "cup"];
+function toDateKey(timestampMs: number, timeZone: string): string {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(new Date(timestampMs));
 
-  for (const token of highPriority) {
-    if (lower.includes(token)) {
-      score += 8;
+  const year = parts.find((part) => part.type === "year")?.value ?? "1970";
+  const month = parts.find((part) => part.type === "month")?.value ?? "01";
+  const day = parts.find((part) => part.type === "day")?.value ?? "01";
+  return `${year}-${month}-${day}`;
+}
+
+function resolveYesterdayDateKey(timeZone: string): string {
+  return toDateKey(Date.now() - 24 * 60 * 60 * 1000, timeZone);
+}
+
+function asSportId(value: string): SportId | null {
+  const normalized = String(value ?? "").trim().toLowerCase();
+  return normalized === "football" ? "football" : null;
+}
+
+function parseOpenAiText(payload: OpenAiResponse): string {
+  if (typeof payload.output_text === "string" && payload.output_text.trim()) {
+    return payload.output_text.trim();
+  }
+  if (!Array.isArray(payload.output)) {
+    return "";
+  }
+
+  return payload.output
+    .filter((item) => item.type === "message" || item.type === undefined)
+    .flatMap((item) => item.content ?? [])
+    .map((item) => (typeof item.text === "string" ? item.text : ""))
+    .join("")
+    .trim();
+}
+
+function extractGameNameFromText(value: string): string | null {
+  const normalized = normalizeWhitespace(value);
+  if (!normalized) {
+    return null;
+  }
+
+  const scorelineMatch = normalized.match(/^(.+?)\s+\d+\s*[-–]\s*\d+\s+(.+)$/i);
+  if (scorelineMatch) {
+    return `${scorelineMatch[1].trim()} vs ${scorelineMatch[2].trim()}`;
+  }
+
+  const versusMatch = normalized.match(/^(.+?)\s+(?:vs|v|against)\s+(.+)$/i);
+  if (versusMatch) {
+    return `${versusMatch[1].trim()} vs ${versusMatch[2].trim()}`;
+  }
+
+  const beatMatch = normalized.match(/^(.+?)\s+(?:beat|beats|defeat|defeats|defeated|edge|edges|edged)\s+(.+)$/i);
+  if (beatMatch) {
+    return `${beatMatch[1].trim()} vs ${beatMatch[2].trim()}`;
+  }
+
+  return null;
+}
+
+function buildFallbackGameDrafts(input: GameClusterBuilderInput): SportsGameDraft[] {
+  const byGame = new Map<string, GameArticleReference[]>();
+
+  for (const article of input.articles) {
+    const inferred = extractGameNameFromText(article.title) || extractGameNameFromText(article.summary) || article.title;
+    const gameName = truncate(normalizeWhitespace(inferred), 120);
+    if (!gameName) {
+      continue;
     }
-  }
-  for (const token of mediumPriority) {
-    if (lower.includes(token)) {
-      score += 4;
+    if (!byGame.has(gameName)) {
+      byGame.set(gameName, []);
     }
-  }
-  return clamp(score, 0, 35);
-}
-
-function buildFallbackStoryDraft(input: BuildStoryInput): StoryDraft {
-  const sentences = splitSentences(input.rawText);
-  const bulletPoints = (sentences.length ? sentences : [input.title])
-    .slice(0, 6)
-    .map((sentence) => truncate(sentence, 180));
-  const reconstructedArticle = sentences.length
-    ? truncate(sentences.slice(0, 7).join(" "), 1_400)
-    : `${input.title}. Source: ${input.sourceName}.`;
-  const importanceScore = clamp(
-    Math.round(computeRecencyScore(input.publishedAtMs) + computeTopicWeight(`${input.title} ${input.rawText}`)),
-    1,
-    100
-  );
-
-  return {
-    importanceScore,
-    bulletPoints,
-    reconstructedArticle,
-    summarySource: "fallback"
-  };
-}
-
-function parseOpenAiText(json: OpenAiSummaryResponse): string {
-  if (typeof json.output_text === "string" && json.output_text.trim()) {
-    return json.output_text.trim();
-  }
-  if (Array.isArray(json.output)) {
-    const text = json.output
-      .filter((item) => item.type === "message" || item.type === undefined)
-      .flatMap((item) => item.content ?? [])
-      .map((part) => (typeof part.text === "string" ? part.text : ""))
-      .join("")
-      .trim();
-    if (text) {
-      return text;
-    }
-  }
-  return "";
-}
-
-function parseStoryDraftFromOpenAi(content: string): StoryDraft {
-  const parsed = JSON.parse(content) as Record<string, unknown>;
-  const bulletPointsRaw = Array.isArray(parsed.bullet_points) ? parsed.bullet_points : [];
-  const bulletPoints = bulletPointsRaw
-    .map((item) => String(item ?? "").trim())
-    .filter(Boolean)
-    .slice(0, 7);
-  const reconstructedArticle = String(parsed.reconstructed_article ?? "")
-    .trim()
-    .slice(0, 2_200);
-  const importanceScore = clamp(Math.round(Number(parsed.importance_score ?? 50)), 1, 100);
-
-  if (!bulletPoints.length || !reconstructedArticle) {
-    throw new Error("invalid-llm-summary-payload");
+    byGame.get(gameName)?.push(article);
   }
 
-  return {
-    importanceScore,
-    bulletPoints,
-    reconstructedArticle,
-    summarySource: "llm"
-  };
+  return Array.from(byGame.entries()).map(([gameName, articleRefs]) => ({
+    gameId: hashText(`${input.sport}:${input.gameDateKey}:${gameName.toLowerCase()}`),
+    gameName,
+    gameDateKey: input.gameDateKey,
+    articleRefs: articleRefs.sort((a, b) => (b.publishedAtMs ?? 0) - (a.publishedAtMs ?? 0))
+  }));
 }
 
-async function defaultStoryBuilder(input: BuildStoryInput): Promise<StoryDraft> {
+async function defaultGameClusterBuilder(input: GameClusterBuilderInput): Promise<SportsGameDraft[]> {
   const apiKey = getOpenAiApiKey();
   if (!apiKey) {
-    return buildFallbackStoryDraft(input);
+    return buildFallbackGameDrafts(input);
   }
 
   const response = await fetch(`${getOpenAiBaseUrl()}/responses`, {
@@ -249,11 +281,170 @@ async function defaultStoryBuilder(input: BuildStoryInput): Promise<StoryDraft> 
     body: JSON.stringify({
       model: "gpt-5-mini",
       reasoning: { effort: "minimal" },
-      max_output_tokens: 800,
+      max_output_tokens: 1200,
       text: {
         format: {
           type: "json_schema",
-          name: "sports_news_summary",
+          name: "sports_game_clusters",
+          strict: true,
+          schema: {
+            type: "object",
+            additionalProperties: false,
+            required: ["games"],
+            properties: {
+              games: {
+                type: "array",
+                items: {
+                  type: "object",
+                  additionalProperties: false,
+                  required: ["game_name", "article_indices"],
+                  properties: {
+                    game_name: { type: "string" },
+                    article_indices: {
+                      type: "array",
+                      items: { type: "number" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      input: [
+        {
+          role: "system",
+          content: [
+            "You are a football editor.",
+            "Group RSS articles into games that happened on the provided date.",
+            "Use all relevant articles from the list.",
+            "Output strict JSON only."
+          ].join("\n")
+        },
+        {
+          role: "user",
+          content: [
+            `Sport: ${input.sport}`,
+            `Game date (yesterday): ${input.gameDateKey}`,
+            "Articles:",
+            ...input.articles.map((item) =>
+              JSON.stringify({
+                item_index: item.itemIndex,
+                source: item.sourceName,
+                title: item.title,
+                summary: item.summary,
+                published_at_ms: item.publishedAtMs ?? null,
+                url: item.canonicalUrl
+              })
+            )
+          ].join("\n")
+        }
+      ]
+    }),
+    signal: AbortSignal.timeout(18_000)
+  });
+
+  if (!response.ok) {
+    return buildFallbackGameDrafts(input);
+  }
+
+  const text = await response.text();
+  if (!text.trim()) {
+    return buildFallbackGameDrafts(input);
+  }
+
+  try {
+    const payload = JSON.parse(text) as OpenAiResponse;
+    const content = parseOpenAiText(payload);
+    if (!content) {
+      return buildFallbackGameDrafts(input);
+    }
+
+    const parsed = JSON.parse(content) as {
+      games?: Array<{ game_name?: unknown; article_indices?: unknown }>;
+    };
+    const games = Array.isArray(parsed.games) ? parsed.games : [];
+    const byIndex = new Map(input.articles.map((article) => [article.itemIndex, article] as const));
+
+    const drafts: SportsGameDraft[] = [];
+    for (const game of games) {
+      const gameName = truncate(normalizeWhitespace(String(game.game_name ?? "")), 120);
+      const indicesRaw = Array.isArray(game.article_indices) ? game.article_indices : [];
+      const indices = indicesRaw.map((item) => Number(item)).filter((item) => Number.isFinite(item));
+      const articleRefs = indices
+        .map((index) => byIndex.get(index))
+        .filter((value): value is GameArticleReference => Boolean(value));
+
+      if (!gameName || !articleRefs.length) {
+        continue;
+      }
+
+      const deduped = new Map<string, GameArticleReference>();
+      for (const article of articleRefs) {
+        if (!deduped.has(article.canonicalUrl)) {
+          deduped.set(article.canonicalUrl, article);
+        }
+      }
+
+      drafts.push({
+        gameId: hashText(`${input.sport}:${input.gameDateKey}:${gameName.toLowerCase()}`),
+        gameName,
+        gameDateKey: input.gameDateKey,
+        articleRefs: Array.from(deduped.values()).sort((a, b) => (b.publishedAtMs ?? 0) - (a.publishedAtMs ?? 0))
+      });
+    }
+
+    return drafts.length ? drafts : buildFallbackGameDrafts(input);
+  } catch {
+    return buildFallbackGameDrafts(input);
+  }
+}
+
+function buildFallbackGameStory(input: GameStoryBuilderInput): GameStoryDraft {
+  const allText = input.articles.map((article) => article.rawText).join(" ");
+  const sentences = splitSentences(allText);
+  const bulletPoints = (sentences.length ? sentences : input.articles.map((item) => item.summary))
+    .map((value) => truncate(value, 220))
+    .filter(Boolean)
+    .slice(0, 6);
+  const reconstructedArticle = truncate(
+    (sentences.length ? sentences.join(" ") : input.articles.map((item) => item.summary).join(" ")) ||
+      `Match summary for ${input.gameName}.`,
+    1_600
+  );
+
+  const recentPublishedAt = Math.max(...input.articles.map((article) => article.publishedAtMs ?? 0));
+  const recencyWeight = recentPublishedAt > 0 ? 65 : 45;
+  const sourceWeight = clamp(input.articles.length * 5, 0, 30);
+
+  return {
+    importanceScore: clamp(recencyWeight + sourceWeight, 1, 100),
+    bulletPoints: bulletPoints.length ? bulletPoints : [truncate(`Update for ${input.gameName}.`, 220)],
+    reconstructedArticle,
+    summarySource: "fallback"
+  };
+}
+
+async function defaultGameStoryBuilder(input: GameStoryBuilderInput): Promise<GameStoryDraft> {
+  const apiKey = getOpenAiApiKey();
+  if (!apiKey) {
+    return buildFallbackGameStory(input);
+  }
+
+  const response = await fetch(`${getOpenAiBaseUrl()}/responses`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model: "gpt-5-mini",
+      reasoning: { effort: "minimal" },
+      max_output_tokens: 1200,
+      text: {
+        format: {
+          type: "json_schema",
+          name: "sports_game_story",
           strict: true,
           schema: {
             type: "object",
@@ -264,7 +455,7 @@ async function defaultStoryBuilder(input: BuildStoryInput): Promise<StoryDraft> 
               bullet_points: {
                 type: "array",
                 minItems: 3,
-                maxItems: 7,
+                maxItems: 8,
                 items: { type: "string" }
               },
               reconstructed_article: { type: "string" }
@@ -276,82 +467,129 @@ async function defaultStoryBuilder(input: BuildStoryInput): Promise<StoryDraft> 
         {
           role: "system",
           content: [
-            "You are a sports news editor.",
-            "Return strict JSON only.",
-            "Use concise factual tone.",
-            "Bullet points must be ordered from most important to least important.",
-            "importance_score is 1-100 where 100 is urgent and globally significant."
+            "You are a football match editor.",
+            "Produce one concise summary article for exactly one game.",
+            "Use bullet points first (most important to least important).",
+            "Then add a concise reconstruction paragraph.",
+            "Return strict JSON only."
           ].join("\n")
         },
         {
           role: "user",
           content: [
-            `Sport: football`,
-            `Source: ${input.sourceName}`,
-            `Title: ${input.title}`,
-            `URL: ${input.canonicalUrl}`,
-            `PublishedAtMs: ${input.publishedAtMs ?? "unknown"}`,
-            "Write 3-7 bullet points, then a reconstructed short article in 2-4 paragraphs.",
-            "Text to reconstruct from:",
-            input.rawText.slice(0, 12_000)
+            `Game: ${input.gameName}`,
+            `Game date: ${input.gameDateKey}`,
+            "Related articles:",
+            ...input.articles.map((item, index) =>
+              [
+                `Article ${index + 1}`,
+                `Source: ${item.sourceName}`,
+                `Title: ${item.title}`,
+                `URL: ${item.canonicalUrl}`,
+                `PublishedAtMs: ${item.publishedAtMs ?? "unknown"}`,
+                `Text: ${truncate(item.rawText, 3600)}`
+              ].join("\n")
+            )
           ].join("\n\n")
         }
       ]
     }),
-    signal: AbortSignal.timeout(16_000)
+    signal: AbortSignal.timeout(20_000)
   });
 
   if (!response.ok) {
-    return buildFallbackStoryDraft(input);
+    return buildFallbackGameStory(input);
   }
 
   const text = await response.text();
   if (!text.trim()) {
-    return buildFallbackStoryDraft(input);
+    return buildFallbackGameStory(input);
   }
 
   try {
-    const payload = JSON.parse(text) as OpenAiSummaryResponse;
+    const payload = JSON.parse(text) as OpenAiResponse;
     const content = parseOpenAiText(payload);
     if (!content) {
-      return buildFallbackStoryDraft(input);
+      return buildFallbackGameStory(input);
     }
-    return parseStoryDraftFromOpenAi(content);
+
+    const parsed = JSON.parse(content) as {
+      importance_score?: unknown;
+      bullet_points?: unknown;
+      reconstructed_article?: unknown;
+    };
+
+    const bulletPoints = Array.isArray(parsed.bullet_points)
+      ? parsed.bullet_points.map((item) => String(item ?? "").trim()).filter(Boolean).slice(0, 8)
+      : [];
+    const reconstructedArticle = String(parsed.reconstructed_article ?? "").trim();
+
+    if (!bulletPoints.length || !reconstructedArticle) {
+      return buildFallbackGameStory(input);
+    }
+
+    return {
+      importanceScore: clamp(Math.round(Number(parsed.importance_score ?? 50)), 1, 100),
+      bulletPoints,
+      reconstructedArticle: truncate(reconstructedArticle, 2_200),
+      summarySource: "llm"
+    };
   } catch {
-    return buildFallbackStoryDraft(input);
+    return buildFallbackGameStory(input);
   }
 }
 
-function buildLegacyStoryBody(sourceName: string, draft: StoryDraft): string {
-  return `${draft.bulletPoints.map((line) => `- ${line}`).join("\n")}\n\n${draft.reconstructedArticle}\n\nSource: ${sourceName}`;
+function buildStoryBody(draft: GameStoryDraft): string {
+  return `${draft.bulletPoints.map((line) => `- ${line}`).join("\n")}\n\n${draft.reconstructedArticle}`;
 }
 
-function asSportId(value: string): SportId | null {
-  const normalized = String(value ?? "").trim().toLowerCase();
-  return normalized === "football" ? "football" : null;
+async function runWithConcurrency<T, R>(items: T[], concurrency: number, worker: (item: T) => Promise<R>): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  const bounded = Math.max(1, Math.min(concurrency, items.length || 1));
+  let cursor = 0;
+
+  const runWorker = async () => {
+    while (true) {
+      const index = cursor;
+      cursor += 1;
+      if (index >= items.length) {
+        return;
+      }
+      results[index] = await worker(items[index]);
+    }
+  };
+
+  await Promise.all(Array.from({ length: bounded }, () => runWorker()));
+  return results;
 }
 
 export class SportsNewsService {
   private readonly feedFetcher: FeedFetcher;
   private readonly feedParser: FeedParser;
   private readonly articleTextFetcher: ArticleTextFetcher;
-  private readonly storyBuilder: StoryBuilder;
+  private readonly gameClusterBuilder: GameClusterBuilder;
+  private readonly gameStoryBuilder: GameStoryBuilder;
 
   constructor(deps: SportsNewsServiceDeps = {}) {
     this.feedFetcher = deps.feedFetcher ?? defaultFeedFetcher;
     this.feedParser = deps.feedParser ?? parseFeedXml;
     this.articleTextFetcher = deps.articleTextFetcher ?? fetchArticleFullText;
-    this.storyBuilder = deps.storyBuilder ?? defaultStoryBuilder;
+    this.gameClusterBuilder = deps.gameClusterBuilder ?? defaultGameClusterBuilder;
+    this.gameStoryBuilder = deps.gameStoryBuilder ?? defaultGameStoryBuilder;
   }
 
-  async fetchLatestStories(input: FetchSportsStoriesInput): Promise<{ sport: SportId; stories: SportsStory[] }> {
+  async fetchLatestStories(input: FetchSportsStoriesInput): Promise<FetchSportsStoriesResult> {
     const sport = asSportId(input.sport);
     if (!sport) {
       throw new Error("Unsupported sport. Supported sports: football.");
     }
 
+    const timeZone = validTimeZone(input.timeZone);
+    const gameDateKey = resolveYesterdayDateKey(timeZone);
     const feedSources = SPORT_NEWS_SOURCES[sport];
-    const candidateItems: CandidateStoryItem[] = [];
+
+    let itemCounter = 0;
+    const allItems: CandidateStoryItem[] = [];
 
     await Promise.all(
       feedSources.map(async (source) => {
@@ -360,94 +598,145 @@ export class SportsNewsService {
           userAgent: input.userAgent
         });
         const parsed = this.feedParser(response.body);
+
         for (const item of parsed) {
           if (!item.canonicalUrl || !item.title) {
             continue;
           }
-          candidateItems.push({
+          allItems.push({
             ...item,
-            source
+            source,
+            itemIndex: itemCounter
           });
+          itemCounter += 1;
         }
       })
     );
 
-    const uniqueByUrl = new Map<string, CandidateStoryItem>();
-    for (const item of candidateItems) {
-      if (!uniqueByUrl.has(item.canonicalUrl)) {
-        uniqueByUrl.set(item.canonicalUrl, item);
-      }
+    const yesterdayItems = allItems
+      .filter((item) => typeof item.publishedAtMs === "number")
+      .filter((item) => toDateKey(item.publishedAtMs as number, timeZone) === gameDateKey);
+
+    const articleRefs: GameArticleReference[] = yesterdayItems.map((item) => ({
+      itemIndex: item.itemIndex,
+      sourceId: item.source.id,
+      sourceName: item.source.name,
+      title: item.title,
+      summary: normalizeWhitespace(item.summary),
+      canonicalUrl: item.canonicalUrl,
+      publishedAtMs: item.publishedAtMs
+    }));
+
+    if (!articleRefs.length) {
+      return {
+        sport,
+        gameDateKey,
+        gameDrafts: [],
+        stories: []
+      };
     }
 
-    const sorted = Array.from(uniqueByUrl.values()).sort(
-      (a, b) => (b.publishedAtMs ?? 0) - (a.publishedAtMs ?? 0)
-    );
-    const boundedLimit = Math.max(1, Math.min(20, Math.floor(input.limit)));
-    const selected = sorted.slice(0, boundedLimit);
+    let gameDrafts = await this.gameClusterBuilder({
+      sport,
+      gameDateKey,
+      articles: articleRefs
+    });
 
-    const stories = await Promise.all(
-      selected.map(async (item, index) => {
-        let rawText = normalizeWhitespace(item.summary);
-        let fullTextStatus: SportsStory["fullTextStatus"] = "fallback";
+    if (!gameDrafts.length) {
+      gameDrafts = buildFallbackGameDrafts({
+        sport,
+        gameDateKey,
+        articles: articleRefs
+      });
+    }
+
+    const storyResults = await runWithConcurrency(gameDrafts, 3, async (draft) => {
+      const enrichedArticles = await runWithConcurrency(draft.articleRefs, 4, async (articleRef) => {
         try {
-          const fetchedText = await this.articleTextFetcher(item.canonicalUrl, {
+          const fullText = await this.articleTextFetcher(articleRef.canonicalUrl, {
             timeoutMs: Math.max(1_000, input.articleTimeoutMs),
             userAgent: input.userAgent
           });
-          if (fetchedText.trim()) {
-            rawText = fetchedText;
-            fullTextStatus = "ready";
+          if (fullText.trim()) {
+            return {
+              ...articleRef,
+              rawText: fullText,
+              fullTextStatus: "ready"
+            } satisfies GameStoryArticleInput;
           }
+          return {
+            ...articleRef,
+            rawText: articleRef.summary,
+            fullTextStatus: "fallback"
+          } satisfies GameStoryArticleInput;
         } catch {
-          rawText = normalizeWhitespace(item.summary);
+          return {
+            ...articleRef,
+            rawText: articleRef.summary,
+            fullTextStatus: "fallback"
+          } satisfies GameStoryArticleInput;
         }
+      });
 
-        const fallbackDraft = buildFallbackStoryDraft({
-          title: item.title,
-          sourceName: item.source.name,
-          canonicalUrl: item.canonicalUrl,
-          publishedAtMs: item.publishedAtMs,
-          rawText
-        });
+      const fallbackStory = buildFallbackGameStory({
+        sport,
+        gameName: draft.gameName,
+        gameDateKey: draft.gameDateKey,
+        articles: enrichedArticles
+      });
 
-        let draft = fallbackDraft;
-        try {
-          draft = await this.storyBuilder({
-            title: item.title,
-            sourceName: item.source.name,
-            canonicalUrl: item.canonicalUrl,
-            publishedAtMs: item.publishedAtMs,
-            rawText
-          });
-        } catch {
-          draft = fallbackDraft;
-        }
-
-        return {
-          id: `${sport}-${index + 1}`,
+      let storyDraft = fallbackStory;
+      try {
+        storyDraft = await this.gameStoryBuilder({
           sport,
-          sourceId: item.source.id,
-          sourceName: item.source.name,
-          title: item.title,
-          canonicalUrl: item.canonicalUrl,
-          publishedAtMs: item.publishedAtMs,
-          importanceScore: draft.importanceScore,
-          bulletPoints: draft.bulletPoints,
-          reconstructedArticle: draft.reconstructedArticle,
-          story: buildLegacyStoryBody(item.source.name, draft),
-          fullTextStatus,
-          summarySource: draft.summarySource
-        } satisfies SportsStory;
-      })
-    );
+          gameName: draft.gameName,
+          gameDateKey: draft.gameDateKey,
+          articles: enrichedArticles
+        });
+      } catch {
+        storyDraft = fallbackStory;
+      }
 
-    const rankedStories = stories.sort((a, b) => {
+      const uniqueSourceIds = Array.from(new Set(draft.articleRefs.map((item) => item.sourceId)));
+      const uniqueSourceNames = Array.from(new Set(draft.articleRefs.map((item) => item.sourceName)));
+      const latestPublishedAtMs = Math.max(...draft.articleRefs.map((item) => item.publishedAtMs ?? 0));
+      const firstArticle = draft.articleRefs[0];
+      const anyFullText = enrichedArticles.some((item) => item.fullTextStatus === "ready");
+
+      return {
+        id: `${sport}-${draft.gameId}`,
+        sport,
+        sourceId: uniqueSourceIds.join(", "),
+        sourceName: uniqueSourceNames.join(", "),
+        title: `${draft.gameName} - ${draft.gameDateKey}`,
+        canonicalUrl: firstArticle?.canonicalUrl ?? "",
+        publishedAtMs: latestPublishedAtMs > 0 ? latestPublishedAtMs : undefined,
+        gameId: draft.gameId,
+        gameName: draft.gameName,
+        gameDateKey: draft.gameDateKey,
+        importanceScore: storyDraft.importanceScore,
+        bulletPoints: storyDraft.bulletPoints,
+        reconstructedArticle: storyDraft.reconstructedArticle,
+        story: buildStoryBody(storyDraft),
+        fullTextStatus: anyFullText ? "ready" : "fallback",
+        summarySource: storyDraft.summarySource
+      } satisfies SportsStory;
+    });
+
+    const sortedStories = storyResults.sort((a, b) => {
       if (b.importanceScore !== a.importanceScore) {
         return b.importanceScore - a.importanceScore;
       }
       return (b.publishedAtMs ?? 0) - (a.publishedAtMs ?? 0);
     });
 
-    return { sport, stories: rankedStories };
+    const boundedLimit = Math.max(1, Math.min(60, Math.floor(input.limit)));
+
+    return {
+      sport,
+      gameDateKey,
+      gameDrafts,
+      stories: sortedStories.slice(0, boundedLimit)
+    };
   }
 }

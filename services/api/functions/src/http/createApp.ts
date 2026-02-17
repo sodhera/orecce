@@ -218,7 +218,7 @@ async function refreshUserSportsStories(deps: CreateAppDeps, userId: string): Pr
   await deps.userSportsNewsService.refreshUserStories({
     userId,
     sport: "football",
-    limit: 12,
+    limit: 60,
     userAgent: "OrecceSportsAgent/1.0 (+https://orecce.local/news-sports)",
     feedTimeoutMs: 8_000,
     articleTimeoutMs: 12_000
@@ -624,7 +624,7 @@ export function createApp(deps: CreateAppDeps): express.Express {
         await deps.userSportsNewsService.refreshUserStories({
           userId: identity.uid,
           sport,
-          limit: Math.max(limit, 12),
+          limit: 60,
           userAgent: "OrecceSportsAgent/1.0 (+https://orecce.local/news-sports)",
           feedTimeoutMs: 8_000,
           articleTimeoutMs: 12_000
@@ -636,7 +636,7 @@ export function createApp(deps: CreateAppDeps): express.Express {
         await deps.userSportsNewsService.refreshUserStories({
           userId: identity.uid,
           sport,
-          limit: Math.max(limit, 12),
+          limit: 60,
           userAgent: "OrecceSportsAgent/1.0 (+https://orecce.local/news-sports)",
           feedTimeoutMs: 8_000,
           articleTimeoutMs: 12_000

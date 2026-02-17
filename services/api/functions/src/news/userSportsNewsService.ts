@@ -34,8 +34,12 @@ export class UserSportsNewsService {
       articleTimeoutMs: input.articleTimeoutMs
     } satisfies FetchSportsStoriesInput);
 
+    await this.repository.replaceGameDraftsForUser(input.userId, fetched.sport, fetched.gameDateKey, fetched.gameDrafts);
     await this.repository.replaceStoriesForUser(input.userId, fetched.sport, fetched.stories);
-    return fetched;
+    return {
+      sport: fetched.sport,
+      stories: fetched.stories
+    };
   }
 
   async listUserStories(userId: string, sport: string, limit: number): Promise<{ sport: SportId; stories: SportsStory[] }> {

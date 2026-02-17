@@ -1,10 +1,26 @@
 import { describe, expect, it } from "vitest";
-import { SportsNewsService, SportsStory } from "../src/news/sportsNewsService";
+import { SportsGameDraft, SportsNewsService, SportsStory } from "../src/news/sportsNewsService";
 import { UserSportsNewsRepository } from "../src/news/userSportsNewsRepository";
 import { UserSportsNewsService } from "../src/news/userSportsNewsService";
 
 class InMemoryUserSportsNewsRepository implements UserSportsNewsRepository {
   private readonly rows = new Map<string, SportsStory[]>();
+  public readonly draftRows = new Map<string, SportsGameDraft[]>();
+
+  async replaceGameDraftsForUser(
+    userId: string,
+    sport: "football",
+    _gameDateKey: string,
+    drafts: SportsGameDraft[]
+  ): Promise<void> {
+    this.draftRows.set(
+      `${userId}:${sport}`,
+      drafts.map((draft) => ({
+        ...draft,
+        articleRefs: draft.articleRefs.map((item) => ({ ...item }))
+      }))
+    );
+  }
 
   async replaceStoriesForUser(userId: string, sport: "football", stories: SportsStory[]): Promise<void> {
     this.rows.set(`${userId}:${sport}`, stories.map((story) => ({ ...story })));
@@ -28,6 +44,9 @@ describe("UserSportsNewsService", () => {
         title: "Title 1",
         canonicalUrl: "https://news.example.com/1",
         publishedAtMs: Date.now(),
+        gameId: "game-1",
+        gameName: "Team A vs Team B",
+        gameDateKey: "2026-02-16",
         importanceScore: 80,
         bulletPoints: ["Point 1", "Point 2"],
         reconstructedArticle: "Reconstructed article 1",
@@ -40,6 +59,15 @@ describe("UserSportsNewsService", () => {
     const sportsNewsService = {
       fetchLatestStories: async () => ({
         sport: "football",
+        gameDateKey: "2026-02-16",
+        gameDrafts: [
+          {
+            gameId: "game-1",
+            gameName: "Team A vs Team B",
+            gameDateKey: "2026-02-16",
+            articleRefs: []
+          }
+        ],
         stories: generated
       })
     } as unknown as SportsNewsService;
@@ -62,6 +90,7 @@ describe("UserSportsNewsService", () => {
     expect(listed.sport).toBe("football");
     expect(listed.stories.length).toBe(1);
     expect(listed.stories[0].title).toBe("Title 1");
+    expect(repository.draftRows.get("u1:football")?.length).toBe(1);
   });
 
   it("rejects unsupported sports", async () => {
@@ -69,6 +98,8 @@ describe("UserSportsNewsService", () => {
     const sportsNewsService = {
       fetchLatestStories: async () => ({
         sport: "football",
+        gameDateKey: "2026-02-16",
+        gameDrafts: [],
         stories: []
       })
     } as unknown as SportsNewsService;

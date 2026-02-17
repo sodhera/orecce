@@ -3,6 +3,8 @@ import { ParsedFeedArticle } from "../src/news/types";
 import { SportsNewsService } from "../src/news/sportsNewsService";
 
 describe("SportsNewsService", () => {
+  const yesterdayMs = Date.now() - 24 * 60 * 60 * 1000;
+
   it("fetches football stories from configured feeds and builds story text", async () => {
     const service = new SportsNewsService({
       feedFetcher: async (url) => ({
@@ -18,7 +20,7 @@ describe("SportsNewsService", () => {
               title: "A Team Wins",
               summary: "A short summary.",
               categories: ["Football"],
-              publishedAtMs: Date.parse("2026-02-16T10:00:00Z")
+              publishedAtMs: yesterdayMs
             }
           ];
         }
@@ -29,16 +31,23 @@ describe("SportsNewsService", () => {
             title: "B Team Signs Player",
             summary: "B summary.",
             categories: ["Soccer"],
-            publishedAtMs: Date.parse("2026-02-16T11:00:00Z")
+            publishedAtMs: yesterdayMs + 1_000
           }
         ];
       },
       articleTextFetcher: async (url) =>
         `Full report for ${url}. First detail. Second detail. Third detail. Fourth detail. Fifth detail.`,
-      storyBuilder: async (input) => ({
-        importanceScore: input.title.includes("Signs") ? 92 : 67,
+      gameClusterBuilder: async (input) =>
+        input.articles.map((article) => ({
+          gameId: `game-${article.itemIndex}`,
+          gameName: article.title,
+          gameDateKey: input.gameDateKey,
+          articleRefs: [article]
+        })),
+      gameStoryBuilder: async (input) => ({
+        importanceScore: input.gameName.includes("B Team") ? 92 : 67,
         bulletPoints: ["Top update", "Second update", "Third update"],
-        reconstructedArticle: `Reconstructed article for ${input.title}.`,
+        reconstructedArticle: `Reconstructed article for ${input.gameName}.`,
         summarySource: "llm"
       })
     });
@@ -48,12 +57,14 @@ describe("SportsNewsService", () => {
       limit: 5,
       userAgent: "TestBot/1.0",
       feedTimeoutMs: 3000,
-      articleTimeoutMs: 3000
+      articleTimeoutMs: 3000,
+      timeZone: "UTC"
     });
 
     expect(result.sport).toBe("football");
+    expect(result.gameDrafts.length).toBe(2);
     expect(result.stories.length).toBe(2);
-    expect(result.stories[0].title).toBe("B Team Signs Player");
+    expect(result.stories[0].title.startsWith("B Team")).toBe(true);
     expect(result.stories[0].importanceScore).toBe(92);
     expect(result.stories[0].bulletPoints[0]).toBe("Top update");
     expect(result.stories[0].reconstructedArticle).toContain("Reconstructed article");
@@ -74,7 +85,7 @@ describe("SportsNewsService", () => {
           title: "A Team Wins",
           summary: "Summary used for fallback. Another sentence.",
           categories: ["Football"],
-          publishedAtMs: Date.parse("2026-02-16T10:00:00Z")
+          publishedAtMs: yesterdayMs
         }
       ],
       articleTextFetcher: async () => {
@@ -87,7 +98,8 @@ describe("SportsNewsService", () => {
       limit: 1,
       userAgent: "TestBot/1.0",
       feedTimeoutMs: 3000,
-      articleTimeoutMs: 3000
+      articleTimeoutMs: 3000,
+      timeZone: "UTC"
     });
 
     expect(result.stories.length).toBe(1);

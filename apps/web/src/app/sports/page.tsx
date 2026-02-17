@@ -39,29 +39,31 @@ export default function SportsPage() {
             try {
                 setFetching(true);
                 setError(null);
-                const cached = await getSportsLatest("football", 12, false);
                 if (!cancelled) {
-                    setStories(cached.stories);
+                    setStories([]);
                 }
 
-                const pollStatus = async () => {
+                const pollState = async () => {
                     try {
-                        const status = await getSportsStatus("football");
+                        const [status, latest] = await Promise.all([
+                            getSportsStatus("football"),
+                            getSportsLatest("football", 12, false),
+                        ]);
                         if (!cancelled) {
                             setSyncState(status.state);
+                            setStories(latest.stories);
                         }
                     } catch {
                         // Ignore transient polling failures during refresh.
                     }
                 };
 
-                await pollStatus();
-                pollTimer = setInterval(pollStatus, 1500);
+                await pollState();
+                pollTimer = setInterval(pollState, 1500);
 
-                const refreshed = await getSportsLatest("football", 12, true);
+                await getSportsLatest("football", 12, true);
                 if (!cancelled) {
-                    setStories(refreshed.stories);
-                    await pollStatus();
+                    await pollState();
                 }
             } catch (err) {
                 if (!cancelled) {
@@ -116,18 +118,6 @@ export default function SportsPage() {
                         {syncState?.status === "running" ? (
                             <div className="sports-feed-state sports-progress">
                                 <p>{syncState.message}</p>
-                                {syncState.foundGames.length > 0 ? (
-                                    <>
-                                        <p>
-                                            Found {syncState.foundGames.length} games:
-                                        </p>
-                                        <ul className="sports-progress-list">
-                                            {syncState.foundGames.map((gameName) => (
-                                                <li key={gameName}>{gameName}</li>
-                                            ))}
-                                        </ul>
-                                    </>
-                                ) : null}
                                 {syncState.totalGames > 0 ? (
                                     <p>
                                         Preparing articles: {syncState.processedGames}/{syncState.totalGames}

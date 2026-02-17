@@ -74,6 +74,7 @@ export interface FetchSportsStoriesInput {
   timeZone?: string;
   knownGameIds?: string[];
   onProgress?: (progress: SportsRefreshProgress) => void | Promise<void>;
+  onStoryReady?: (story: SportsStory) => void | Promise<void>;
 }
 
 export interface FetchSportsStoriesResult {
@@ -823,7 +824,7 @@ export class SportsNewsService {
         foundGames
       });
 
-      return {
+      const nextStory = {
         id: `${sport}-${draft.gameId}`,
         sport,
         sourceId: uniqueSourceIds.join(", "),
@@ -841,6 +842,10 @@ export class SportsNewsService {
         fullTextStatus: anyFullText ? "ready" : "fallback",
         summarySource: storyDraft.summarySource
       } satisfies SportsStory;
+      if (input.onStoryReady) {
+        await input.onStoryReady(nextStory);
+      }
+      return nextStory;
     });
 
     const sortedStories = storyResults.sort((a, b) => {

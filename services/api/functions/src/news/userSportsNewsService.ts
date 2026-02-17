@@ -86,6 +86,9 @@ export class UserSportsNewsService {
     });
 
     try {
+      await this.repository.replaceStoriesForUser(input.userId, sport, []);
+      const generatedByGameId = new Map<string, SportsStory>();
+
       const fetched = await this.sportsNewsService.fetchLatestStories({
         sport: input.sport,
         limit: 60,
@@ -105,6 +108,16 @@ export class UserSportsNewsService {
             startedAtMs,
             updatedAtMs: Date.now()
           });
+        },
+        onStoryReady: async (story) => {
+          generatedByGameId.set(story.gameId, story);
+          const generatedStories = Array.from(generatedByGameId.values()).sort((a, b) => {
+            if (b.importanceScore !== a.importanceScore) {
+              return b.importanceScore - a.importanceScore;
+            }
+            return (b.publishedAtMs ?? 0) - (a.publishedAtMs ?? 0);
+          });
+          await this.repository.replaceStoriesForUser(input.userId, sport, generatedStories);
         }
       } satisfies FetchSportsStoriesInput);
 
@@ -164,6 +177,7 @@ export class UserSportsNewsService {
       });
 
       if (existingStories.length) {
+        await this.repository.replaceStoriesForUser(input.userId, sport, existingStories);
         return {
           sport,
           stories: existingStories.slice(0, boundedLimit)

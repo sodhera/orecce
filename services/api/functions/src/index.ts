@@ -22,6 +22,9 @@ import { FirestoreNewsRepository } from "./news/firestoreNewsRepository";
 import { NewsReadService } from "./news/newsReadService";
 import { DEFAULT_NEWS_SOURCES } from "./news/newsSources";
 import { NewsIngestionService } from "./news/newsIngestionService";
+import { SportsNewsService } from "./news/sportsNewsService";
+import { FirestoreUserSportsNewsRepository } from "./news/userSportsNewsRepository";
+import { UserSportsNewsService } from "./news/userSportsNewsService";
 import { FirestoreRepository } from "./repositories/firestoreRepository";
 import { logInfo } from "./utils/logging";
 import { PrefillService } from "./services/prefillService";
@@ -36,6 +39,12 @@ const prefillService = new PrefillService(repository, gateway);
 const authVerifier = new FirebaseAuthVerifier();
 const newsRepository = new FirestoreNewsRepository(getFirestore());
 const newsReadService = new NewsReadService(getFirestore());
+const sportsNewsService = new SportsNewsService();
+const userSportsNewsRepository = new FirestoreUserSportsNewsRepository(getFirestore());
+const userSportsNewsService = new UserSportsNewsService({
+  sportsNewsService,
+  repository: userSportsNewsRepository
+});
 const newsIngestionService = new NewsIngestionService({
   repository: newsRepository,
   sources: DEFAULT_NEWS_SOURCES
@@ -45,6 +54,8 @@ const app = createApp({
   postGenerationService,
   prefillService,
   newsReadService,
+  sportsNewsService,
+  userSportsNewsService,
   authVerifier,
   requireAuth: true,
   defaultPrefillPostsPerMode: getDefaultPrefillPostsPerMode()

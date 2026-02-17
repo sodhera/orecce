@@ -169,6 +169,27 @@ export interface GetNewsArticleResult {
     article: NewsArticleDetail;
 }
 
+export interface SportsStory {
+    id: string;
+    sport: "football";
+    sourceId: string;
+    sourceName: string;
+    title: string;
+    canonicalUrl: string;
+    publishedAtMs?: number;
+    importanceScore: number;
+    bulletPoints: string[];
+    reconstructedArticle: string;
+    story: string;
+    fullTextStatus: "ready" | "fallback";
+    summarySource: "llm" | "fallback";
+}
+
+export interface GetSportsLatestResult {
+    sport: "football";
+    stories: SportsStory[];
+}
+
 export async function listNewsSources(): Promise<ListNewsSourcesResult> {
     return get<ListNewsSourcesResult>("/news/sources");
 }
@@ -189,4 +210,14 @@ export async function getNewsArticle(
     return get<GetNewsArticleResult>(
         `/news/articles/${encodeURIComponent(articleId)}`,
     );
+}
+
+export async function getSportsLatest(
+    sport: "football",
+    limit: number = 10,
+): Promise<GetSportsLatestResult> {
+    return get<GetSportsLatestResult>("/news/sports/latest", {
+        sport,
+        limit,
+    });
 }

@@ -3,6 +3,8 @@ import { randomUUID } from "crypto";
 import express, { NextFunction, Request, Response } from "express";
 import { AuthIdentity, AuthVerifier } from "../auth/firebaseAuthVerifier";
 import { NewsReadService } from "../news/newsReadService";
+import { SportsNewsService } from "../news/sportsNewsService";
+import { UserSportsNewsService } from "../news/userSportsNewsService";
 import { PrefillService } from "../services/prefillService";
 import { PostGenerationService } from "../services/postGenerationService";
 import { Repository } from "../types/contracts";
@@ -24,6 +26,8 @@ interface CreateAppDeps {
   postGenerationService: PostGenerationService;
   prefillService?: PrefillService;
   newsReadService?: NewsReadService;
+  sportsNewsService?: SportsNewsService;
+  userSportsNewsService?: UserSportsNewsService;
   authVerifier?: AuthVerifier;
   requireAuth: boolean;
   defaultPrefillPostsPerMode: number;
@@ -207,6 +211,20 @@ async function ensureUserHasPrefills(
   });
 }
 
+async function refreshUserSportsStories(deps: CreateAppDeps, userId: string): Promise<void> {
+  if (!deps.userSportsNewsService) {
+    return;
+  }
+  await deps.userSportsNewsService.refreshUserStories({
+    userId,
+    sport: "football",
+    limit: 12,
+    userAgent: "OrecceSportsAgent/1.0 (+https://orecce.local/news-sports)",
+    feedTimeoutMs: 8_000,
+    articleTimeoutMs: 12_000
+  });
+}
+
 export function createApp(deps: CreateAppDeps): express.Express {
   const app = express();
 
@@ -292,6 +310,7 @@ export function createApp(deps: CreateAppDeps): express.Express {
   const handleGetUser = withAsync(async (_req, res) => {
     const identity = getAuthIdentity(res);
     await ensureUserHasPrefills(deps, identity.uid, identity.email);
+    await refreshUserSportsStories(deps, identity.uid);
     const user = await deps.repository.getOrCreateUser({
       userId: identity.uid,
       email: identity.email,
@@ -310,6 +329,7 @@ export function createApp(deps: CreateAppDeps): express.Express {
         throw new ApiError(403, "forbidden", "Cannot access another user's profile.");
       }
       await ensureUserHasPrefills(deps, identity.uid, identity.email);
+      await refreshUserSportsStories(deps, identity.uid);
       const user = await deps.repository.getOrCreateUser({
         userId: identity.uid,
         email: identity.email,
@@ -581,6 +601,53 @@ export function createApp(deps: CreateAppDeps): express.Express {
       });
 
       res.json({ ok: true, data: result });
+    })
+  );
+
+  app.get(
+    "/v1/news/sports/latest",
+    withAsync(async (req, res) => {
+      if (!deps.userSportsNewsService) {
+        throw new ApiError(500, "server_misconfigured", "User sports news service is not configured.");
+      }
+
+      const sport = String(req.query.sport ?? "").trim();
+      if (!sport) {
+        throw new ApiError(400, "bad_request", "Missing required query param sport.");
+      }
+      const limitRaw = Number(req.query.limit ?? "8");
+      const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(20, Math.floor(limitRaw))) : 8;
+      const refresh = String(req.query.refresh ?? "").trim().toLowerCase() === "true";
+      const identity = getAuthIdentity(res);
+
+      if (refresh) {
+        await deps.userSportsNewsService.refreshUserStories({
+          userId: identity.uid,
+          sport,
+          limit: Math.max(limit, 12),
+          userAgent: "OrecceSportsAgent/1.0 (+https://orecce.local/news-sports)",
+          feedTimeoutMs: 8_000,
+          articleTimeoutMs: 12_000
+        });
+      }
+
+      let data = await deps.userSportsNewsService.listUserStories(identity.uid, sport, limit);
+      if (!data.stories.length) {
+        await deps.userSportsNewsService.refreshUserStories({
+          userId: identity.uid,
+          sport,
+          limit: Math.max(limit, 12),
+          userAgent: "OrecceSportsAgent/1.0 (+https://orecce.local/news-sports)",
+          feedTimeoutMs: 8_000,
+          articleTimeoutMs: 12_000
+        });
+        data = await deps.userSportsNewsService.listUserStories(identity.uid, sport, limit);
+      }
+
+      res.json({
+        ok: true,
+        data
+      });
     })
   );
 

@@ -16,6 +16,7 @@ import {
     IoSunnyOutline,
 } from "react-icons/io5";
 import { MdExplore, MdOutlineExplore } from "react-icons/md";
+import { MdSportsSoccer } from "react-icons/md";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 
@@ -30,6 +31,12 @@ const navItems: Array<{
         href: "/",
         iconOutline: <AiOutlineHome aria-hidden="true" />,
         iconFilled: <AiFillHome aria-hidden="true" />,
+    },
+    {
+        label: "Sports",
+        href: "/sports",
+        iconOutline: <MdSportsSoccer aria-hidden="true" />,
+        iconFilled: <MdSportsSoccer aria-hidden="true" />,
     },
     {
         label: "Discover",

@@ -22,6 +22,7 @@ jobs:
           node-version: "20"
 
       - name: Validate GCP auth config
+        # Exactly one auth path must be configured for google-github-actions/auth.
         env:
           GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
           GCP_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}

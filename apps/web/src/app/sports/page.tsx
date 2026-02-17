@@ -5,6 +5,7 @@ import Sidebar from "@/components/Sidebar";
 import {
     getSportsLatest,
     getSportsStatus,
+    requestSportsRefresh,
     type SportsStory,
     type SportsSyncState,
 } from "@/lib/api";
@@ -34,14 +35,14 @@ export default function SportsPage() {
         }
 
         let cancelled = false;
-        let pollTimer: ReturnType<typeof setInterval> | null = null;
+        const sleep = (ms: number) =>
+            new Promise<void>((resolve) => {
+                setTimeout(resolve, ms);
+            });
         (async () => {
             try {
                 setFetching(true);
                 setError(null);
-                if (!cancelled) {
-                    setStories([]);
-                }
 
                 const pollState = async () => {
                     try {
@@ -53,26 +54,33 @@ export default function SportsPage() {
                             setSyncState(status.state);
                             setStories(latest.stories);
                         }
+                        return status.state;
                     } catch {
                         // Ignore transient polling failures during refresh.
+                        return null;
                     }
                 };
 
                 await pollState();
-                pollTimer = setInterval(pollState, 1500);
+                await requestSportsRefresh("football");
 
-                await getSportsLatest("football", 12, true);
-                if (!cancelled) {
-                    await pollState();
+                const startedAt = Date.now();
+                while (!cancelled) {
+                    await sleep(1500);
+                    const state = await pollState();
+                    const timedOut = Date.now() - startedAt > 8 * 60 * 1000;
+                    const finished =
+                        state?.status === "complete" ||
+                        state?.status === "error";
+                    if (finished || timedOut) {
+                        break;
+                    }
                 }
             } catch (err) {
                 if (!cancelled) {
                     setError(err instanceof Error ? err.message : "Failed to load sports news.");
                 }
             } finally {
-                if (pollTimer) {
-                    clearInterval(pollTimer);
-                }
                 if (!cancelled) {
                     setFetching(false);
                 }
@@ -81,9 +89,6 @@ export default function SportsPage() {
 
         return () => {
             cancelled = true;
-            if (pollTimer) {
-                clearInterval(pollTimer);
-            }
         };
     }, [isAuthenticated, loading]);
 

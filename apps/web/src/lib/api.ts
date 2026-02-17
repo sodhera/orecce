@@ -214,6 +214,11 @@ export interface GetSportsStatusResult {
     state: SportsSyncState;
 }
 
+export interface RequestSportsRefreshResult {
+    sport: "football";
+    queued: boolean;
+}
+
 export async function listNewsSources(): Promise<ListNewsSourcesResult> {
     return get<ListNewsSourcesResult>("/news/sources");
 }
@@ -252,6 +257,14 @@ export async function getSportsStatus(
     sport: "football",
 ): Promise<GetSportsStatusResult> {
     return get<GetSportsStatusResult>("/news/sports/status", {
+        sport,
+    });
+}
+
+export async function requestSportsRefresh(
+    sport: "football",
+): Promise<RequestSportsRefreshResult> {
+    return post<RequestSportsRefreshResult>("/news/sports/refresh", {
         sport,
     });
 }

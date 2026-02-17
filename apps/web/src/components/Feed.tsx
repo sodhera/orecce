@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import PostCard, { type Post } from "./PostCard";
 import {
     getNewsArticle,
@@ -19,6 +20,7 @@ import { MOCK_POSTS } from "@/lib/mockPosts";
 const VISIBLE_GUEST_POSTS = 3; // posts shown before the gate
 
 const CATEGORIES = [
+    { value: "SPORTS", label: "Sports" },
     { value: "ALL", label: "All" },
     { value: "BIOGRAPHY", label: "Biographies" },
     { value: "TRIVIA", label: "Trivia" },
@@ -80,6 +82,7 @@ interface FeedProps {
 
 export default function Feed({ mode, profile, onModeChange }: FeedProps) {
     const { isAuthenticated, setShowAuthModal } = useAuth();
+    const router = useRouter();
 
     const [posts, setPosts] = useState<Post[]>([]);
     const [newsSources, setNewsSources] = useState<NewsSource[]>([]);
@@ -285,7 +288,13 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
                     <button
                         key={cat.value}
                         className={`feed-category-pill ${mode === cat.value || (cat.value === "ALL" && mode === "ALL") ? "active" : ""}`}
-                        onClick={() => onModeChange?.(cat.value)}
+                        onClick={() => {
+                            if (cat.value === "SPORTS") {
+                                router.push("/sports");
+                                return;
+                            }
+                            onModeChange?.(cat.value);
+                        }}
                     >
                         {cat.label}
                     </button>

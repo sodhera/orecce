@@ -21,6 +21,12 @@ jobs:
         with:
           node-version: "20"
 
+      - name: Install API dependencies
+        run: npm --prefix services/api/functions ci
+
+      - name: Build API functions
+        run: npm --prefix services/api/functions run build
+
       - name: Validate GCP service account key
         env:
           GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}

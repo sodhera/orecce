@@ -5,6 +5,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: deploy-functions-main
+  cancel-in-progress: false
+
 jobs:
   deploy-functions:
     runs-on: ubuntu-latest

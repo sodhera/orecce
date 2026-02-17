@@ -44,6 +44,17 @@ This repo is split into clean monorepo domains:
 Default cloud API base:
 - `https://us-central1-audit-3a7ec.cloudfunctions.net/api`
 
+## Automatic deploy on push
+- GitHub Actions workflow: `.github/workflows/deploy-functions.yml`
+- Trigger: push to `main`
+- Deploys: Firebase Functions (`api`, `onAuthUserCreate`, `syncNewsEvery3Hours`) + Firestore rules/indexes
+- Required GitHub settings:
+  - Repository secret: `GCP_SA_KEY` (JSON for a service account with Firebase deploy permissions)
+  - Repository variable (optional): `FIREBASE_PROJECT_ID` (defaults to `audit-3a7ec`)
+
+Frontend note:
+- The frontend is local-only right now. Pushes do not deploy any web/mobile hosting.
+
 ## Run app clients separately
 ### Mobile app
 - `npm --prefix apps/mobile install`

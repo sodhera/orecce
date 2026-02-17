@@ -2,6 +2,9 @@
 .DS_Store
 .vscode/
 
+# Root deps/cache
+node_modules/
+
 # Mobile
 apps/mobile/node_modules/
 apps/mobile/.expo/

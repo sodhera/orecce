@@ -32,7 +32,7 @@ export default function SportsPage() {
             try {
                 setFetching(true);
                 setError(null);
-                const result = await getSportsLatest("football", 12);
+                const result = await getSportsLatest("football", 12, true);
                 if (!cancelled) {
                     setStories(result.stories);
                 }

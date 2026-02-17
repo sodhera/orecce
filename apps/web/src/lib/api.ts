@@ -215,9 +215,11 @@ export async function getNewsArticle(
 export async function getSportsLatest(
     sport: "football",
     limit: number = 10,
+    refresh: boolean = false,
 ): Promise<GetSportsLatestResult> {
     return get<GetSportsLatestResult>("/news/sports/latest", {
         sport,
         limit,
+        refresh: refresh ? "true" : undefined,
     });
 }

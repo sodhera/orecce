@@ -1922,6 +1922,205 @@ img {
   background: var(--accent-soft-bg);
 }
 
+/* ── Home Onboarding ── */
+.onboarding-loading {
+  min-height: 55vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-size: 15px;
+  padding: 24px;
+}
+
+.home-onboarding {
+  min-height: 100vh;
+  padding: 24px 20px 32px;
+  display: flex;
+}
+
+.home-onboarding-card {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  border: 1px solid var(--bg-border);
+  border-radius: 24px;
+  background: linear-gradient(180deg,
+      var(--bg-primary) 0%,
+      var(--bg-secondary) 100%);
+  padding: 24px 24px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.home-onboarding-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.home-onboarding-step {
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.home-onboarding-skip {
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+
+.home-onboarding-skip:hover {
+  opacity: 0.8;
+}
+
+.home-onboarding-dots {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.home-onboarding-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 9999px;
+  background: var(--bg-border);
+  transition: width 0.2s, background 0.2s;
+}
+
+.home-onboarding-dot.active {
+  width: 24px;
+  background: var(--accent);
+}
+
+.home-onboarding-slide {
+  min-height: 360px;
+}
+
+.home-onboarding-icon {
+  width: 76px;
+  height: 76px;
+  border-radius: 9999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+  background: var(--accent-soft-bg);
+  margin-bottom: 14px;
+}
+
+.home-onboarding-title {
+  font-size: 31px;
+  line-height: 1.15;
+  margin-bottom: 10px;
+}
+
+.home-onboarding-description {
+  color: var(--text-secondary);
+  font-size: 15px;
+  line-height: 1.55;
+  margin-bottom: 20px;
+}
+
+.home-onboarding-chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.home-onboarding-chip {
+  padding: 8px 14px;
+  border-radius: 9999px;
+  border: 1px solid var(--bg-border);
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.home-onboarding-chip:hover {
+  background: var(--bg-hover);
+}
+
+.home-onboarding-chip.active {
+  background: var(--accent-soft-bg);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.home-onboarding-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.home-onboarding-label {
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 8px;
+}
+
+.home-onboarding-textarea {
+  min-height: 128px;
+  border-radius: 14px;
+  border: 1px solid var(--bg-border);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 12px 14px;
+  resize: vertical;
+  font-family: var(--font-sans);
+}
+
+.home-onboarding-textarea::placeholder {
+  color: var(--text-tertiary);
+}
+
+.home-onboarding-textarea:focus {
+  outline: 2px solid var(--accent-soft-bg);
+  border-color: var(--accent);
+}
+
+.home-onboarding-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.home-onboarding-back,
+.home-onboarding-next {
+  border-radius: 9999px;
+  padding: 11px 20px;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.home-onboarding-back {
+  border: 1px solid var(--bg-border);
+  color: var(--text-primary);
+}
+
+.home-onboarding-back:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.home-onboarding-next {
+  background: var(--accent);
+  color: var(--text-on-accent);
+}
+
+.home-onboarding-next:hover {
+  background: var(--accent-hover);
+}
+
 /* ── Responsive ── */
 @media (max-width: 1280px) {
   .app-layout {
@@ -2014,6 +2213,10 @@ img {
     flex: 1;
     width: auto;
     max-width: calc(100vw - 84px);
+  }
+
+  .home-onboarding-card {
+    max-width: 600px;
   }
 }
 
@@ -2192,6 +2395,24 @@ img {
     padding: 32px 20px 24px;
   }
 
+  .home-onboarding {
+    min-height: auto;
+    padding: 16px 12px calc(106px + env(safe-area-inset-bottom));
+  }
+
+  .home-onboarding-card {
+    border-radius: 18px;
+    padding: 20px 16px 16px;
+  }
+
+  .home-onboarding-slide {
+    min-height: 320px;
+  }
+
+  .home-onboarding-title {
+    font-size: 28px;
+  }
+
   .logout-confirm-title {
     font-size: 20px;
   }
@@ -2288,5 +2509,18 @@ img {
 
   .auth-logo {
     margin-bottom: 20px;
+  }
+
+  .home-onboarding-title {
+    font-size: 24px;
+  }
+
+  .home-onboarding-description {
+    font-size: 14px;
+  }
+
+  .home-onboarding-chip {
+    font-size: 13px;
+    padding: 7px 12px;
   }
 }

@@ -7,6 +7,7 @@ import type { ReactNode } from "react";
 import { AiFillHome, AiOutlineHome } from "react-icons/ai";
 import { BsBookmark, BsBookmarkFill } from "react-icons/bs";
 import {
+    IoChatbubbleEllipsesOutline,
     IoLogOutOutline,
     IoMoonOutline,
     IoNotifications,
@@ -47,6 +48,11 @@ const navItems: Array<{
         href: "/notifications",
         iconOutline: <IoNotificationsOutline aria-hidden="true" />,
         iconFilled: <IoNotifications aria-hidden="true" />,
+    },
+    {
+        label: "Feedback",
+        href: "mailto:feedback@orecce.app?subject=Orecce%20Web%20Feedback",
+        iconOutline: <IoChatbubbleEllipsesOutline aria-hidden="true" />,
     },
 ];
 
@@ -142,7 +148,12 @@ export default function Sidebar() {
                             ? item.iconFilled
                             : item.iconOutline;
 
-                    return item.href ? (
+                    return item.href?.startsWith("mailto:") ? (
+                        <a key={item.label} href={item.href} className={className}>
+                            {icon}
+                            <span>{item.label}</span>
+                        </a>
+                    ) : item.href ? (
                         <Link key={item.label} href={item.href} className={className}>
                             {icon}
                             <span>{item.label}</span>

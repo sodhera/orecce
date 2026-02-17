@@ -198,6 +198,10 @@ function resolveYesterdayDateKey(timeZone: string): string {
   return toDateKey(Date.now() - 24 * 60 * 60 * 1000, timeZone);
 }
 
+function resolveTodayDateKey(timeZone: string): string {
+  return toDateKey(Date.now(), timeZone);
+}
+
 function asSportId(value: string): SportId | null {
   const normalized = String(value ?? "").trim().toLowerCase();
   return normalized === "football" ? "football" : null;
@@ -325,7 +329,7 @@ async function defaultGameClusterBuilder(input: GameClusterBuilderInput): Promis
           role: "user",
           content: [
             `Sport: ${input.sport}`,
-            `Game date (yesterday): ${input.gameDateKey}`,
+            `Game date: ${input.gameDateKey}`,
             "Articles:",
             ...input.articles.map((item) =>
               JSON.stringify({
@@ -585,7 +589,10 @@ export class SportsNewsService {
     }
 
     const timeZone = validTimeZone(input.timeZone);
-    const gameDateKey = resolveYesterdayDateKey(timeZone);
+    const yesterdayDateKey = resolveYesterdayDateKey(timeZone);
+    const todayDateKey = resolveTodayDateKey(timeZone);
+    const selectedDateKeys = [todayDateKey, yesterdayDateKey];
+    const selectedDateKeySet = new Set(selectedDateKeys);
     const feedSources = SPORT_NEWS_SOURCES[sport];
 
     let itemCounter = 0;
@@ -613,11 +620,11 @@ export class SportsNewsService {
       })
     );
 
-    const yesterdayItems = allItems
+    const selectedItems = allItems
       .filter((item) => typeof item.publishedAtMs === "number")
-      .filter((item) => toDateKey(item.publishedAtMs as number, timeZone) === gameDateKey);
+      .filter((item) => selectedDateKeySet.has(toDateKey(item.publishedAtMs as number, timeZone)));
 
-    const articleRefs: GameArticleReference[] = yesterdayItems.map((item) => ({
+    const articleRefs: GameArticleReference[] = selectedItems.map((item) => ({
       itemIndex: item.itemIndex,
       sourceId: item.source.id,
       sourceName: item.source.name,
@@ -630,24 +637,51 @@ export class SportsNewsService {
     if (!articleRefs.length) {
       return {
         sport,
-        gameDateKey,
+        gameDateKey: yesterdayDateKey,
         gameDrafts: [],
         stories: []
       };
     }
 
-    let gameDrafts = await this.gameClusterBuilder({
-      sport,
-      gameDateKey,
-      articles: articleRefs
-    });
+    const refsByDate = new Map<string, GameArticleReference[]>();
+    for (const articleRef of articleRefs) {
+      const dateKey = toDateKey(articleRef.publishedAtMs as number, timeZone);
+      if (!refsByDate.has(dateKey)) {
+        refsByDate.set(dateKey, []);
+      }
+      refsByDate.get(dateKey)?.push(articleRef);
+    }
+
+    let gameDrafts: SportsGameDraft[] = [];
+    for (const dateKey of selectedDateKeys) {
+      const refsForDate = refsByDate.get(dateKey) ?? [];
+      if (!refsForDate.length) {
+        continue;
+      }
+
+      let draftsForDate = await this.gameClusterBuilder({
+        sport,
+        gameDateKey: dateKey,
+        articles: refsForDate
+      });
+
+      if (!draftsForDate.length) {
+        draftsForDate = buildFallbackGameDrafts({
+          sport,
+          gameDateKey: dateKey,
+          articles: refsForDate
+        });
+      }
+      gameDrafts = gameDrafts.concat(draftsForDate);
+    }
 
     if (!gameDrafts.length) {
-      gameDrafts = buildFallbackGameDrafts({
+      return {
         sport,
-        gameDateKey,
-        articles: articleRefs
-      });
+        gameDateKey: yesterdayDateKey,
+        gameDrafts: [],
+        stories: []
+      };
     }
 
     const storyResults = await runWithConcurrency(gameDrafts, 3, async (draft) => {
@@ -734,7 +768,7 @@ export class SportsNewsService {
 
     return {
       sport,
-      gameDateKey,
+      gameDateKey: yesterdayDateKey,
       gameDrafts,
       stories: sortedStories.slice(0, boundedLimit)
     };

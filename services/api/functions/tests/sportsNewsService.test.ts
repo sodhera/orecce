@@ -3,7 +3,10 @@ import { ParsedFeedArticle } from "../src/news/types";
 import { SportsNewsService } from "../src/news/sportsNewsService";
 
 describe("SportsNewsService", () => {
-  const yesterdayMs = Date.now() - 24 * 60 * 60 * 1000;
+  const now = new Date();
+  const todayMs = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 12, 0, 0, 0);
+  const yesterdayMs = todayMs - 24 * 60 * 60 * 1000;
+  const twoDaysAgoMs = todayMs - 48 * 60 * 60 * 1000;
 
   it("fetches football stories from configured feeds and builds story text", async () => {
     const service = new SportsNewsService({
@@ -107,6 +110,74 @@ describe("SportsNewsService", () => {
     expect(result.stories[0].summarySource).toBe("fallback");
     expect(result.stories[0].bulletPoints.length).toBeGreaterThan(0);
     expect(result.stories[0].story).toContain("Summary used for fallback.");
+  });
+
+  it("includes stories from today and yesterday, excluding older dates", async () => {
+    const service = new SportsNewsService({
+      feedFetcher: async (url) => ({
+        status: 200,
+        body: `<feed>${url}</feed>`
+      }),
+      feedParser: (xml): ParsedFeedArticle[] => {
+        if (!xml.includes("bbci")) {
+          return [];
+        }
+        return [
+          {
+            externalId: "today-1",
+            canonicalUrl: "https://news.example.com/today",
+            title: "Today Match",
+            summary: "Today summary.",
+            categories: ["Football"],
+            publishedAtMs: todayMs
+          },
+          {
+            externalId: "yesterday-1",
+            canonicalUrl: "https://news.example.com/yesterday",
+            title: "Yesterday Match",
+            summary: "Yesterday summary.",
+            categories: ["Football"],
+            publishedAtMs: yesterdayMs
+          },
+          {
+            externalId: "old-1",
+            canonicalUrl: "https://news.example.com/old",
+            title: "Old Match",
+            summary: "Old summary.",
+            categories: ["Football"],
+            publishedAtMs: twoDaysAgoMs
+          }
+        ];
+      },
+      articleTextFetcher: async (url) => `Full report for ${url}.`,
+      gameClusterBuilder: async (input) =>
+        input.articles.map((article) => ({
+          gameId: `game-${article.itemIndex}`,
+          gameName: article.title,
+          gameDateKey: input.gameDateKey,
+          articleRefs: [article]
+        })),
+      gameStoryBuilder: async () => ({
+        importanceScore: 70,
+        bulletPoints: ["Top update", "Second update", "Third update"],
+        reconstructedArticle: "Reconstructed article.",
+        summarySource: "llm"
+      })
+    });
+
+    const result = await service.fetchLatestStories({
+      sport: "football",
+      limit: 10,
+      userAgent: "TestBot/1.0",
+      feedTimeoutMs: 3000,
+      articleTimeoutMs: 3000,
+      timeZone: "UTC"
+    });
+
+    expect(result.stories.length).toBe(2);
+    expect(result.stories.some((story) => story.title.startsWith("Today Match"))).toBe(true);
+    expect(result.stories.some((story) => story.title.startsWith("Yesterday Match"))).toBe(true);
+    expect(result.stories.some((story) => story.title.startsWith("Old Match"))).toBe(false);
   });
 
   it("throws on unsupported sports", async () => {

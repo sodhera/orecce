@@ -5,6 +5,7 @@
     "web:dev": "npm --prefix apps/web run dev",
     "mobile:start": "npm --prefix apps/mobile run start",
     "api:deploy:cloud": "./services/api/scripts/deploy-cloud.sh",
+    "api:logs:cloud": "./services/api/scripts/logs-cloud.sh",
     "api:migrate:auth:cloud": "npm --prefix services/api/functions run migrate:auth:cloud --",
     "api:migrate:firestore:cloud": "npm --prefix services/api/functions run migrate:firestore:cloud --",
     "api:populate:common:cloud": "npm --prefix services/api/functions run populate:common:cloud --"

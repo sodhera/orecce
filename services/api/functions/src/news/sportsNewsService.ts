@@ -72,6 +72,8 @@ export interface FetchSportsStoriesInput {
   feedTimeoutMs: number;
   articleTimeoutMs: number;
   timeZone?: string;
+  knownGameIds?: string[];
+  onProgress?: (progress: SportsRefreshProgress) => void | Promise<void>;
 }
 
 export interface FetchSportsStoriesResult {
@@ -79,6 +81,15 @@ export interface FetchSportsStoriesResult {
   gameDateKey: string;
   gameDrafts: SportsGameDraft[];
   stories: SportsStory[];
+}
+
+export interface SportsRefreshProgress {
+  step: "looking_games" | "games_found" | "preparing_articles";
+  message: string;
+  totalGames?: number;
+  processedGames?: number;
+  foundGames?: string[];
+  gameName?: string;
 }
 
 interface CandidateStoryItem extends ParsedFeedArticle {
@@ -567,6 +578,16 @@ async function runWithConcurrency<T, R>(items: T[], concurrency: number, worker:
   return results;
 }
 
+async function reportProgress(
+  onProgress: FetchSportsStoriesInput["onProgress"],
+  progress: SportsRefreshProgress
+): Promise<void> {
+  if (!onProgress) {
+    return;
+  }
+  await onProgress(progress);
+}
+
 export class SportsNewsService {
   private readonly feedFetcher: FeedFetcher;
   private readonly feedParser: FeedParser;
@@ -594,6 +615,11 @@ export class SportsNewsService {
     const selectedDateKeys = [todayDateKey, yesterdayDateKey];
     const selectedDateKeySet = new Set(selectedDateKeys);
     const feedSources = SPORT_NEWS_SOURCES[sport];
+
+    await reportProgress(input.onProgress, {
+      step: "looking_games",
+      message: "Looking at games from today and yesterday."
+    });
 
     let itemCounter = 0;
     const allItems: CandidateStoryItem[] = [];
@@ -635,6 +661,12 @@ export class SportsNewsService {
     }));
 
     if (!articleRefs.length) {
+      await reportProgress(input.onProgress, {
+        step: "games_found",
+        message: "Found 0 games for today and yesterday.",
+        totalGames: 0,
+        foundGames: []
+      });
       return {
         sport,
         gameDateKey: yesterdayDateKey,
@@ -676,6 +708,12 @@ export class SportsNewsService {
     }
 
     if (!gameDrafts.length) {
+      await reportProgress(input.onProgress, {
+        step: "games_found",
+        message: "Found 0 games after clustering.",
+        totalGames: 0,
+        foundGames: []
+      });
       return {
         sport,
         gameDateKey: yesterdayDateKey,
@@ -684,7 +722,45 @@ export class SportsNewsService {
       };
     }
 
-    const storyResults = await runWithConcurrency(gameDrafts, 3, async (draft) => {
+    const knownGameIdSet = new Set((input.knownGameIds ?? []).map((item) => String(item)));
+    const gameDraftsToGenerate = gameDrafts.filter((draft) => !knownGameIdSet.has(draft.gameId));
+    const foundGames = gameDrafts.map((draft) => draft.gameName).slice(0, 40);
+
+    await reportProgress(input.onProgress, {
+      step: "games_found",
+      message: `Found ${gameDrafts.length} games.`,
+      totalGames: gameDrafts.length,
+      processedGames: 0,
+      foundGames
+    });
+
+    if (!gameDraftsToGenerate.length) {
+      await reportProgress(input.onProgress, {
+        step: "preparing_articles",
+        message: "No new games to prepare. Existing summaries are current.",
+        totalGames: gameDrafts.length,
+        processedGames: gameDrafts.length,
+        foundGames
+      });
+      return {
+        sport,
+        gameDateKey: yesterdayDateKey,
+        gameDrafts,
+        stories: []
+      };
+    }
+
+    let processedGames = 0;
+    const storyResults = await runWithConcurrency(gameDraftsToGenerate, 1, async (draft) => {
+      await reportProgress(input.onProgress, {
+        step: "preparing_articles",
+        message: `Preparing article for ${draft.gameName}.`,
+        totalGames: gameDraftsToGenerate.length,
+        processedGames,
+        gameName: draft.gameName,
+        foundGames
+      });
+
       const enrichedArticles = await runWithConcurrency(draft.articleRefs, 4, async (articleRef) => {
         try {
           const fullText = await this.articleTextFetcher(articleRef.canonicalUrl, {
@@ -736,6 +812,16 @@ export class SportsNewsService {
       const latestPublishedAtMs = Math.max(...draft.articleRefs.map((item) => item.publishedAtMs ?? 0));
       const firstArticle = draft.articleRefs[0];
       const anyFullText = enrichedArticles.some((item) => item.fullTextStatus === "ready");
+      processedGames += 1;
+
+      await reportProgress(input.onProgress, {
+        step: "preparing_articles",
+        message: `Prepared ${processedGames}/${gameDraftsToGenerate.length} game articles.`,
+        totalGames: gameDraftsToGenerate.length,
+        processedGames,
+        gameName: draft.gameName,
+        foundGames
+      });
 
       return {
         id: `${sport}-${draft.gameId}`,

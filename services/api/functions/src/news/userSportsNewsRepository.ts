@@ -15,16 +15,90 @@ function toMillis(value: unknown): number | undefined {
 }
 
 export interface UserSportsNewsRepository {
+  replaceSyncStateForUser(userId: string, sport: SportId, state: UserSportsSyncState): Promise<void>;
+  getSyncStateForUser(userId: string, sport: SportId): Promise<UserSportsSyncState | null>;
   replaceGameDraftsForUser(userId: string, sport: SportId, gameDateKey: string, drafts: SportsGameDraft[]): Promise<void>;
   replaceStoriesForUser(userId: string, sport: SportId, stories: SportsStory[]): Promise<void>;
   listStoriesForUser(userId: string, sport: SportId, limit: number): Promise<SportsStory[]>;
 }
 
+export type UserSportsSyncStep =
+  | "idle"
+  | "looking_games"
+  | "games_found"
+  | "preparing_articles"
+  | "complete"
+  | "error";
+
+export interface UserSportsSyncState {
+  status: "idle" | "running" | "complete" | "error";
+  step: UserSportsSyncStep;
+  message: string;
+  totalGames: number;
+  processedGames: number;
+  foundGames: string[];
+  updatedAtMs: number;
+  startedAtMs?: number;
+  completedAtMs?: number;
+  errorMessage?: string;
+}
+
 export class FirestoreUserSportsNewsRepository implements UserSportsNewsRepository {
   private readonly storiesCollection = "userSportsNewsStories";
   private readonly gameDraftsCollection = "userSportsNewsGameDrafts";
+  private readonly syncStateCollection = "userSportsNewsSyncState";
 
   constructor(private readonly db: Firestore) {}
+
+  async replaceSyncStateForUser(userId: string, sport: SportId, state: UserSportsSyncState): Promise<void> {
+    const docId = hashText(`${userId}:${sport}:sync`);
+    const ref = this.db.collection(this.syncStateCollection).doc(docId);
+    await ref.set({
+      userId,
+      sport,
+      status: state.status,
+      step: state.step,
+      message: state.message,
+      totalGames: state.totalGames,
+      processedGames: state.processedGames,
+      foundGames: state.foundGames,
+      updatedAt: Timestamp.fromMillis(state.updatedAtMs),
+      startedAt: typeof state.startedAtMs === "number" ? Timestamp.fromMillis(state.startedAtMs) : null,
+      completedAt: typeof state.completedAtMs === "number" ? Timestamp.fromMillis(state.completedAtMs) : null,
+      errorMessage: state.errorMessage ?? null
+    });
+  }
+
+  async getSyncStateForUser(userId: string, sport: SportId): Promise<UserSportsSyncState | null> {
+    const docId = hashText(`${userId}:${sport}:sync`);
+    const snap = await this.db.collection(this.syncStateCollection).doc(docId).get();
+    if (!snap.exists) {
+      return null;
+    }
+    const data = (snap.data() ?? {}) as Record<string, unknown>;
+    return {
+      status:
+        data.status === "running" || data.status === "complete" || data.status === "error"
+          ? data.status
+          : "idle",
+      step:
+        data.step === "looking_games" ||
+        data.step === "games_found" ||
+        data.step === "preparing_articles" ||
+        data.step === "complete" ||
+        data.step === "error"
+          ? data.step
+          : "idle",
+      message: String(data.message ?? ""),
+      totalGames: typeof data.totalGames === "number" ? data.totalGames : 0,
+      processedGames: typeof data.processedGames === "number" ? data.processedGames : 0,
+      foundGames: Array.isArray(data.foundGames) ? data.foundGames.map((item) => String(item)).slice(0, 40) : [],
+      updatedAtMs: toMillis(data.updatedAt) ?? Date.now(),
+      startedAtMs: toMillis(data.startedAt),
+      completedAtMs: toMillis(data.completedAt),
+      errorMessage: data.errorMessage ? String(data.errorMessage) : undefined
+    };
+  }
 
   async replaceGameDraftsForUser(
     userId: string,

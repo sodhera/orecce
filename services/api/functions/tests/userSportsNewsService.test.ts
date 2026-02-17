@@ -1,11 +1,20 @@
 import { describe, expect, it } from "vitest";
 import { SportsGameDraft, SportsNewsService, SportsStory } from "../src/news/sportsNewsService";
-import { UserSportsNewsRepository } from "../src/news/userSportsNewsRepository";
+import { UserSportsNewsRepository, UserSportsSyncState } from "../src/news/userSportsNewsRepository";
 import { UserSportsNewsService } from "../src/news/userSportsNewsService";
 
 class InMemoryUserSportsNewsRepository implements UserSportsNewsRepository {
   private readonly rows = new Map<string, SportsStory[]>();
   public readonly draftRows = new Map<string, SportsGameDraft[]>();
+  public readonly syncRows = new Map<string, UserSportsSyncState>();
+
+  async replaceSyncStateForUser(userId: string, sport: "football", state: UserSportsSyncState): Promise<void> {
+    this.syncRows.set(`${userId}:${sport}`, { ...state, foundGames: [...state.foundGames] });
+  }
+
+  async getSyncStateForUser(userId: string, sport: "football"): Promise<UserSportsSyncState | null> {
+    return this.syncRows.get(`${userId}:${sport}`) ?? null;
+  }
 
   async replaceGameDraftsForUser(
     userId: string,
@@ -91,6 +100,7 @@ describe("UserSportsNewsService", () => {
     expect(listed.stories.length).toBe(1);
     expect(listed.stories[0].title).toBe("Title 1");
     expect(repository.draftRows.get("u1:football")?.length).toBe(1);
+    expect(repository.syncRows.get("u1:football")?.status).toBe("complete");
   });
 
   it("rejects unsupported sports", async () => {

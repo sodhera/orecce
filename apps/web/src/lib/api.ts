@@ -190,6 +190,30 @@ export interface GetSportsLatestResult {
     stories: SportsStory[];
 }
 
+export interface SportsSyncState {
+    status: "idle" | "running" | "complete" | "error";
+    step:
+        | "idle"
+        | "looking_games"
+        | "games_found"
+        | "preparing_articles"
+        | "complete"
+        | "error";
+    message: string;
+    totalGames: number;
+    processedGames: number;
+    foundGames: string[];
+    updatedAtMs: number;
+    startedAtMs?: number;
+    completedAtMs?: number;
+    errorMessage?: string;
+}
+
+export interface GetSportsStatusResult {
+    sport: "football";
+    state: SportsSyncState;
+}
+
 export async function listNewsSources(): Promise<ListNewsSourcesResult> {
     return get<ListNewsSourcesResult>("/news/sources");
 }
@@ -221,5 +245,13 @@ export async function getSportsLatest(
         sport,
         limit,
         refresh: refresh ? "true" : undefined,
+    });
+}
+
+export async function getSportsStatus(
+    sport: "football",
+): Promise<GetSportsStatusResult> {
+    return get<GetSportsStatusResult>("/news/sports/status", {
+        sport,
     });
 }

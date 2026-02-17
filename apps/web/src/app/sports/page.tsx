@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Sidebar from "@/components/Sidebar";
-import { getSportsLatest, type SportsStory } from "@/lib/api";
+import {
+    getSportsLatest,
+    getSportsStatus,
+    type SportsStory,
+    type SportsSyncState,
+} from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 
 function formatDateFromMs(value?: number): string {
@@ -21,6 +26,7 @@ export default function SportsPage() {
     const [stories, setStories] = useState<SportsStory[]>([]);
     const [fetching, setFetching] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [syncState, setSyncState] = useState<SportsSyncState | null>(null);
 
     useEffect(() => {
         if (loading || !isAuthenticated) {
@@ -28,19 +34,43 @@ export default function SportsPage() {
         }
 
         let cancelled = false;
+        let pollTimer: ReturnType<typeof setInterval> | null = null;
         (async () => {
             try {
                 setFetching(true);
                 setError(null);
-                const result = await getSportsLatest("football", 12, true);
+                const cached = await getSportsLatest("football", 12, false);
                 if (!cancelled) {
-                    setStories(result.stories);
+                    setStories(cached.stories);
+                }
+
+                const pollStatus = async () => {
+                    try {
+                        const status = await getSportsStatus("football");
+                        if (!cancelled) {
+                            setSyncState(status.state);
+                        }
+                    } catch {
+                        // Ignore transient polling failures during refresh.
+                    }
+                };
+
+                await pollStatus();
+                pollTimer = setInterval(pollStatus, 1500);
+
+                const refreshed = await getSportsLatest("football", 12, true);
+                if (!cancelled) {
+                    setStories(refreshed.stories);
+                    await pollStatus();
                 }
             } catch (err) {
                 if (!cancelled) {
                     setError(err instanceof Error ? err.message : "Failed to load sports news.");
                 }
             } finally {
+                if (pollTimer) {
+                    clearInterval(pollTimer);
+                }
                 if (!cancelled) {
                     setFetching(false);
                 }
@@ -49,6 +79,9 @@ export default function SportsPage() {
 
         return () => {
             cancelled = true;
+            if (pollTimer) {
+                clearInterval(pollTimer);
+            }
         };
     }, [isAuthenticated, loading]);
 
@@ -80,6 +113,29 @@ export default function SportsPage() {
 
                 {isAuthenticated ? (
                     <div className="sports-feed">
+                        {syncState?.status === "running" ? (
+                            <div className="sports-feed-state sports-progress">
+                                <p>{syncState.message}</p>
+                                {syncState.foundGames.length > 0 ? (
+                                    <>
+                                        <p>
+                                            Found {syncState.foundGames.length} games:
+                                        </p>
+                                        <ul className="sports-progress-list">
+                                            {syncState.foundGames.map((gameName) => (
+                                                <li key={gameName}>{gameName}</li>
+                                            ))}
+                                        </ul>
+                                    </>
+                                ) : null}
+                                {syncState.totalGames > 0 ? (
+                                    <p>
+                                        Preparing articles: {syncState.processedGames}/{syncState.totalGames}
+                                    </p>
+                                ) : null}
+                            </div>
+                        ) : null}
+
                         {fetching ? (
                             <div className="sports-feed-state">Loading latest sports stories...</div>
                         ) : null}

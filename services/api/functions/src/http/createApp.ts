@@ -211,20 +211,6 @@ async function ensureUserHasPrefills(
   });
 }
 
-async function refreshUserSportsStories(deps: CreateAppDeps, userId: string): Promise<void> {
-  if (!deps.userSportsNewsService) {
-    return;
-  }
-  await deps.userSportsNewsService.refreshUserStories({
-    userId,
-    sport: "football",
-    limit: 60,
-    userAgent: "OrecceSportsAgent/1.0 (+https://orecce.local/news-sports)",
-    feedTimeoutMs: 8_000,
-    articleTimeoutMs: 12_000
-  });
-}
-
 export function createApp(deps: CreateAppDeps): express.Express {
   const app = express();
 
@@ -310,7 +296,6 @@ export function createApp(deps: CreateAppDeps): express.Express {
   const handleGetUser = withAsync(async (_req, res) => {
     const identity = getAuthIdentity(res);
     await ensureUserHasPrefills(deps, identity.uid, identity.email);
-    await refreshUserSportsStories(deps, identity.uid);
     const user = await deps.repository.getOrCreateUser({
       userId: identity.uid,
       email: identity.email,
@@ -329,7 +314,6 @@ export function createApp(deps: CreateAppDeps): express.Express {
         throw new ApiError(403, "forbidden", "Cannot access another user's profile.");
       }
       await ensureUserHasPrefills(deps, identity.uid, identity.email);
-      await refreshUserSportsStories(deps, identity.uid);
       const user = await deps.repository.getOrCreateUser({
         userId: identity.uid,
         email: identity.email,
@@ -619,34 +603,75 @@ export function createApp(deps: CreateAppDeps): express.Express {
       const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(20, Math.floor(limitRaw))) : 8;
       const refresh = String(req.query.refresh ?? "").trim().toLowerCase() === "true";
       const identity = getAuthIdentity(res);
+      let refreshError: string | null = null;
 
       if (refresh) {
-        await deps.userSportsNewsService.refreshUserStories({
-          userId: identity.uid,
-          sport,
-          limit: 60,
-          userAgent: "OrecceSportsAgent/1.0 (+https://orecce.local/news-sports)",
-          feedTimeoutMs: 8_000,
-          articleTimeoutMs: 12_000
-        });
+        try {
+          await deps.userSportsNewsService.refreshUserStories({
+            userId: identity.uid,
+            sport,
+            limit: 60,
+            userAgent: "OrecceSportsAgent/1.0 (+https://orecce.local/news-sports)",
+            feedTimeoutMs: 8_000,
+            articleTimeoutMs: 12_000
+          });
+        } catch (error) {
+          refreshError = error instanceof Error ? error.message : String(error);
+          logError("news.sports.refresh.failed", {
+            user_id: identity.uid,
+            sport,
+            message: refreshError
+          });
+        }
       }
 
       let data = await deps.userSportsNewsService.listUserStories(identity.uid, sport, limit);
       if (!data.stories.length) {
-        await deps.userSportsNewsService.refreshUserStories({
-          userId: identity.uid,
-          sport,
-          limit: 60,
-          userAgent: "OrecceSportsAgent/1.0 (+https://orecce.local/news-sports)",
-          feedTimeoutMs: 8_000,
-          articleTimeoutMs: 12_000
-        });
+        try {
+          await deps.userSportsNewsService.refreshUserStories({
+            userId: identity.uid,
+            sport,
+            limit: 60,
+            userAgent: "OrecceSportsAgent/1.0 (+https://orecce.local/news-sports)",
+            feedTimeoutMs: 8_000,
+            articleTimeoutMs: 12_000
+          });
+        } catch (error) {
+          refreshError = refreshError ?? (error instanceof Error ? error.message : String(error));
+          logError("news.sports.refresh.bootstrap_failed", {
+            user_id: identity.uid,
+            sport,
+            message: refreshError
+          });
+        }
         data = await deps.userSportsNewsService.listUserStories(identity.uid, sport, limit);
       }
 
       res.json({
         ok: true,
-        data
+        data,
+        meta: {
+          refreshError
+        }
+      });
+    })
+  );
+
+  app.get(
+    "/v1/news/sports/status",
+    withAsync(async (req, res) => {
+      if (!deps.userSportsNewsService) {
+        throw new ApiError(500, "server_misconfigured", "User sports news service is not configured.");
+      }
+      const sport = String(req.query.sport ?? "").trim();
+      if (!sport) {
+        throw new ApiError(400, "bad_request", "Missing required query param sport.");
+      }
+      const identity = getAuthIdentity(res);
+      const status = await deps.userSportsNewsService.getUserSyncState(identity.uid, sport);
+      res.json({
+        ok: true,
+        data: status
       });
     })
   );

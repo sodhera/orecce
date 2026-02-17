@@ -433,6 +433,20 @@ img {
   font-size: 14px;
 }
 
+.sports-progress {
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sports-progress-list {
+  margin-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .sports-state-error {
   color: #d93025;
 }

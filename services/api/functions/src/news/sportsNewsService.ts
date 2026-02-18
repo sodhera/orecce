@@ -398,12 +398,6 @@ function sanitizeArticleNarrativeText(raw: string): string {
     .replace(/\bUK only\b/gi, " ")
     .replace(/\s+/g, " ")
     .trim();
-  const lower = text.toLowerCase();
-  for (const token of BOILERPLATE_TOKENS) {
-    if (lower.includes(token)) {
-      return "";
-    }
-  }
   const filteredSentences = splitSentences(text)
     .filter((sentence) => {
       const s = sentence.toLowerCase();
@@ -1162,8 +1156,7 @@ export class SportsNewsService {
       .map((item) => {
         const identity = resolveMatchIdentity(item.title, item.summary);
         return { item, identity };
-      })
-      .filter((entry) => Boolean(entry.identity));
+      });
 
     const articleRefs: GameArticleReference[] = selectedItems.map(({ item, identity }) => ({
       itemIndex: item.itemIndex,

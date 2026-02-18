@@ -244,4 +244,81 @@ describe("UserSportsNewsService", () => {
     expect(listed.stories.some((story) => story.id === "ready")).toBe(true);
     expect(listed.stories.some((story) => story.id === "fallback")).toBe(true);
   });
+
+  it("drops stale fallback stories for active games when refresh skips regeneration", async () => {
+    const repository = new InMemoryUserSportsNewsRepository();
+    const now = Date.now();
+    const timeZone = "America/New_York";
+    const todayKey = new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    })
+      .formatToParts(new Date(now))
+      .reduce(
+        (acc, part) => {
+          if (part.type === "year" || part.type === "month" || part.type === "day") {
+            acc[part.type] = part.value;
+          }
+          return acc;
+        },
+        {} as Record<string, string>
+      );
+    const todayDateKey = `${todayKey.year ?? "1970"}-${todayKey.month ?? "01"}-${todayKey.day ?? "01"}`;
+
+    await repository.replaceStoriesForUser("u1", "football", [
+      {
+        id: "fallback-old",
+        sport: "football",
+        sourceId: "bbc-football",
+        sourceName: "BBC Football",
+        title: "Old fallback",
+        canonicalUrl: "https://news.example.com/old-fallback",
+        publishedAtMs: now,
+        gameId: "game-active",
+        gameName: "Team A vs Team B",
+        gameDateKey: todayDateKey,
+        importanceScore: 65,
+        bulletPoints: ["Old point"],
+        reconstructedArticle: "Old fallback content",
+        story: "Old fallback content",
+        fullTextStatus: "fallback",
+        summarySource: "fallback"
+      }
+    ]);
+
+    const sportsNewsService = {
+      fetchLatestStories: async () => ({
+        sport: "football",
+        gameDateKey: todayDateKey,
+        gameDrafts: [
+          {
+            gameId: "game-active",
+            gameName: "Team A vs Team B",
+            gameDateKey: todayDateKey,
+            articleRefs: []
+          }
+        ],
+        stories: []
+      })
+    } as unknown as SportsNewsService;
+
+    const service = new UserSportsNewsService({
+      repository,
+      sportsNewsService
+    });
+
+    await service.refreshUserStories({
+      userId: "u1",
+      sport: "football",
+      limit: 10,
+      userAgent: "Test",
+      feedTimeoutMs: 1000,
+      articleTimeoutMs: 1000
+    });
+
+    const listed = await service.listUserStories("u1", "football", 10);
+    expect(listed.stories.length).toBe(0);
+  });
 });

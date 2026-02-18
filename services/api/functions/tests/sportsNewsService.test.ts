@@ -32,8 +32,8 @@ describe("SportsNewsService", () => {
             {
               externalId: "bbc-1",
               canonicalUrl: "https://news.example.com/a",
-              title: "A Team 2-1 C Team",
-              summary: "A short summary.",
+              title: "Manchester City 2-1 River Plate",
+              summary: "BBC match report summary.",
               categories: ["Football"],
               publishedAtMs: yesterdayMs
             }
@@ -43,8 +43,8 @@ describe("SportsNewsService", () => {
           {
             externalId: "espn-1",
             canonicalUrl: "https://news.example.com/b",
-            title: "B Team v D Team preview",
-            summary: "B summary.",
+            title: "Manchester City vs River Plate reaction",
+            summary: "ESPN post-match reaction summary.",
             categories: ["Soccer"],
             publishedAtMs: yesterdayMs + 1_000
           }
@@ -52,17 +52,18 @@ describe("SportsNewsService", () => {
       },
       articleTextFetcher: async (url) =>
         `Full report for ${url}. First detail with tactical context and player positioning. Second detail covering halftime adjustments and substitutions. Third detail explains key chances and defensive recoveries. Fourth detail captures crowd momentum and late pressure. Fifth detail summarizes final passages and implications for upcoming fixtures.`,
-      gameClusterBuilder: async (input) =>
-        input.articles.map((article) => ({
-          gameId: `game-${article.itemIndex}`,
-          gameName: article.title,
+      gameClusterBuilder: async (input) => [
+        {
+          gameId: "game-city-river",
+          gameName: "Manchester City vs River Plate",
           gameDateKey: input.gameDateKey,
-          articleRefs: [article]
-        })),
-      gameStoryBuilder: async (input) => ({
-        importanceScore: input.gameName.includes("B Team") ? 92 : 67,
+          articleRefs: input.articles
+        }
+      ],
+      gameStoryBuilder: async () => ({
+        importanceScore: 92,
         bulletPoints: ["Top update", "Second update", "Third update"],
-        reconstructedArticle: `Reconstructed article for ${input.gameName}.`,
+        reconstructedArticle: "Reconstructed article for Manchester City vs River Plate.",
         summarySource: "llm"
       })
     });
@@ -77,30 +78,51 @@ describe("SportsNewsService", () => {
     });
 
     expect(result.sport).toBe("football");
-    expect(result.gameDrafts.length).toBe(2);
-    expect(result.stories.length).toBe(2);
-    expect(result.stories[0].title.startsWith("B Team")).toBe(true);
+    expect(result.gameDrafts.length).toBe(1);
+    expect(result.stories.length).toBe(1);
     expect(result.stories[0].importanceScore).toBe(92);
     expect(result.stories[0].bulletPoints[0]).toBe("Top update");
     expect(result.stories[0].reconstructedArticle).toContain("Reconstructed article");
     expect(result.stories[0].fullTextStatus).toBe("ready");
     expect(result.stories[0].summarySource).toBe("llm");
+    expect(result.stories[0].sourceName).toContain("BBC Football");
+    expect(result.stories[0].sourceName).toContain("ESPN Soccer");
   });
 
   it("falls back to feed summary when article text fetch fails for all related articles", async () => {
     const service = new SportsNewsService({
-      feedFetcher: async () => ({
+      feedFetcher: async (url) => ({
         status: 200,
-        body: "<rss/>"
+        body: `<rss>${url}</rss>`
       }),
-      feedParser: (): ParsedFeedArticle[] => [
+      feedParser: (xml): ParsedFeedArticle[] =>
+        xml.includes("bbci")
+          ? [
+              {
+                externalId: "bbc-1",
+                canonicalUrl: "https://news.example.com/a",
+                title: "A Team 1-0 B Team",
+                summary: "Summary used for fallback. Another sentence.",
+                categories: ["Football"],
+                publishedAtMs: yesterdayMs
+              }
+            ]
+          : [
+              {
+                externalId: "espn-1",
+                canonicalUrl: "https://news.example.com/b",
+                title: "A Team vs B Team recap",
+                summary: "Additional source summary sentence.",
+                categories: ["Soccer"],
+                publishedAtMs: yesterdayMs + 1_000
+              }
+            ],
+      gameClusterBuilder: async (input) => [
         {
-          externalId: "bbc-1",
-          canonicalUrl: "https://news.example.com/a",
-          title: "A Team 1-0 B Team",
-          summary: "Summary used for fallback. Another sentence.",
-          categories: ["Football"],
-          publishedAtMs: yesterdayMs
+          gameId: "game-fallback",
+          gameName: "A Team vs B Team",
+          gameDateKey: input.gameDateKey,
+          articleRefs: input.articles
         }
       ],
       articleTextFetcher: async () => {
@@ -125,18 +147,38 @@ describe("SportsNewsService", () => {
     process.env.SPORTS_NEWS_FETCH_FULL_TEXT = "true";
 
     const service = new SportsNewsService({
-      feedFetcher: async () => ({
+      feedFetcher: async (url) => ({
         status: 200,
-        body: "<rss/>"
+        body: `<rss>${url}</rss>`
       }),
-      feedParser: (): ParsedFeedArticle[] => [
+      feedParser: (xml): ParsedFeedArticle[] =>
+        xml.includes("bbci")
+          ? [
+              {
+                externalId: "bbc-1",
+                canonicalUrl: "https://news.example.com/a",
+                title: "A Team 1-0 B Team",
+                summary: "Summary used for fallback. Another sentence.",
+                categories: ["Football"],
+                publishedAtMs: yesterdayMs
+              }
+            ]
+          : [
+              {
+                externalId: "espn-1",
+                canonicalUrl: "https://news.example.com/b",
+                title: "A Team vs B Team recap",
+                summary: "Additional source summary sentence.",
+                categories: ["Soccer"],
+                publishedAtMs: yesterdayMs + 1_000
+              }
+            ],
+      gameClusterBuilder: async (input) => [
         {
-          externalId: "bbc-1",
-          canonicalUrl: "https://news.example.com/a",
-          title: "A Team 1-0 B Team",
-          summary: "Summary used for fallback. Another sentence.",
-          categories: ["Football"],
-          publishedAtMs: yesterdayMs
+          gameId: "game-fulltext-skip",
+          gameName: "A Team vs B Team",
+          gameDateKey: input.gameDateKey,
+          articleRefs: input.articles
         }
       ],
       articleTextFetcher: async () => {
@@ -163,44 +205,62 @@ describe("SportsNewsService", () => {
         body: `<feed>${url}</feed>`
       }),
       feedParser: (xml): ParsedFeedArticle[] => {
-        if (!xml.includes("bbci")) {
-          return [];
+        if (xml.includes("bbci")) {
+          return [
+            {
+              externalId: "today-bbc-1",
+              canonicalUrl: "https://news.example.com/today-bbc",
+              title: "Today FC 3-1 Rivals",
+              summary: "Today summary from BBC.",
+              categories: ["Football"],
+              publishedAtMs: todayMs
+            },
+            {
+              externalId: "yesterday-bbc-1",
+              canonicalUrl: "https://news.example.com/yesterday-bbc",
+              title: "Yesterday FC 1-1 City",
+              summary: "Yesterday summary from BBC.",
+              categories: ["Football"],
+              publishedAtMs: yesterdayMs
+            },
+            {
+              externalId: "old-bbc-1",
+              canonicalUrl: "https://news.example.com/old-bbc",
+              title: "Old FC 2-0 Town",
+              summary: "Old summary.",
+              categories: ["Football"],
+              publishedAtMs: twoDaysAgoMs
+            }
+          ];
         }
         return [
           {
-            externalId: "today-1",
-            canonicalUrl: "https://news.example.com/today",
-            title: "Today FC 3-1 Rivals",
-            summary: "Today summary.",
-            categories: ["Football"],
-            publishedAtMs: todayMs
+            externalId: "today-espn-1",
+            canonicalUrl: "https://news.example.com/today-espn",
+            title: "Today FC vs Rivals reaction",
+            summary: "Today summary from ESPN.",
+            categories: ["Soccer"],
+            publishedAtMs: todayMs + 1_000
           },
           {
-            externalId: "yesterday-1",
-            canonicalUrl: "https://news.example.com/yesterday",
-            title: "Yesterday FC 1-1 City",
-            summary: "Yesterday summary.",
-            categories: ["Football"],
-            publishedAtMs: yesterdayMs
-          },
-          {
-            externalId: "old-1",
-            canonicalUrl: "https://news.example.com/old",
-            title: "Old FC 2-0 Town",
-            summary: "Old summary.",
-            categories: ["Football"],
-            publishedAtMs: twoDaysAgoMs
+            externalId: "yesterday-espn-1",
+            canonicalUrl: "https://news.example.com/yesterday-espn",
+            title: "Yesterday FC vs City analysis",
+            summary: "Yesterday summary from ESPN.",
+            categories: ["Soccer"],
+            publishedAtMs: yesterdayMs + 1_000
           }
         ];
       },
       articleTextFetcher: async (url) => `Full report for ${url}.`,
-      gameClusterBuilder: async (input) =>
-        input.articles.map((article) => ({
-          gameId: `game-${article.itemIndex}`,
-          gameName: article.title,
+      gameClusterBuilder: async (input) => [
+        {
+          gameId: `game-${input.gameDateKey}`,
+          gameName: input.articles[0]?.title ?? `Game ${input.gameDateKey}`,
           gameDateKey: input.gameDateKey,
-          articleRefs: [article]
-        })),
+          articleRefs: input.articles
+        }
+      ],
       gameStoryBuilder: async () => ({
         importanceScore: 70,
         bulletPoints: ["Top update", "Second update", "Third update"],
@@ -291,8 +351,7 @@ describe("SportsNewsService", () => {
       timeZone: "UTC"
     });
 
-    expect(result.stories.length).toBe(1);
-    expect(result.stories[0].gameName).toContain("River Team");
+    expect(result.stories.length).toBe(0);
   });
 
   it("groups multiple source articles into one match draft", async () => {

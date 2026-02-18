@@ -146,7 +146,9 @@ export class UserSportsNewsService {
         mergedStories = existingStories.filter((story) => activeDateKeys.has(story.gameDateKey));
       } else {
         const latestGameIds = new Set(fetched.gameDrafts.map((draft) => draft.gameId));
-        const retainedStories = existingStories.filter((story) => latestGameIds.has(story.gameId));
+        const retainedStories = existingStories
+          .filter((story) => latestGameIds.has(story.gameId))
+          .filter((story) => story.fullTextStatus === "ready");
         const byGameId = new Map<string, SportsStory>();
         for (const story of retainedStories) {
           byGameId.set(story.gameId, story);

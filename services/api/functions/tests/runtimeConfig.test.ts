@@ -9,6 +9,7 @@ import {
   getSportsNewsModel,
   getSportsNewsArticleConcurrency,
   getSportsNewsMaxArticlesPerGame,
+  getSportsNewsMinSourcesPerGame,
   isNewsSyncEnabled,
   isSportsNewsLlmEnabled,
   shouldFetchNewsFullText,
@@ -104,5 +105,16 @@ describe("runtimeConfig", () => {
 
     process.env.SPORTS_NEWS_MODEL = "gpt-5-mini";
     expect(getSportsNewsModel()).toBe("gpt-5-mini");
+  });
+
+  it("uses single-source sports by default and bounds configured minimum", () => {
+    delete process.env.SPORTS_NEWS_MIN_SOURCES_PER_GAME;
+    expect(getSportsNewsMinSourcesPerGame()).toBe(1);
+
+    process.env.SPORTS_NEWS_MIN_SOURCES_PER_GAME = "9";
+    expect(getSportsNewsMinSourcesPerGame()).toBe(2);
+
+    process.env.SPORTS_NEWS_MIN_SOURCES_PER_GAME = "0";
+    expect(getSportsNewsMinSourcesPerGame()).toBe(1);
   });
 });

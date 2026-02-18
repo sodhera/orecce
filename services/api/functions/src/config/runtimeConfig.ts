@@ -159,6 +159,10 @@ export function getSportsNewsArticleConcurrency(): number {
   return parseBoundedInt(process.env.SPORTS_NEWS_ARTICLE_CONCURRENCY, 2, 1, 4);
 }
 
+export function getSportsNewsMinSourcesPerGame(): number {
+  return parseBoundedInt(process.env.SPORTS_NEWS_MIN_SOURCES_PER_GAME, 1, 1, 2);
+}
+
 export function getNewsCrawlerUserAgent(): string {
   const value = process.env.NEWS_CRAWLER_USER_AGENT?.trim();
   if (value) {

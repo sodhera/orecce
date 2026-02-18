@@ -1,6 +1,7 @@
 import { SportId } from "./sportsNewsSources";
 import { FetchSportsStoriesInput, SportsNewsService, SportsStory } from "./sportsNewsService";
 import { UserSportsNewsRepository, UserSportsSyncState } from "./userSportsNewsRepository";
+import { getSportsNewsMinSourcesPerGame } from "../config/runtimeConfig";
 
 interface UserSportsNewsServiceDeps {
   sportsNewsService: SportsNewsService;
@@ -58,7 +59,8 @@ export class UserSportsNewsService {
     await this.repository.replaceSyncStateForUser(userId, sport, state);
   }
 
-  private static hasMultiSourceCoverage(story: SportsStory): boolean {
+  private static hasRequiredSourceCoverage(story: SportsStory): boolean {
+    const minSourcesPerGame = getSportsNewsMinSourcesPerGame();
     const sourceIds = Array.from(
       new Set(
         String(story.sourceId ?? "")
@@ -67,11 +69,11 @@ export class UserSportsNewsService {
           .filter(Boolean)
       )
     );
-    return sourceIds.length >= 2;
+    return sourceIds.length >= minSourcesPerGame;
   }
 
   private static isAcceptableSportsStory(story: SportsStory): boolean {
-    return story.fullTextStatus === "ready" && this.hasMultiSourceCoverage(story);
+    return story.fullTextStatus === "ready" && this.hasRequiredSourceCoverage(story);
   }
 
   async requestRefresh(userId: string, sport: string): Promise<{ sport: SportId }> {

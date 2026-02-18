@@ -3,6 +3,7 @@ import {
   getOpenAiApiKey,
   getOpenAiBaseUrl,
   getSportsNewsArticleConcurrency,
+  getSportsNewsMinSourcesPerGame,
   getSportsNewsModel,
   getSportsNewsMaxArticlesPerGame,
   isSportsNewsLlmEnabled,
@@ -193,7 +194,6 @@ function clamp(value: number, min: number, max: number): number {
 const MAX_GAMES_PER_REFRESH = 12;
 const GAME_PROCESSING_CONCURRENCY = 2;
 const MIN_SPORTS_FULL_TEXT_CHARS = 120;
-const MIN_DISTINCT_SOURCES_PER_GAME = 2;
 
 function selectArticlesForStory(articleRefs: GameArticleReference[], maxArticles: number): GameArticleReference[] {
   const sorted = [...articleRefs].sort((a, b) => (b.publishedAtMs ?? 0) - (a.publishedAtMs ?? 0));
@@ -1316,11 +1316,12 @@ export class SportsNewsService {
         });
 
         const distinctSourceIdsForDraft = new Set(draft.articleRefs.map((item) => item.sourceId));
-        if (distinctSourceIdsForDraft.size < MIN_DISTINCT_SOURCES_PER_GAME) {
+        const minSourcesPerGame = getSportsNewsMinSourcesPerGame();
+        if (distinctSourceIdsForDraft.size < minSourcesPerGame) {
           processedGames += 1;
           await reportProgress(input.onProgress, {
             step: "preparing_articles",
-            message: `Skipped ${draft.gameName} because coverage from both RSS sources is required.`,
+            message: `Skipped ${draft.gameName} because coverage from at least ${minSourcesPerGame} source(s) is required.`,
             totalGames: budgetedGameDraftsToGenerate.length,
             processedGames,
             gameName: draft.gameName,

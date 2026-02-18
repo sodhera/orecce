@@ -351,7 +351,8 @@ describe("SportsNewsService", () => {
       timeZone: "UTC"
     });
 
-    expect(result.stories.length).toBe(0);
+    expect(result.stories.length).toBe(1);
+    expect(result.stories[0].gameName).toContain("River Team");
   });
 
   it("groups multiple source articles into one match draft", async () => {

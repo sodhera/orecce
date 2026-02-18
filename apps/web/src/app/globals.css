@@ -470,6 +470,88 @@ img {
   line-height: 1.45;
 }
 
+.sports-story-title {
+  margin-top: 8px;
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: left;
+}
+
+.sports-story-title:hover {
+  text-decoration: underline;
+}
+
+.sports-story-title:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.sports-story-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 20, 25, 0.55);
+  padding: 16px;
+}
+
+.sports-story-modal {
+  width: min(720px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  border: 1px solid var(--bg-border);
+  border-radius: 16px;
+  background: var(--bg-primary);
+  box-shadow: 0 24px 72px rgba(0, 0, 0, 0.35);
+  padding: 16px;
+}
+
+.sports-story-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sports-story-modal-header h2 {
+  font-size: 21px;
+  line-height: 1.3;
+  font-weight: 800;
+}
+
+.sports-story-modal-close {
+  color: var(--text-secondary);
+  font-size: 28px;
+  line-height: 1;
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+.sports-story-modal-close:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.sports-story-modal-meta {
+  margin-top: 8px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+}
+
+.sports-story-modal-bullets {
+  margin-top: 12px;
+  margin-bottom: 8px;
+}
+
 .utility-card {
   border: 1px solid var(--bg-border);
   border-radius: 16px;

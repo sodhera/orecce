@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import {
     getSportsLatest,
@@ -22,12 +22,95 @@ function formatDateFromMs(value?: number): string {
     });
 }
 
+function normalizeGameName(rawTitle: string): string {
+    const trimmed = String(rawTitle ?? "").trim();
+    if (!trimmed) {
+        return "";
+    }
+    return trimmed.replace(/\s+-\s+\d{4}-\d{2}-\d{2}\s*$/i, "").trim();
+}
+
+function sanitizeTeamName(raw: string): string {
+    return raw
+        .replace(/\s+in\s+.+$/i, "")
+        .replace(/\s+\(.*\)\s*$/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+function extractTeamsFromGameName(gameName: string): { home: string; away: string } | null {
+    const match = gameName.match(/^(.+?)\s+(?:vs|v|versus)\s+(.+?)$/i);
+    if (!match) {
+        return null;
+    }
+
+    const home = sanitizeTeamName(match[1]);
+    const away = sanitizeTeamName(match[2]);
+    if (!home || !away) {
+        return null;
+    }
+    return { home, away };
+}
+
+function extractScoreline(story: SportsStory): { home: string; away: string } | null {
+    const scoreRegex = /\b(\d+)\s*[-–]\s*(\d+)\b/;
+    const candidates = [
+        ...story.bulletPoints,
+        story.reconstructedArticle,
+        story.title,
+    ];
+    for (const text of candidates) {
+        const match = text.match(scoreRegex);
+        if (match) {
+            return { home: match[1], away: match[2] };
+        }
+    }
+    return null;
+}
+
+function buildMatchTitle(story: SportsStory): string {
+    const gameName = normalizeGameName(story.title);
+    const teams = extractTeamsFromGameName(gameName);
+    if (!teams) {
+        return gameName || "Match update";
+    }
+    const score = extractScoreline(story);
+    if (!score) {
+        return `${teams.home} vs ${teams.away}`;
+    }
+    return `${teams.home} ${score.home} - ${score.away} ${teams.away}`;
+}
+
 export default function SportsPage() {
     const { isAuthenticated, loading, setShowAuthModal } = useAuth();
     const [stories, setStories] = useState<SportsStory[]>([]);
     const [fetching, setFetching] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [syncState, setSyncState] = useState<SportsSyncState | null>(null);
+    const [selectedStory, setSelectedStory] = useState<SportsStory | null>(null);
+
+    useEffect(() => {
+        if (!selectedStory) {
+            return;
+        }
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key === "Escape") {
+                setSelectedStory(null);
+            }
+        };
+        window.addEventListener("keydown", onKeyDown);
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            window.removeEventListener("keydown", onKeyDown);
+        };
+    }, [selectedStory]);
+
+    const selectedStoryTitle = useMemo(
+        () => (selectedStory ? buildMatchTitle(selectedStory) : ""),
+        [selectedStory],
+    );
 
     useEffect(() => {
         if (loading || !isAuthenticated) {
@@ -44,6 +127,7 @@ export default function SportsPage() {
                 setFetching(true);
                 setError(null);
                 setStories([]);
+                setSelectedStory(null);
 
                 const pollState = async () => {
                     try {
@@ -152,15 +236,19 @@ export default function SportsPage() {
                                         <span className="post-topic-badge">{story.sourceName}</span>
                                         <span className="post-dot">·</span>
                                         <span className="post-time">{formatDateFromMs(story.publishedAtMs)}</span>
-                                        <span className="post-dot">·</span>
-                                        <span className="post-time">Score {story.importanceScore}</span>
                                     </div>
+                                    <button
+                                        type="button"
+                                        className="sports-story-title"
+                                        onClick={() => setSelectedStory(story)}
+                                    >
+                                        {buildMatchTitle(story)}
+                                    </button>
                                     <ul className="sports-inline-bullets">
                                         {story.bulletPoints.map((point, index) => (
                                             <li key={`${story.id}-point-${index}`}>{point}</li>
                                         ))}
                                     </ul>
-                                    <p className="post-content">{story.reconstructedArticle}</p>
                                     <a
                                         href={story.canonicalUrl}
                                         target="_blank"
@@ -175,6 +263,54 @@ export default function SportsPage() {
                     </div>
                 ) : null}
             </main>
+
+            {selectedStory ? (
+                <div
+                    className="sports-story-modal-overlay"
+                    onClick={() => setSelectedStory(null)}
+                    role="presentation"
+                >
+                    <div
+                        className="sports-story-modal"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-label={selectedStoryTitle}
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <div className="sports-story-modal-header">
+                            <h2>{selectedStoryTitle}</h2>
+                            <button
+                                type="button"
+                                className="sports-story-modal-close"
+                                onClick={() => setSelectedStory(null)}
+                                aria-label="Close sports story"
+                            >
+                                ×
+                            </button>
+                        </div>
+                        <div className="sports-story-modal-meta">
+                            <span>{selectedStory.sourceName}</span>
+                            <span className="post-dot">·</span>
+                            <span>{formatDateFromMs(selectedStory.publishedAtMs)}</span>
+                            <span className="post-dot">·</span>
+                            <span>Relevance {selectedStory.importanceScore}</span>
+                        </div>
+                        <ul className="sports-inline-bullets sports-story-modal-bullets">
+                            {selectedStory.bulletPoints.map((point, index) => (
+                                <li key={`${selectedStory.id}-modal-point-${index}`}>{point}</li>
+                            ))}
+                        </ul>
+                        <a
+                            href={selectedStory.canonicalUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="post-source-link"
+                        >
+                            Read original source
+                        </a>
+                    </div>
+                </div>
+            ) : null}
 
             <aside className="right-sidebar">
                 <div className="right-card right-new-section page-side-note">

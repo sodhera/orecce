@@ -138,6 +138,7 @@ export const processSportsRefreshJob = onDocumentWritten(
     maxInstances: 5
   },
   async (event) => {
+    const startedAtMs = Date.now();
     const after = event.data?.after;
     if (!after?.exists) {
       return;
@@ -164,7 +165,8 @@ export const processSportsRefreshJob = onDocumentWritten(
         limit: 60,
         userAgent: "OrecceSportsAgent/1.0 (+https://orecce.local/news-sports)",
         feedTimeoutMs: 8_000,
-        articleTimeoutMs: 12_000
+        articleTimeoutMs: 12_000,
+        deadlineMs: startedAtMs + 510_000
       });
       await userSportsNewsRepository.finishRefreshForUser(userId, "football", {
         success: true

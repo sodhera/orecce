@@ -8,6 +8,7 @@ class InMemoryUserSportsNewsRepository implements UserSportsNewsRepository {
   public readonly draftRows = new Map<string, SportsGameDraft[]>();
   public readonly syncRows = new Map<string, UserSportsSyncState>();
   public queuedRefreshes: Array<{ userId: string; sport: "football" }> = [];
+  public upsertedStories: SportsStory[] = [];
 
   async enqueueRefreshForUser(userId: string, sport: "football"): Promise<void> {
     this.queuedRefreshes.push({ userId, sport });
@@ -48,6 +49,17 @@ class InMemoryUserSportsNewsRepository implements UserSportsNewsRepository {
 
   async replaceStoriesForUser(userId: string, sport: "football", stories: SportsStory[]): Promise<void> {
     this.rows.set(`${userId}:${sport}`, stories.map((story) => ({ ...story })));
+  }
+
+  async upsertStoriesForUser(userId: string, sport: "football", stories: SportsStory[]): Promise<void> {
+    const key = `${userId}:${sport}`;
+    const current = this.rows.get(key) ?? [];
+    const byGameId = new Map(current.map((story) => [story.gameId, { ...story }] as const));
+    for (const story of stories) {
+      byGameId.set(story.gameId, { ...story });
+      this.upsertedStories.push({ ...story });
+    }
+    this.rows.set(key, Array.from(byGameId.values()));
   }
 
   async listStoriesForUser(userId: string, sport: "football", limit: number): Promise<SportsStory[]> {
@@ -135,5 +147,101 @@ describe("UserSportsNewsService", () => {
     });
 
     await expect(service.listUserStories("u1", "basketball", 5)).rejects.toThrow("Unsupported sport");
+  });
+
+  it("resets progress counts when queuing a new refresh", async () => {
+    const repository = new InMemoryUserSportsNewsRepository();
+    repository.syncRows.set("u1:football", {
+      status: "complete",
+      step: "complete",
+      message: "Prepared 26 game summaries.",
+      totalGames: 28,
+      processedGames: 26,
+      foundGames: ["A vs B"],
+      updatedAtMs: Date.now()
+    });
+    const sportsNewsService = {
+      fetchLatestStories: async () => ({
+        sport: "football",
+        gameDateKey: "2026-02-16",
+        gameDrafts: [],
+        stories: []
+      })
+    } as unknown as SportsNewsService;
+
+    const service = new UserSportsNewsService({
+      repository,
+      sportsNewsService
+    });
+
+    await service.requestRefresh("u1", "football");
+
+    const state = repository.syncRows.get("u1:football");
+    expect(state?.status).toBe("running");
+    expect(state?.totalGames).toBe(0);
+    expect(state?.processedGames).toBe(0);
+    expect(state?.foundGames).toEqual([]);
+    expect(repository.queuedRefreshes.length).toBe(1);
+  });
+
+  it("includes fallback stories when listing user sports feed", async () => {
+    const repository = new InMemoryUserSportsNewsRepository();
+    await repository.replaceStoriesForUser("u1", "football", [
+      {
+        id: "ready",
+        sport: "football",
+        sourceId: "bbc-football",
+        sourceName: "BBC Football",
+        title: "Ready Story",
+        canonicalUrl: "https://news.example.com/ready",
+        publishedAtMs: Date.now(),
+        gameId: "game-ready",
+        gameName: "Team A vs Team B",
+        gameDateKey: "2026-02-16",
+        importanceScore: 90,
+        bulletPoints: ["Point 1"],
+        reconstructedArticle: "Ready content",
+        story: "Ready content",
+        fullTextStatus: "ready",
+        summarySource: "llm"
+      },
+      {
+        id: "fallback",
+        sport: "football",
+        sourceId: "espn-soccer",
+        sourceName: "ESPN Soccer",
+        title: "Fallback Story",
+        canonicalUrl: "https://news.example.com/fallback",
+        publishedAtMs: Date.now() - 1000,
+        gameId: "game-fallback",
+        gameName: "Team C vs Team D",
+        gameDateKey: "2026-02-16",
+        importanceScore: 80,
+        bulletPoints: ["Point 1"],
+        reconstructedArticle: "Fallback content",
+        story: "Fallback content",
+        fullTextStatus: "fallback",
+        summarySource: "fallback"
+      }
+    ]);
+
+    const sportsNewsService = {
+      fetchLatestStories: async () => ({
+        sport: "football",
+        gameDateKey: "2026-02-16",
+        gameDrafts: [],
+        stories: []
+      })
+    } as unknown as SportsNewsService;
+
+    const service = new UserSportsNewsService({
+      repository,
+      sportsNewsService
+    });
+
+    const listed = await service.listUserStories("u1", "football", 10);
+    expect(listed.stories.length).toBe(2);
+    expect(listed.stories.some((story) => story.id === "ready")).toBe(true);
+    expect(listed.stories.some((story) => story.id === "fallback")).toBe(true);
   });
 });

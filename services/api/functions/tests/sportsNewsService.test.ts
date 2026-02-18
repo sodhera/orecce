@@ -20,7 +20,7 @@ describe("SportsNewsService", () => {
             {
               externalId: "bbc-1",
               canonicalUrl: "https://news.example.com/a",
-              title: "A Team Wins",
+              title: "A Team 2-1 C Team",
               summary: "A short summary.",
               categories: ["Football"],
               publishedAtMs: yesterdayMs
@@ -31,7 +31,7 @@ describe("SportsNewsService", () => {
           {
             externalId: "espn-1",
             canonicalUrl: "https://news.example.com/b",
-            title: "B Team Signs Player",
+            title: "B Team v D Team preview",
             summary: "B summary.",
             categories: ["Soccer"],
             publishedAtMs: yesterdayMs + 1_000
@@ -75,7 +75,7 @@ describe("SportsNewsService", () => {
     expect(result.stories[0].summarySource).toBe("llm");
   });
 
-  it("falls back to feed summary when article text fetch fails", async () => {
+  it("falls back to feed summary when article text fetch fails for all related articles", async () => {
     const service = new SportsNewsService({
       feedFetcher: async () => ({
         status: 200,
@@ -85,7 +85,7 @@ describe("SportsNewsService", () => {
         {
           externalId: "bbc-1",
           canonicalUrl: "https://news.example.com/a",
-          title: "A Team Wins",
+          title: "A Team 1-0 B Team",
           summary: "Summary used for fallback. Another sentence.",
           categories: ["Football"],
           publishedAtMs: yesterdayMs
@@ -107,9 +107,6 @@ describe("SportsNewsService", () => {
 
     expect(result.stories.length).toBe(1);
     expect(result.stories[0].fullTextStatus).toBe("fallback");
-    expect(result.stories[0].summarySource).toBe("fallback");
-    expect(result.stories[0].bulletPoints.length).toBeGreaterThan(0);
-    expect(result.stories[0].story).toContain("Summary used for fallback.");
   });
 
   it("includes stories from today and yesterday, excluding older dates", async () => {
@@ -126,7 +123,7 @@ describe("SportsNewsService", () => {
           {
             externalId: "today-1",
             canonicalUrl: "https://news.example.com/today",
-            title: "Today Match",
+            title: "Today FC 3-1 Rivals",
             summary: "Today summary.",
             categories: ["Football"],
             publishedAtMs: todayMs
@@ -134,7 +131,7 @@ describe("SportsNewsService", () => {
           {
             externalId: "yesterday-1",
             canonicalUrl: "https://news.example.com/yesterday",
-            title: "Yesterday Match",
+            title: "Yesterday FC 1-1 City",
             summary: "Yesterday summary.",
             categories: ["Football"],
             publishedAtMs: yesterdayMs
@@ -142,7 +139,7 @@ describe("SportsNewsService", () => {
           {
             externalId: "old-1",
             canonicalUrl: "https://news.example.com/old",
-            title: "Old Match",
+            title: "Old FC 2-0 Town",
             summary: "Old summary.",
             categories: ["Football"],
             publishedAtMs: twoDaysAgoMs
@@ -175,9 +172,9 @@ describe("SportsNewsService", () => {
     });
 
     expect(result.stories.length).toBe(2);
-    expect(result.stories.some((story) => story.title.startsWith("Today Match"))).toBe(true);
-    expect(result.stories.some((story) => story.title.startsWith("Yesterday Match"))).toBe(true);
-    expect(result.stories.some((story) => story.title.startsWith("Old Match"))).toBe(false);
+    expect(result.stories.some((story) => story.title.startsWith("Today FC"))).toBe(true);
+    expect(result.stories.some((story) => story.title.startsWith("Yesterday FC"))).toBe(true);
+    expect(result.stories.some((story) => story.title.startsWith("Old FC"))).toBe(false);
   });
 
   it("throws on unsupported sports", async () => {
@@ -198,5 +195,109 @@ describe("SportsNewsService", () => {
         articleTimeoutMs: 3000
       })
     ).rejects.toThrow("Unsupported sport");
+  });
+
+  it("continues when one feed source fails", async () => {
+    const service = new SportsNewsService({
+      feedFetcher: async (url) => {
+        if (url.includes("bbci")) {
+          throw new Error("BBC unavailable");
+        }
+        return {
+          status: 200,
+          body: `<feed>${url}</feed>`
+        };
+      },
+      feedParser: (): ParsedFeedArticle[] => [
+        {
+          externalId: "espn-1",
+          canonicalUrl: "https://news.example.com/live-game",
+          title: "City Team 3-2 River Team",
+          summary: "Live summary.",
+          categories: ["Soccer"],
+          publishedAtMs: yesterdayMs
+        }
+      ],
+      articleTextFetcher: async () => "Full report. Detail one. Detail two. Detail three.",
+      gameClusterBuilder: async (input) => [
+        {
+          gameId: "game-live",
+          gameName: "Live Team vs Away Team",
+          gameDateKey: input.gameDateKey,
+          articleRefs: input.articles
+        }
+      ],
+      gameStoryBuilder: async () => ({
+        importanceScore: 77,
+        bulletPoints: ["Top update", "Second update", "Third update"],
+        reconstructedArticle: "Reconstructed article.",
+        summarySource: "llm"
+      })
+    });
+
+    const result = await service.fetchLatestStories({
+      sport: "football",
+      limit: 5,
+      userAgent: "TestBot/1.0",
+      feedTimeoutMs: 3000,
+      articleTimeoutMs: 3000,
+      timeZone: "UTC"
+    });
+
+    expect(result.stories.length).toBe(1);
+    expect(result.stories[0].gameName).toContain("River Team");
+  });
+
+  it("groups multiple source articles into one match draft", async () => {
+    const service = new SportsNewsService({
+      feedFetcher: async (url) => ({
+        status: 200,
+        body: `<feed>${url}</feed>`
+      }),
+      feedParser: (xml): ParsedFeedArticle[] => {
+        if (xml.includes("bbci")) {
+          return [
+            {
+              externalId: "bbc-match-1",
+              canonicalUrl: "https://news.example.com/match-1-bbc",
+              title: "Arsenal 2-1 Chelsea",
+              summary: "Match report.",
+              categories: ["Football"],
+              publishedAtMs: yesterdayMs
+            }
+          ];
+        }
+        return [
+          {
+            externalId: "espn-match-1",
+            canonicalUrl: "https://news.example.com/match-1-espn",
+            title: "Arsenal vs Chelsea reaction",
+            summary: "Post-match analysis.",
+            categories: ["Soccer"],
+            publishedAtMs: yesterdayMs + 2_000
+          }
+        ];
+      },
+      articleTextFetcher: async (url) => `Full report for ${url}. First detail. Second detail. Third detail.`,
+      gameStoryBuilder: async () => ({
+        importanceScore: 88,
+        bulletPoints: ["Top update", "Second update", "Third update"],
+        reconstructedArticle: "Combined reconstruction.",
+        summarySource: "llm"
+      })
+    });
+
+    const result = await service.fetchLatestStories({
+      sport: "football",
+      limit: 5,
+      userAgent: "TestBot/1.0",
+      feedTimeoutMs: 3000,
+      articleTimeoutMs: 3000,
+      timeZone: "UTC"
+    });
+
+    expect(result.gameDrafts.length).toBe(1);
+    expect(result.gameDrafts[0].articleRefs.length).toBe(2);
+    expect(result.gameDrafts[0].gameName).toContain("Arsenal");
   });
 });

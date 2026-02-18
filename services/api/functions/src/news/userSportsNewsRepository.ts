@@ -21,6 +21,7 @@ export interface UserSportsNewsRepository {
   replaceSyncStateForUser(userId: string, sport: SportId, state: UserSportsSyncState): Promise<void>;
   getSyncStateForUser(userId: string, sport: SportId): Promise<UserSportsSyncState | null>;
   replaceGameDraftsForUser(userId: string, sport: SportId, gameDateKey: string, drafts: SportsGameDraft[]): Promise<void>;
+  upsertStoriesForUser(userId: string, sport: SportId, stories: SportsStory[]): Promise<void>;
   replaceStoriesForUser(userId: string, sport: SportId, stories: SportsStory[]): Promise<void>;
   listStoriesForUser(userId: string, sport: SportId, limit: number): Promise<SportsStory[]>;
 }
@@ -304,6 +305,46 @@ export class FirestoreUserSportsNewsRepository implements UserSportsNewsReposito
         updatedAt: now,
         createdAt: now
       });
+    });
+
+    await batch.commit();
+  }
+
+  async upsertStoriesForUser(userId: string, sport: SportId, stories: SportsStory[]): Promise<void> {
+    if (!stories.length) {
+      return;
+    }
+
+    const now = Timestamp.now();
+    const batch = this.db.batch();
+    stories.forEach((story, index) => {
+      const docId = hashText(`${userId}:${sport}:${story.gameDateKey}:${story.gameId}`);
+      const ref = this.db.collection(this.storiesCollection).doc(docId);
+      batch.set(
+        ref,
+        {
+          userId,
+          sport,
+          sourceId: story.sourceId,
+          sourceName: story.sourceName,
+          title: story.title,
+          canonicalUrl: story.canonicalUrl,
+          publishedAt: typeof story.publishedAtMs === "number" ? Timestamp.fromMillis(story.publishedAtMs) : null,
+          gameId: story.gameId,
+          gameName: story.gameName,
+          gameDateKey: story.gameDateKey,
+          importanceScore: story.importanceScore,
+          bulletPoints: story.bulletPoints,
+          reconstructedArticle: story.reconstructedArticle,
+          story: story.story,
+          fullTextStatus: story.fullTextStatus,
+          summarySource: story.summarySource,
+          rank: index + 1,
+          updatedAt: now,
+          createdAt: now
+        },
+        { merge: true }
+      );
     });
 
     await batch.commit();

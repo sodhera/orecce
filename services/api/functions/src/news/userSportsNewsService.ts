@@ -14,6 +14,7 @@ interface RefreshUserSportsStoriesInput {
   userAgent: string;
   feedTimeoutMs: number;
   articleTimeoutMs: number;
+  deadlineMs?: number;
 }
 
 export class UserSportsNewsService {
@@ -66,9 +67,9 @@ export class UserSportsNewsService {
         status: "running",
         step: "looking_games",
         message: "Queued sports refresh.",
-        totalGames: existingState?.totalGames ?? 0,
-        processedGames: existingState?.processedGames ?? 0,
-        foundGames: existingState?.foundGames ?? [],
+        totalGames: 0,
+        processedGames: 0,
+        foundGames: [],
         startedAtMs: now,
         updatedAtMs: now
       });
@@ -106,7 +107,6 @@ export class UserSportsNewsService {
     });
 
     try {
-      await this.repository.replaceStoriesForUser(input.userId, sport, []);
       const generatedByGameId = new Map<string, SportsStory>();
 
       const fetched = await this.sportsNewsService.fetchLatestStories({
@@ -115,6 +115,7 @@ export class UserSportsNewsService {
         userAgent: input.userAgent,
         feedTimeoutMs: input.feedTimeoutMs,
         articleTimeoutMs: input.articleTimeoutMs,
+        deadlineMs: input.deadlineMs,
         timeZone,
         knownGameIds,
         onProgress: async (progress) => {
@@ -131,13 +132,7 @@ export class UserSportsNewsService {
         },
         onStoryReady: async (story) => {
           generatedByGameId.set(story.gameId, story);
-          const generatedStories = Array.from(generatedByGameId.values()).sort((a, b) => {
-            if (b.importanceScore !== a.importanceScore) {
-              return b.importanceScore - a.importanceScore;
-            }
-            return (b.publishedAtMs ?? 0) - (a.publishedAtMs ?? 0);
-          });
-          await this.repository.replaceStoriesForUser(input.userId, sport, generatedStories);
+          await this.repository.upsertStoriesForUser(input.userId, sport, [story]);
         }
       } satisfies FetchSportsStoriesInput);
 
@@ -163,7 +158,6 @@ export class UserSportsNewsService {
           return (b.publishedAtMs ?? 0) - (a.publishedAtMs ?? 0);
         });
       }
-
       await this.repository.replaceStoriesForUser(input.userId, fetched.sport, mergedStories);
       await this.updateSyncState(input.userId, sport, {
         status: "complete",

@@ -198,6 +198,64 @@ describe("SportsNewsService", () => {
     expect(result.stories.length).toBe(0);
   });
 
+  it("keeps BBC match narrative when metadata text includes published markers", async () => {
+    process.env.SPORTS_NEWS_FETCH_FULL_TEXT = "true";
+
+    const service = new SportsNewsService({
+      feedFetcher: async (url) => ({
+        status: 200,
+        body: `<rss>${url}</rss>`
+      }),
+      feedParser: (xml): ParsedFeedArticle[] =>
+        xml.includes("bbci")
+          ? [
+              {
+                externalId: "bbc-clip-1",
+                canonicalUrl: "https://news.example.com/bbc-clip",
+                title: "Dundee United 2-1 Spartans",
+                summary: "Dundee United advanced after a late scare.",
+                categories: ["Football"],
+                publishedAtMs: yesterdayMs
+              }
+            ]
+          : [],
+      gameClusterBuilder: async (input) => [
+        {
+          gameId: "dundee-vs-spartans",
+          gameName: "Dundee United vs Spartans",
+          gameDateKey: input.gameDateKey,
+          articleRefs: input.articles
+        }
+      ],
+      articleTextFetcher: async () =>
+        [
+          "Watch: Dundee United edge out Spartans in Scottish Cup.",
+          "Media caption, Highlights: Dundee United 2-1 Spartans.",
+          "Published 8 hours ago.",
+          "Watch as Dundee United survived an early red card and a late comeback from Spartans to win 2-1.",
+          "The result sends Dundee United into the quarter-finals after they held on through sustained pressure."
+        ].join(" "),
+      gameStoryBuilder: async () => ({
+        importanceScore: 70,
+        bulletPoints: ["Top update", "Second update", "Third update"],
+        reconstructedArticle: "Reconstructed article.",
+        summarySource: "llm"
+      })
+    });
+
+    const result = await service.fetchLatestStories({
+      sport: "football",
+      limit: 2,
+      userAgent: "TestBot/1.0",
+      feedTimeoutMs: 3000,
+      articleTimeoutMs: 3000,
+      timeZone: "UTC"
+    });
+
+    expect(result.stories.length).toBe(1);
+    expect(result.stories[0].fullTextStatus).toBe("ready");
+  });
+
   it("includes stories from today and yesterday, excluding older dates", async () => {
     const service = new SportsNewsService({
       feedFetcher: async (url) => ({

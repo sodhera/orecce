@@ -1,10 +1,14 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { ParsedFeedArticle } from "../src/news/types";
 import { SportsNewsService } from "../src/news/sportsNewsService";
 
 const ORIGINAL_ENV = { ...process.env };
 
 describe("SportsNewsService", () => {
+  beforeEach(() => {
+    process.env.SPORTS_NEWS_FETCH_FULL_TEXT = "false";
+  });
+
   afterEach(() => {
     process.env = { ...ORIGINAL_ENV };
   });
@@ -47,7 +51,7 @@ describe("SportsNewsService", () => {
         ];
       },
       articleTextFetcher: async (url) =>
-        `Full report for ${url}. First detail. Second detail. Third detail. Fourth detail. Fifth detail.`,
+        `Full report for ${url}. First detail with tactical context and player positioning. Second detail covering halftime adjustments and substitutions. Third detail explains key chances and defensive recoveries. Fourth detail captures crowd momentum and late pressure. Fifth detail summarizes final passages and implications for upcoming fixtures.`,
       gameClusterBuilder: async (input) =>
         input.articles.map((article) => ({
           gameId: `game-${article.itemIndex}`,
@@ -115,6 +119,41 @@ describe("SportsNewsService", () => {
 
     expect(result.stories.length).toBe(1);
     expect(result.stories[0].fullTextStatus).toBe("fallback");
+  });
+
+  it("skips story generation when full-text mode is enabled and article bodies are unavailable", async () => {
+    process.env.SPORTS_NEWS_FETCH_FULL_TEXT = "true";
+
+    const service = new SportsNewsService({
+      feedFetcher: async () => ({
+        status: 200,
+        body: "<rss/>"
+      }),
+      feedParser: (): ParsedFeedArticle[] => [
+        {
+          externalId: "bbc-1",
+          canonicalUrl: "https://news.example.com/a",
+          title: "A Team 1-0 B Team",
+          summary: "Summary used for fallback. Another sentence.",
+          categories: ["Football"],
+          publishedAtMs: yesterdayMs
+        }
+      ],
+      articleTextFetcher: async () => {
+        throw new Error("fetch failed");
+      }
+    });
+
+    const result = await service.fetchLatestStories({
+      sport: "football",
+      limit: 1,
+      userAgent: "TestBot/1.0",
+      feedTimeoutMs: 3000,
+      articleTimeoutMs: 3000,
+      timeZone: "UTC"
+    });
+
+    expect(result.stories.length).toBe(0);
   });
 
   it("includes stories from today and yesterday, excluding older dates", async () => {

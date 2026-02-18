@@ -191,6 +191,7 @@ function clamp(value: number, min: number, max: number): number {
 
 const MAX_GAMES_PER_REFRESH = 12;
 const GAME_PROCESSING_CONCURRENCY = 2;
+const MIN_SPORTS_FULL_TEXT_CHARS = 120;
 
 function selectArticlesForStory(articleRefs: GameArticleReference[], maxArticles: number): GameArticleReference[] {
   const sorted = [...articleRefs].sort((a, b) => (b.publishedAtMs ?? 0) - (a.publishedAtMs ?? 0));
@@ -432,6 +433,30 @@ function sanitizeTeamName(raw: string): string {
     value = value.slice(0, 44).trim();
   }
   return value;
+}
+
+function normalizeComparableText(value: string): string {
+  return normalizeWhitespace(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function isHeadlineLikeSentence(sentence: string, titleKeys: Set<string>): boolean {
+  const sentenceKey = normalizeComparableText(sentence);
+  if (!sentenceKey || sentenceKey.length < 16) {
+    return false;
+  }
+  for (const titleKey of titleKeys) {
+    if (!titleKey || titleKey.length < 16) {
+      continue;
+    }
+    if (titleKey.includes(sentenceKey) || sentenceKey.includes(titleKey)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function normalizeTeamKey(raw: string): string {
@@ -835,21 +860,31 @@ function buildFallbackGameStory(input: GameStoryBuilderInput): GameStoryDraft {
     .filter(Boolean);
   const allText = [...cleanedSummaries, ...cleanedNarratives].join(" ");
   const sentenceSeen = new Set<string>();
+  const titleKeys = new Set(
+    input.articles.map((article) => normalizeComparableText(article.title)).filter((value) => value.length >= 16)
+  );
   const sentences = splitSentences(allText).filter((sentence) => {
     const key = sentence.toLowerCase().replace(/[^a-z0-9 ]+/g, "").trim();
     if (!key || sentenceSeen.has(key)) {
       return false;
     }
     sentenceSeen.add(key);
-    return true;
+    return !isHeadlineLikeSentence(sentence, titleKeys);
   });
-  const bulletPoints = (sentences.length ? sentences : input.articles.map((item) => item.summary))
+  const bulletSource = sentences.length ? sentences.slice(0, 6) : input.articles.map((item) => item.summary);
+  const reconstructionSource =
+    sentences.length > 4 ? sentences.slice(4) : sentences.length > 1 ? sentences.slice(1) : sentences;
+  const bulletPoints = bulletSource
     .map((value) => truncate(value, 220))
     .filter(Boolean)
     .slice(0, 6);
   const sourceNames = Array.from(new Set(input.articles.map((article) => article.sourceName))).join(", ");
   const reconstructedArticle = truncate(
-    (sentences.length ? sentences.join(" ") : input.articles.map((item) => item.summary).join(" ")) ||
+    (reconstructionSource.length
+      ? reconstructionSource.join(" ")
+      : sentences.length
+      ? sentences.join(" ")
+      : input.articles.map((item) => item.summary).join(" ")) ||
       `Match summary for ${input.gameName}.`,
     1_600
   );
@@ -1265,7 +1300,7 @@ export class SportsNewsService {
                   userAgent: input.userAgent
                 });
                 const sanitized = sanitizeArticleNarrativeText(fullText);
-                if (sanitized.length >= 40) {
+                if (sanitized.length >= MIN_SPORTS_FULL_TEXT_CHARS) {
                   return {
                     ...articleRef,
                     rawText: sanitized,
@@ -1295,6 +1330,18 @@ export class SportsNewsService {
             );
 
         const readyArticles = enrichedArticles.filter((item) => item.fullTextStatus === "ready");
+        if (fetchSportsFullText && readyArticles.length === 0) {
+          processedGames += 1;
+          await reportProgress(input.onProgress, {
+            step: "preparing_articles",
+            message: `Skipped ${draft.gameName} due to unavailable full article content.`,
+            totalGames: budgetedGameDraftsToGenerate.length,
+            processedGames,
+            gameName: draft.gameName,
+            foundGames
+          });
+          return null;
+        }
         const usableArticles = readyArticles.length ? readyArticles : enrichedArticles;
         if (!usableArticles.length) {
           processedGames += 1;

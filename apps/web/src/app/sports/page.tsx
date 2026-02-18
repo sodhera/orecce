@@ -43,16 +43,13 @@ export default function SportsPage() {
             try {
                 setFetching(true);
                 setError(null);
+                setStories([]);
 
                 const pollState = async () => {
                     try {
-                        const [status, latest] = await Promise.all([
-                            getSportsStatus("football"),
-                            getSportsLatest("football", 12, false),
-                        ]);
+                        const status = await getSportsStatus("football");
                         if (!cancelled) {
                             setSyncState(status.state);
-                            setStories(latest.stories);
                         }
                         return status.state;
                     } catch {
@@ -61,8 +58,8 @@ export default function SportsPage() {
                     }
                 };
 
-                await pollState();
                 await requestSportsRefresh("football");
+                await pollState();
 
                 const startedAt = Date.now();
                 while (!cancelled) {
@@ -75,6 +72,11 @@ export default function SportsPage() {
                     if (finished || timedOut) {
                         break;
                     }
+                }
+
+                const latest = await getSportsLatest("football", 12, false);
+                if (!cancelled) {
+                    setStories(latest.stories);
                 }
             } catch (err) {
                 if (!cancelled) {
@@ -100,7 +102,7 @@ export default function SportsPage() {
                     <div className="feed-header-top">
                         <h1>Sports</h1>
                         <p className="utility-page-intro">
-                            Latest football stories reconstructed from live RSS articles.
+                            Latest football match news synthesized from source reporting.
                         </p>
                     </div>
                 </div>
@@ -179,7 +181,7 @@ export default function SportsPage() {
                 <div className="right-card right-new-section page-side-note">
                     <h2 className="page-side-note-title">Sports Feed</h2>
                     <p className="page-side-note-text">
-                        Ordered by importance first, then freshness, using BBC and ESPN football RSS.
+                        Ordered by importance first, then freshness, using multi-source football coverage.
                     </p>
                 </div>
             </aside>

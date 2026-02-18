@@ -136,7 +136,11 @@ export function isSportsNewsLlmEnabled(): boolean {
 }
 
 export function shouldFetchSportsNewsFullText(): boolean {
-  return envFlagTrue(process.env.SPORTS_NEWS_FETCH_FULL_TEXT);
+  const raw = process.env.SPORTS_NEWS_FETCH_FULL_TEXT?.trim();
+  if (!raw) {
+    return true;
+  }
+  return raw.toLowerCase() !== "false";
 }
 
 export function getSportsNewsMaxArticlesPerGame(): number {

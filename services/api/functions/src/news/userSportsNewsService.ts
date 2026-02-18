@@ -89,7 +89,10 @@ export class UserSportsNewsService {
     const existingDateKeys = new Set(existingStories.map((story) => story.gameDateKey));
     const hasFreshCoverage = existingDateKeys.has(todayKey) && existingDateKeys.has(yesterdayKey);
     const knownGameIds = hasFreshCoverage
-      ? existingStories.filter((story) => activeDateKeys.has(story.gameDateKey)).map((story) => story.gameId)
+      ? existingStories
+          .filter((story) => activeDateKeys.has(story.gameDateKey))
+          .filter((story) => story.fullTextStatus === "ready")
+          .map((story) => story.gameId)
       : [];
 
     const startedAtMs = Date.now();

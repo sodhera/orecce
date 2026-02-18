@@ -28,7 +28,7 @@ Endpoints:
 - `GET /health`
 
 Background jobs:
-- `syncNewsEvery3Hours` (Cloud Scheduler: every 3 hours, 60s timeout)
+- `syncNewsEvery3Hours` (Cloud Scheduler: every 12 hours, 45s timeout)
   - Ingests latest stories from configured RSS sources
   - Stores normalized records in `newsArticles`
   - Stores full article text in `newsArticleTextChunks` (chunked, verbatim extraction from source pages)
@@ -63,6 +63,12 @@ NEWS_FETCH_FULL_TEXT=true
 NEWS_ARTICLE_TIMEOUT_MS=12000
 NEWS_ARTICLE_CONCURRENCY=2
 NEWS_CRAWLER_USER_AGENT="OrecceNewsBot/1.0 (+https://orecce.local/news-ingest)"
+
+# optional sports-cost tuning (defaults are low-cost)
+SPORTS_NEWS_LLM_ENABLED=false
+SPORTS_NEWS_FETCH_FULL_TEXT=false
+SPORTS_NEWS_MAX_ARTICLES_PER_GAME=3
+SPORTS_NEWS_ARTICLE_CONCURRENCY=2
 ```
 
 3. (Optional deploy config) Set Firebase runtime config:

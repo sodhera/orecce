@@ -6,8 +6,12 @@ import {
   getNewsMaxSourcesPerRun,
   getNewsSourceConcurrency,
   getOpenAiApiKey,
+  getSportsNewsArticleConcurrency,
+  getSportsNewsMaxArticlesPerGame,
   isNewsSyncEnabled,
-  shouldFetchNewsFullText
+  isSportsNewsLlmEnabled,
+  shouldFetchNewsFullText,
+  shouldFetchSportsNewsFullText
 } from "../src/config/runtimeConfig";
 
 const ORIGINAL_ENV = { ...process.env };
@@ -70,5 +74,25 @@ describe("runtimeConfig", () => {
 
     process.env.NEWS_FETCH_FULL_TEXT = "false";
     expect(shouldFetchNewsFullText()).toBe(false);
+  });
+
+  it("keeps sports LLM and full text disabled by default", () => {
+    delete process.env.SPORTS_NEWS_LLM_ENABLED;
+    delete process.env.SPORTS_NEWS_FETCH_FULL_TEXT;
+
+    expect(isSportsNewsLlmEnabled()).toBe(false);
+    expect(shouldFetchSportsNewsFullText()).toBe(false);
+  });
+
+  it("supports explicit sports LLM/full text enable and bounded tuning", () => {
+    process.env.SPORTS_NEWS_LLM_ENABLED = "true";
+    process.env.SPORTS_NEWS_FETCH_FULL_TEXT = "true";
+    process.env.SPORTS_NEWS_MAX_ARTICLES_PER_GAME = "99";
+    process.env.SPORTS_NEWS_ARTICLE_CONCURRENCY = "0";
+
+    expect(isSportsNewsLlmEnabled()).toBe(true);
+    expect(shouldFetchSportsNewsFullText()).toBe(true);
+    expect(getSportsNewsMaxArticlesPerGame()).toBe(8);
+    expect(getSportsNewsArticleConcurrency()).toBe(1);
   });
 });

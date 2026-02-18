@@ -1,14 +1,22 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { ParsedFeedArticle } from "../src/news/types";
 import { SportsNewsService } from "../src/news/sportsNewsService";
 
+const ORIGINAL_ENV = { ...process.env };
+
 describe("SportsNewsService", () => {
+  afterEach(() => {
+    process.env = { ...ORIGINAL_ENV };
+  });
+
   const now = new Date();
   const todayMs = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 12, 0, 0, 0);
   const yesterdayMs = todayMs - 24 * 60 * 60 * 1000;
   const twoDaysAgoMs = todayMs - 48 * 60 * 60 * 1000;
 
   it("fetches football stories from configured feeds and builds story text", async () => {
+    process.env.SPORTS_NEWS_FETCH_FULL_TEXT = "true";
+
     const service = new SportsNewsService({
       feedFetcher: async (url) => ({
         status: 200,

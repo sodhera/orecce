@@ -65,11 +65,11 @@ const app = createApp({
 export const api = onRequest(
   {
     region: "us-central1",
-    timeoutSeconds: 120,
-    minInstances: 1,
-    // Prototype scale target: support bursty feed generation with up to ~10 concurrent users.
-    concurrency: 20,
-    maxInstances: 10
+    timeoutSeconds: 60,
+    minInstances: 0,
+    // Keep warm capacity at zero and favor high per-instance concurrency to minimize idle spend.
+    concurrency: 40,
+    maxInstances: 3
   },
   app
 );
@@ -91,22 +91,22 @@ export const onAuthUserCreate = functionsV1.auth.user().onCreate(async (user) =>
 export const syncNewsEvery3Hours = onSchedule(
   {
     region: "us-central1",
-    schedule: "every 3 hours",
+    schedule: "every 12 hours",
     timeZone: "Etc/UTC",
-    timeoutSeconds: 60,
-    memory: "512MiB",
+    timeoutSeconds: 45,
+    memory: "256MiB",
     maxInstances: 1,
     retryCount: 0
   },
   async () => {
     if (!isNewsSyncEnabled()) {
-      logInfo("news.sync.scheduler.disabled", { schedule: "every 3 hours" });
+      logInfo("news.sync.scheduler.disabled", { schedule: "every 12 hours" });
       return;
     }
 
     const startedAtMs = Date.now();
     const result = await newsIngestionService.syncAllSources({
-      schedule: "every 3 hours",
+      schedule: "every 12 hours",
       maxArticlesPerSource: getNewsMaxArticlesPerSource(),
       sourceConcurrency: getNewsSourceConcurrency(),
       feedTimeoutMs: getNewsFeedTimeoutMs(),
@@ -115,7 +115,7 @@ export const syncNewsEvery3Hours = onSchedule(
       fetchFullText: shouldFetchNewsFullText(),
       maxSourcesPerRun: getNewsMaxSourcesPerRun(),
       userAgent: getNewsCrawlerUserAgent(),
-      deadlineMs: startedAtMs + 57_000
+      deadlineMs: startedAtMs + 42_000
     });
 
     logInfo("news.sync.scheduler.complete", {
@@ -133,9 +133,9 @@ export const processSportsRefreshJob = onDocumentWritten(
   {
     region: "us-central1",
     document: "userSportsNewsRefreshJobs/{jobId}",
-    timeoutSeconds: 540,
-    memory: "1GiB",
-    maxInstances: 5
+    timeoutSeconds: 300,
+    memory: "256MiB",
+    maxInstances: 1
   },
   async (event) => {
     const startedAtMs = Date.now();
@@ -166,7 +166,7 @@ export const processSportsRefreshJob = onDocumentWritten(
         userAgent: "OrecceSportsAgent/1.0 (+https://orecce.local/news-sports)",
         feedTimeoutMs: 8_000,
         articleTimeoutMs: 12_000,
-        deadlineMs: startedAtMs + 510_000
+        deadlineMs: startedAtMs + 270_000
       });
       await userSportsNewsRepository.finishRefreshForUser(userId, "football", {
         success: true

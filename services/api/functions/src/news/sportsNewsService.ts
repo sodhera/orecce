@@ -1,5 +1,12 @@
 import { createHash } from "crypto";
-import { getOpenAiApiKey, getOpenAiBaseUrl } from "../config/runtimeConfig";
+import {
+  getOpenAiApiKey,
+  getOpenAiBaseUrl,
+  getSportsNewsArticleConcurrency,
+  getSportsNewsMaxArticlesPerGame,
+  isSportsNewsLlmEnabled,
+  shouldFetchSportsNewsFullText
+} from "../config/runtimeConfig";
 import { fetchArticleFullText } from "./articleTextFetcher";
 import { parseFeedXml } from "./feedParser";
 import { SportFeedSource, SportId, SPORT_NEWS_SOURCES } from "./sportsNewsSources";
@@ -184,6 +191,39 @@ function clamp(value: number, min: number, max: number): number {
 
 const MAX_GAMES_PER_REFRESH = 12;
 const GAME_PROCESSING_CONCURRENCY = 2;
+
+function selectArticlesForStory(articleRefs: GameArticleReference[], maxArticles: number): GameArticleReference[] {
+  const sorted = [...articleRefs].sort((a, b) => (b.publishedAtMs ?? 0) - (a.publishedAtMs ?? 0));
+  const boundedMax = Math.max(1, Math.floor(maxArticles));
+  const selected: GameArticleReference[] = [];
+  const selectedUrls = new Set<string>();
+  const selectedSourceIds = new Set<string>();
+
+  for (const article of sorted) {
+    if (selected.length >= boundedMax) {
+      break;
+    }
+    if (selectedSourceIds.has(article.sourceId) || selectedUrls.has(article.canonicalUrl)) {
+      continue;
+    }
+    selected.push(article);
+    selectedSourceIds.add(article.sourceId);
+    selectedUrls.add(article.canonicalUrl);
+  }
+
+  for (const article of sorted) {
+    if (selected.length >= boundedMax) {
+      break;
+    }
+    if (selectedUrls.has(article.canonicalUrl)) {
+      continue;
+    }
+    selected.push(article);
+    selectedUrls.add(article.canonicalUrl);
+  }
+
+  return selected;
+}
 
 function validTimeZone(value: string | undefined): string {
   const candidate = String(value ?? "").trim();
@@ -649,6 +689,10 @@ function coalesceDraftsByMatchKey(input: GameClusterBuilderInput, suggestedDraft
 }
 
 async function defaultGameClusterBuilder(input: GameClusterBuilderInput): Promise<SportsGameDraft[]> {
+  if (!isSportsNewsLlmEnabled()) {
+    return buildFallbackGameDrafts(input);
+  }
+
   const apiKey = getOpenAiApiKey();
   if (!apiKey) {
     return buildFallbackGameDrafts(input);
@@ -663,7 +707,7 @@ async function defaultGameClusterBuilder(input: GameClusterBuilderInput): Promis
     body: JSON.stringify({
       model: "gpt-5-mini",
       reasoning: { effort: "minimal" },
-      max_output_tokens: 1200,
+      max_output_tokens: 400,
       text: {
         format: {
           type: "json_schema",
@@ -823,6 +867,10 @@ function buildFallbackGameStory(input: GameStoryBuilderInput): GameStoryDraft {
 }
 
 async function defaultGameStoryBuilder(input: GameStoryBuilderInput): Promise<GameStoryDraft> {
+  if (!isSportsNewsLlmEnabled()) {
+    return buildFallbackGameStory(input);
+  }
+
   const apiKey = getOpenAiApiKey();
   if (!apiKey) {
     return buildFallbackGameStory(input);
@@ -837,7 +885,7 @@ async function defaultGameStoryBuilder(input: GameStoryBuilderInput): Promise<Ga
     body: JSON.stringify({
       model: "gpt-5-mini",
       reasoning: { effort: "minimal" },
-      max_output_tokens: 1200,
+      max_output_tokens: 700,
       text: {
         format: {
           type: "json_schema",
@@ -884,7 +932,7 @@ async function defaultGameStoryBuilder(input: GameStoryBuilderInput): Promise<Ga
                 `Title: ${item.title}`,
                 `URL: ${item.canonicalUrl}`,
                 `PublishedAtMs: ${item.publishedAtMs ?? "unknown"}`,
-                `Text: ${truncate(item.rawText, 3600)}`
+                `Text: ${truncate(item.rawText, 1800)}`
               ].join("\n")
             )
           ].join("\n\n")
@@ -1206,33 +1254,45 @@ export class SportsNewsService {
           foundGames
         });
 
-        const enrichedArticles = await runWithConcurrency(draft.articleRefs, 4, async (articleRef) => {
-          try {
-            const fullText = await this.articleTextFetcher(articleRef.canonicalUrl, {
-              timeoutMs: Math.max(1_000, input.articleTimeoutMs),
-              userAgent: input.userAgent
-            });
-            const sanitized = sanitizeArticleNarrativeText(fullText);
-            if (sanitized.length >= 40) {
-              return {
-                ...articleRef,
-                rawText: sanitized,
-                fullTextStatus: "ready"
-              } satisfies GameStoryArticleInput;
-            }
-            return {
-              ...articleRef,
-              rawText: articleRef.summary,
-              fullTextStatus: "fallback"
-            } satisfies GameStoryArticleInput;
-          } catch {
-            return {
-              ...articleRef,
-              rawText: articleRef.summary,
-              fullTextStatus: "fallback"
-            } satisfies GameStoryArticleInput;
-          }
-        });
+        const storyArticleRefs = selectArticlesForStory(draft.articleRefs, getSportsNewsMaxArticlesPerGame());
+        const fetchSportsFullText = shouldFetchSportsNewsFullText();
+        const articleFetchConcurrency = getSportsNewsArticleConcurrency();
+        const enrichedArticles = fetchSportsFullText
+          ? await runWithConcurrency(storyArticleRefs, articleFetchConcurrency, async (articleRef) => {
+              try {
+                const fullText = await this.articleTextFetcher(articleRef.canonicalUrl, {
+                  timeoutMs: Math.max(1_000, input.articleTimeoutMs),
+                  userAgent: input.userAgent
+                });
+                const sanitized = sanitizeArticleNarrativeText(fullText);
+                if (sanitized.length >= 40) {
+                  return {
+                    ...articleRef,
+                    rawText: sanitized,
+                    fullTextStatus: "ready"
+                  } satisfies GameStoryArticleInput;
+                }
+                return {
+                  ...articleRef,
+                  rawText: articleRef.summary,
+                  fullTextStatus: "fallback"
+                } satisfies GameStoryArticleInput;
+              } catch {
+                return {
+                  ...articleRef,
+                  rawText: articleRef.summary,
+                  fullTextStatus: "fallback"
+                } satisfies GameStoryArticleInput;
+              }
+            })
+          : storyArticleRefs.map(
+              (articleRef) =>
+                ({
+                  ...articleRef,
+                  rawText: articleRef.summary,
+                  fullTextStatus: "fallback"
+                } satisfies GameStoryArticleInput)
+            );
 
         const readyArticles = enrichedArticles.filter((item) => item.fullTextStatus === "ready");
         const usableArticles = readyArticles.length ? readyArticles : enrichedArticles;

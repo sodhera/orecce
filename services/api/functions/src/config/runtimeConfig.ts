@@ -131,6 +131,22 @@ export function shouldFetchNewsFullText(): boolean {
   return raw.toLowerCase() !== "false";
 }
 
+export function isSportsNewsLlmEnabled(): boolean {
+  return envFlagTrue(process.env.SPORTS_NEWS_LLM_ENABLED);
+}
+
+export function shouldFetchSportsNewsFullText(): boolean {
+  return envFlagTrue(process.env.SPORTS_NEWS_FETCH_FULL_TEXT);
+}
+
+export function getSportsNewsMaxArticlesPerGame(): number {
+  return parseBoundedInt(process.env.SPORTS_NEWS_MAX_ARTICLES_PER_GAME, 3, 1, 8);
+}
+
+export function getSportsNewsArticleConcurrency(): number {
+  return parseBoundedInt(process.env.SPORTS_NEWS_ARTICLE_CONCURRENCY, 2, 1, 4);
+}
+
 export function getNewsCrawlerUserAgent(): string {
   const value = process.env.NEWS_CRAWLER_USER_AGENT?.trim();
   if (value) {

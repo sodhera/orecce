@@ -625,6 +625,57 @@ function isLikelyGameArticle(title: string, summary: string): boolean {
   return hasVersusTerm && hasMatchContext;
 }
 
+function isCompletedMatchArticle(title: string, summary: string, canonicalUrl: string): boolean {
+  const combined = normalizeWhitespace(`${title} ${summary}`);
+  if (!combined) {
+    return false;
+  }
+
+  // Keep an initial broad match gate, then tighten to completed-match signals.
+  if (!isLikelyGameArticle(title, summary)) {
+    return false;
+  }
+
+  const lower = combined.toLowerCase();
+  const lowerTitle = normalizeWhitespace(title).toLowerCase();
+  const hasIdentity = Boolean(resolveMatchIdentity(title, summary));
+  const hasReportUrl = /\/report\/_\/gameid\/\d+/i.test(canonicalUrl);
+  const hasTitleScoreline = hasScorelinePattern(title);
+  const hasCombinedScoreline = hasScorelinePattern(combined);
+  const hasResultVerb =
+    /\b(won|win|beats?|beating|defeats?|defeated|drew|draw|drawn|held|rescued?|equali[sz]ed|edges?|edged|advanced|eliminated|through|on penalties|penalty shootout|after extra time)\b/.test(
+      lower
+    );
+  const hasMinuteOrFinalCue =
+    /\b\d{1,3}(?:st|nd|rd|th)-minute\b|\b(stoppage|added)\s+time\b|\bfull-time\b|\bfinal whistle\b|\bft\b/.test(lower);
+  const hasPrematchCue =
+    /\b(preview|will face|to face|drawn together|build-up|ahead of|next\b.*\b(saturday|sunday|monday|tuesday|wednesday|thursday|friday)\b|kick-?off|where to watch|prediction)\b/.test(
+      lower
+    );
+
+  // Require clear match linkage, not just a floating scoreline mention.
+  if (!hasReportUrl && !hasIdentity) {
+    return false;
+  }
+
+  // Direct match report URLs or clear scoreline-in-title should always count.
+  if (hasReportUrl || hasTitleScoreline) {
+    return true;
+  }
+
+  // Otherwise require scoreline plus result/final cues, and avoid obvious pre-match pieces.
+  if (hasCombinedScoreline && (hasResultVerb || hasMinuteOrFinalCue)) {
+    return !hasPrematchCue;
+  }
+
+  // Fallback: result language with final-time cues in title/summary can indicate played matches.
+  if ((hasResultVerb && hasMinuteOrFinalCue) || /\b(post-match|match report)\b/.test(lowerTitle)) {
+    return !hasPrematchCue;
+  }
+
+  return false;
+}
+
 function compareDraftPriority(a: SportsGameDraft, b: SportsGameDraft): number {
   if (b.articleRefs.length !== a.articleRefs.length) {
     return b.articleRefs.length - a.articleRefs.length;
@@ -1156,7 +1207,7 @@ export class SportsNewsService {
     const selectedItems = allItems
       .filter((item) => typeof item.publishedAtMs === "number")
       .filter((item) => selectedDateKeySet.has(toDateKey(item.publishedAtMs as number, timeZone)))
-      .filter((item) => isLikelyGameArticle(item.title, item.summary))
+      .filter((item) => isCompletedMatchArticle(item.title, item.summary, item.canonicalUrl))
       .map((item) => {
         const identity = resolveMatchIdentity(item.title, item.summary);
         return { item, identity };

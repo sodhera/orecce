@@ -42,9 +42,9 @@ describe("SportsNewsService", () => {
         return [
           {
             externalId: "espn-1",
-            canonicalUrl: "https://news.example.com/b",
+            canonicalUrl: "https://www.espn.com/soccer/report/_/gameId/10001",
             title: "Manchester City vs River Plate reaction",
-            summary: "ESPN post-match reaction summary.",
+            summary: "Manchester City beat River Plate 2-1 in the match report.",
             categories: ["Soccer"],
             publishedAtMs: yesterdayMs + 1_000
           }
@@ -435,9 +435,9 @@ describe("SportsNewsService", () => {
         return [
           {
             externalId: "espn-match-1",
-            canonicalUrl: "https://news.example.com/match-1-espn",
+            canonicalUrl: "https://www.espn.com/soccer/report/_/gameId/10002",
             title: "Arsenal vs Chelsea reaction",
-            summary: "Post-match analysis.",
+            summary: "Arsenal beat Chelsea 2-1 in a tense match report.",
             categories: ["Soccer"],
             publishedAtMs: yesterdayMs + 2_000
           }
@@ -464,5 +464,41 @@ describe("SportsNewsService", () => {
     expect(result.gameDrafts.length).toBe(1);
     expect(result.gameDrafts[0].articleRefs.length).toBe(2);
     expect(result.gameDrafts[0].gameName).toContain("Arsenal");
+  });
+
+  it("excludes pre-match fixture pieces that do not report a completed match", async () => {
+    const service = new SportsNewsService({
+      feedFetcher: async (url) => ({
+        status: 200,
+        body: `<feed>${url}</feed>`
+      }),
+      feedParser: (xml): ParsedFeedArticle[] =>
+        xml.includes("bbci")
+          ? [
+              {
+                externalId: "bbc-preview-1",
+                canonicalUrl: "https://news.example.com/preview-1",
+                title: "Man City vs Newcastle",
+                summary:
+                  "The sides have been drawn together again and will face each other on Saturday after City won 5-1 on aggregate in a previous cup tie.",
+                categories: ["Football"],
+                publishedAtMs: yesterdayMs
+              }
+            ]
+          : [],
+      articleTextFetcher: async () => "preview text"
+    });
+
+    const result = await service.fetchLatestStories({
+      sport: "football",
+      limit: 5,
+      userAgent: "TestBot/1.0",
+      feedTimeoutMs: 3000,
+      articleTimeoutMs: 3000,
+      timeZone: "UTC"
+    });
+
+    expect(result.gameDrafts.length).toBe(0);
+    expect(result.stories.length).toBe(0);
   });
 });

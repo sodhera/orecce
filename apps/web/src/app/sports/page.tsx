@@ -232,11 +232,6 @@ export default function SportsPage() {
                         {stories.map((story) => (
                             <article key={story.id} className="post-card sports-post">
                                 <div className="post-body">
-                                    <div className="post-header">
-                                        <span className="post-topic-badge">{story.sourceName}</span>
-                                        <span className="post-dot">·</span>
-                                        <span className="post-time">{formatDateFromMs(story.publishedAtMs)}</span>
-                                    </div>
                                     <button
                                         type="button"
                                         className="sports-story-title"
@@ -244,19 +239,6 @@ export default function SportsPage() {
                                     >
                                         {buildMatchTitle(story)}
                                     </button>
-                                    <ul className="sports-inline-bullets">
-                                        {story.bulletPoints.map((point, index) => (
-                                            <li key={`${story.id}-point-${index}`}>{point}</li>
-                                        ))}
-                                    </ul>
-                                    <a
-                                        href={story.canonicalUrl}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="post-source-link"
-                                    >
-                                        Read original source
-                                    </a>
                                 </div>
                             </article>
                         ))}

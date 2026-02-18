@@ -155,7 +155,6 @@ export default function SportsPage() {
                                         <span className="post-dot">·</span>
                                         <span className="post-time">Score {story.importanceScore}</span>
                                     </div>
-                                    <h2 className="post-title">{story.title}</h2>
                                     <ul className="sports-inline-bullets">
                                         {story.bulletPoints.map((point, index) => (
                                             <li key={`${story.id}-point-${index}`}>{point}</li>

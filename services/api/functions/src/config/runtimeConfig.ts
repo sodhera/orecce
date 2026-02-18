@@ -132,7 +132,15 @@ export function shouldFetchNewsFullText(): boolean {
 }
 
 export function isSportsNewsLlmEnabled(): boolean {
-  return envFlagTrue(process.env.SPORTS_NEWS_LLM_ENABLED);
+  const raw = process.env.SPORTS_NEWS_LLM_ENABLED?.trim();
+  if (!raw) {
+    return true;
+  }
+  return raw.toLowerCase() !== "false";
+}
+
+export function getSportsNewsModel(): string {
+  return process.env.SPORTS_NEWS_MODEL?.trim() || getOpenAiModel();
 }
 
 export function shouldFetchSportsNewsFullText(): boolean {

@@ -3,6 +3,7 @@ import {
   getOpenAiApiKey,
   getOpenAiBaseUrl,
   getSportsNewsArticleConcurrency,
+  getSportsNewsModel,
   getSportsNewsMaxArticlesPerGame,
   isSportsNewsLlmEnabled,
   shouldFetchSportsNewsFullText
@@ -459,6 +460,20 @@ function isHeadlineLikeSentence(sentence: string, titleKeys: Set<string>): boole
   return false;
 }
 
+function dedupeLines(lines: string[]): string[] {
+  const seen = new Set<string>();
+  const deduped: string[] = [];
+  for (const line of lines) {
+    const key = normalizeComparableText(line);
+    if (!key || seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    deduped.push(line);
+  }
+  return deduped;
+}
+
 function normalizeTeamKey(raw: string): string {
   let normalized = sanitizeTeamName(raw)
     .toLowerCase()
@@ -730,9 +745,9 @@ async function defaultGameClusterBuilder(input: GameClusterBuilderInput): Promis
       Authorization: `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: "gpt-5-mini",
-      reasoning: { effort: "minimal" },
-      max_output_tokens: 400,
+      model: getSportsNewsModel(),
+      reasoning: { effort: "low" },
+      max_output_tokens: 600,
       text: {
         format: {
           type: "json_schema",
@@ -918,9 +933,9 @@ async function defaultGameStoryBuilder(input: GameStoryBuilderInput): Promise<Ga
       Authorization: `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      model: "gpt-5-mini",
-      reasoning: { effort: "minimal" },
-      max_output_tokens: 700,
+      model: getSportsNewsModel(),
+      reasoning: { effort: "low" },
+      max_output_tokens: 900,
       text: {
         format: {
           type: "json_schema",
@@ -948,9 +963,11 @@ async function defaultGameStoryBuilder(input: GameStoryBuilderInput): Promise<Ga
           role: "system",
           content: [
             "You are a football match editor.",
-            "Produce one concise summary article for exactly one game.",
+            "Produce one concise summary article for exactly one game using all provided sources.",
             "Use bullet points first (most important to least important).",
-            "Then add a concise reconstruction paragraph.",
+            "Then add a concise reconstruction paragraph in your own words.",
+            "Do not repeat article titles or source names in bullet points or summary text.",
+            "Avoid near-verbatim copying from source text.",
             "Return strict JSON only."
           ].join("\n")
         },
@@ -999,10 +1016,18 @@ async function defaultGameStoryBuilder(input: GameStoryBuilderInput): Promise<Ga
       reconstructed_article?: unknown;
     };
 
+    const titleKeys = new Set(
+      input.articles.map((article) => normalizeComparableText(article.title)).filter((value) => value.length >= 16)
+    );
     const bulletPoints = Array.isArray(parsed.bullet_points)
-      ? parsed.bullet_points.map((item) => String(item ?? "").trim()).filter(Boolean).slice(0, 8)
+      ? dedupeLines(parsed.bullet_points.map((item) => String(item ?? "").trim()).filter(Boolean))
+          .filter((line) => !isHeadlineLikeSentence(line, titleKeys))
+          .slice(0, 8)
       : [];
-    const reconstructedArticle = String(parsed.reconstructed_article ?? "").trim();
+    const reconstructedSentences = dedupeLines(
+      splitSentences(String(parsed.reconstructed_article ?? "").trim()).filter(Boolean)
+    ).filter((line) => !isHeadlineLikeSentence(line, titleKeys));
+    const reconstructedArticle = reconstructedSentences.join(" ").trim();
 
     if (!bulletPoints.length || !reconstructedArticle) {
       return buildFallbackGameStory(input);

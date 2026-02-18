@@ -6,6 +6,7 @@ import {
   getNewsMaxSourcesPerRun,
   getNewsSourceConcurrency,
   getOpenAiApiKey,
+  getSportsNewsModel,
   getSportsNewsArticleConcurrency,
   getSportsNewsMaxArticlesPerGame,
   isNewsSyncEnabled,
@@ -76,23 +77,32 @@ describe("runtimeConfig", () => {
     expect(shouldFetchNewsFullText()).toBe(false);
   });
 
-  it("keeps sports LLM disabled and full text enabled by default", () => {
+  it("keeps sports LLM and full text enabled by default", () => {
     delete process.env.SPORTS_NEWS_LLM_ENABLED;
     delete process.env.SPORTS_NEWS_FETCH_FULL_TEXT;
 
-    expect(isSportsNewsLlmEnabled()).toBe(false);
+    expect(isSportsNewsLlmEnabled()).toBe(true);
     expect(shouldFetchSportsNewsFullText()).toBe(true);
   });
 
   it("supports explicit sports LLM/full text flags and bounded tuning", () => {
-    process.env.SPORTS_NEWS_LLM_ENABLED = "true";
+    process.env.SPORTS_NEWS_LLM_ENABLED = "false";
     process.env.SPORTS_NEWS_FETCH_FULL_TEXT = "false";
     process.env.SPORTS_NEWS_MAX_ARTICLES_PER_GAME = "99";
     process.env.SPORTS_NEWS_ARTICLE_CONCURRENCY = "0";
 
-    expect(isSportsNewsLlmEnabled()).toBe(true);
+    expect(isSportsNewsLlmEnabled()).toBe(false);
     expect(shouldFetchSportsNewsFullText()).toBe(false);
     expect(getSportsNewsMaxArticlesPerGame()).toBe(8);
     expect(getSportsNewsArticleConcurrency()).toBe(1);
+  });
+
+  it("uses sports model override when set", () => {
+    process.env.OPENAI_MODEL = "gpt-5.2-2025-12-11";
+    delete process.env.SPORTS_NEWS_MODEL;
+    expect(getSportsNewsModel()).toBe("gpt-5.2-2025-12-11");
+
+    process.env.SPORTS_NEWS_MODEL = "gpt-5-mini";
+    expect(getSportsNewsModel()).toBe("gpt-5-mini");
   });
 });

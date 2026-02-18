@@ -58,6 +58,22 @@ export class UserSportsNewsService {
     await this.repository.replaceSyncStateForUser(userId, sport, state);
   }
 
+  private static hasMultiSourceCoverage(story: SportsStory): boolean {
+    const sourceIds = Array.from(
+      new Set(
+        String(story.sourceId ?? "")
+          .split(",")
+          .map((item) => item.trim())
+          .filter(Boolean)
+      )
+    );
+    return sourceIds.length >= 2;
+  }
+
+  private static isAcceptableSportsStory(story: SportsStory): boolean {
+    return story.fullTextStatus === "ready" && this.hasMultiSourceCoverage(story);
+  }
+
   async requestRefresh(userId: string, sport: string): Promise<{ sport: SportId }> {
     const normalized = UserSportsNewsService.normalizeSport(sport);
     const existingState = await this.repository.getSyncStateForUser(userId, normalized);
@@ -91,7 +107,7 @@ export class UserSportsNewsService {
     const knownGameIds = hasFreshCoverage
       ? existingStories
           .filter((story) => activeDateKeys.has(story.gameDateKey))
-          .filter((story) => story.fullTextStatus === "ready")
+          .filter((story) => UserSportsNewsService.isAcceptableSportsStory(story))
           .map((story) => story.gameId)
       : [];
 
@@ -143,12 +159,14 @@ export class UserSportsNewsService {
 
       let mergedStories: SportsStory[];
       if (!fetched.gameDrafts.length) {
-        mergedStories = existingStories.filter((story) => activeDateKeys.has(story.gameDateKey));
+        mergedStories = existingStories
+          .filter((story) => activeDateKeys.has(story.gameDateKey))
+          .filter((story) => UserSportsNewsService.isAcceptableSportsStory(story));
       } else {
         const latestGameIds = new Set(fetched.gameDrafts.map((draft) => draft.gameId));
         const retainedStories = existingStories
           .filter((story) => latestGameIds.has(story.gameId))
-          .filter((story) => story.fullTextStatus === "ready");
+          .filter((story) => UserSportsNewsService.isAcceptableSportsStory(story));
         const byGameId = new Map<string, SportsStory>();
         for (const story of retainedStories) {
           byGameId.set(story.gameId, story);
@@ -196,10 +214,11 @@ export class UserSportsNewsService {
       });
 
       if (existingStories.length) {
-        await this.repository.replaceStoriesForUser(input.userId, sport, existingStories);
+        const safeExistingStories = existingStories.filter((story) => UserSportsNewsService.isAcceptableSportsStory(story));
+        await this.repository.replaceStoriesForUser(input.userId, sport, safeExistingStories);
         return {
           sport,
-          stories: existingStories.slice(0, boundedLimit)
+          stories: safeExistingStories.slice(0, boundedLimit)
         };
       }
       throw error;

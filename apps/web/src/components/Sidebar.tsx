@@ -13,6 +13,8 @@ import {
     IoNotifications,
     IoNotificationsOutline,
     IoSettingsOutline,
+    IoSparklesOutline,
+    IoSparkles,
     IoSunnyOutline,
 } from "react-icons/io5";
 import { MdExplore, MdOutlineExplore } from "react-icons/md";
@@ -37,6 +39,12 @@ const navItems: Array<{
         href: "/sports",
         iconOutline: <MdSportsSoccer aria-hidden="true" />,
         iconFilled: <MdSportsSoccer aria-hidden="true" />,
+    },
+    {
+        label: "AI News",
+        href: "/ai-news",
+        iconOutline: <IoSparklesOutline aria-hidden="true" />,
+        iconFilled: <IoSparkles aria-hidden="true" />,
     },
     {
         label: "Discover",

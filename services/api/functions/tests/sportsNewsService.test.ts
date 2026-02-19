@@ -86,7 +86,76 @@ describe("SportsNewsService", () => {
     expect(result.stories[0].fullTextStatus).toBe("ready");
     expect(result.stories[0].summarySource).toBe("llm");
     expect(result.stories[0].sourceName).toContain("BBC Football");
-    expect(result.stories[0].sourceName).toContain("ESPN Soccer");
+    expect(
+      result.stories[0].sourceName.includes("ESPN Soccer") || result.stories[0].sourceName.includes("Yahoo Soccer")
+    ).toBe(true);
+  });
+
+  it("fetches basketball stories from configured feeds and builds story text", async () => {
+    const service = new SportsNewsService({
+      feedFetcher: async (url) => ({
+        status: 200,
+        body: `<feed>${url}</feed>`
+      }),
+      feedParser: (xml): ParsedFeedArticle[] => {
+        if (xml.includes("/nba/news")) {
+          return [
+            {
+              externalId: "espn-nba-1",
+              canonicalUrl: "https://www.espn.com/nba/recap/_/gameId/401000001",
+              title: "Los Angeles Lakers 110-104 Boston Celtics",
+              summary: "Lakers beat Celtics with a late run in overtime.",
+              categories: ["NBA"],
+              publishedAtMs: yesterdayMs
+            }
+          ];
+        }
+        if (xml.includes("sports.yahoo.com/nba")) {
+          return [
+            {
+              externalId: "yahoo-nba-1",
+              canonicalUrl: "https://sports.yahoo.com/nba/news/lakers-celtics-recap-123",
+              title: "Los Angeles Lakers vs Boston Celtics recap",
+              summary: "Lakers won 110-104 and closed with strong defense.",
+              categories: ["NBA"],
+              publishedAtMs: yesterdayMs + 1_000
+            }
+          ];
+        }
+        return [];
+      },
+      articleTextFetcher: async (url) =>
+        `Full game report for ${url}. First key run. Defensive stops. Final possession execution.`,
+      gameClusterBuilder: async (input) => [
+        {
+          gameId: "game-lakers-celtics",
+          gameName: "Los Angeles Lakers vs Boston Celtics",
+          gameDateKey: input.gameDateKey,
+          articleRefs: input.articles
+        }
+      ],
+      gameStoryBuilder: async () => ({
+        importanceScore: 85,
+        bulletPoints: ["Top update", "Second update", "Third update"],
+        reconstructedArticle: "Reconstructed basketball article.",
+        summarySource: "llm"
+      })
+    });
+
+    const result = await service.fetchLatestStories({
+      sport: "basketball",
+      limit: 5,
+      userAgent: "TestBot/1.0",
+      feedTimeoutMs: 3000,
+      articleTimeoutMs: 3000,
+      timeZone: "UTC"
+    });
+
+    expect(result.sport).toBe("basketball");
+    expect(result.gameDrafts.length).toBe(1);
+    expect(result.stories.length).toBe(1);
+    expect(result.stories[0].sourceName).toContain("ESPN NBA");
+    expect(result.stories[0].sourceName).toContain("Yahoo NBA");
   });
 
   it("falls back to feed summary when article text fetch fails for all related articles", async () => {
@@ -353,7 +422,7 @@ describe("SportsNewsService", () => {
 
     await expect(
       service.fetchLatestStories({
-        sport: "basketball",
+        sport: "volleyball",
         limit: 3,
         userAgent: "TestBot/1.0",
         feedTimeoutMs: 3000,

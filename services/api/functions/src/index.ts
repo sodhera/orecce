@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
+import { FieldPath, getFirestore } from "firebase-admin/firestore";
 import * as functionsV1 from "firebase-functions/v1";
 import { onRequest } from "firebase-functions/v2/https";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
@@ -14,7 +14,10 @@ import {
   getNewsMaxArticlesPerSource,
   getNewsMaxSourcesPerRun,
   getNewsSourceConcurrency,
+  getSportsRefreshConcurrency,
+  getSportsRefreshMaxUsers,
   isNewsSyncEnabled,
+  isSportsRefreshSchedulerEnabled,
   shouldFetchNewsFullText
 } from "./config/runtimeConfig";
 import { createApp } from "./http/createApp";
@@ -24,6 +27,7 @@ import { NewsReadService } from "./news/newsReadService";
 import { DEFAULT_NEWS_SOURCES } from "./news/newsSources";
 import { NewsIngestionService } from "./news/newsIngestionService";
 import { SportsNewsService } from "./news/sportsNewsService";
+import { parseSportId, SPORT_IDS } from "./news/sportsNewsSources";
 import { FirestoreUserSportsNewsRepository } from "./news/userSportsNewsRepository";
 import { UserSportsNewsService } from "./news/userSportsNewsService";
 import { FirestoreRepository } from "./repositories/firestoreRepository";
@@ -62,12 +66,74 @@ const app = createApp({
   defaultPrefillPostsPerMode: getDefaultPrefillPostsPerMode()
 });
 
+async function listSportsSchedulerUserIds(maxUsers: number): Promise<string[]> {
+  const db = getFirestore();
+  const collection = db.collection("users");
+  const userIds = new Set<string>();
+  const pageSize = Math.min(250, Math.max(1, maxUsers));
+  let lastDocId: string | null = null;
+
+  while (userIds.size < maxUsers) {
+    let query = collection.orderBy(FieldPath.documentId()).limit(pageSize);
+    if (lastDocId) {
+      query = query.startAfter(lastDocId);
+    }
+
+    const snap = await query.get();
+    if (snap.empty) {
+      break;
+    }
+
+    for (const doc of snap.docs) {
+      const data = (doc.data() ?? {}) as Record<string, unknown>;
+      const authUidRaw = typeof data.authUid === "string" ? data.authUid.trim() : "";
+      const userId = authUidRaw || doc.id;
+      if (!userId || userId === "common_prefill_dataset") {
+        continue;
+      }
+      userIds.add(userId);
+      if (userIds.size >= maxUsers) {
+        break;
+      }
+    }
+
+    lastDocId = snap.docs[snap.docs.length - 1]?.id ?? null;
+    if (snap.size < pageSize) {
+      break;
+    }
+  }
+
+  return Array.from(userIds);
+}
+
+async function runWithConcurrency<T>(
+  items: T[],
+  concurrency: number,
+  worker: (item: T) => Promise<void>
+): Promise<void> {
+  const bounded = Math.max(1, Math.min(concurrency, items.length || 1));
+  let cursor = 0;
+
+  const runWorker = async () => {
+    while (true) {
+      const index = cursor;
+      cursor += 1;
+      if (index >= items.length) {
+        return;
+      }
+      await worker(items[index]);
+    }
+  };
+
+  await Promise.all(Array.from({ length: bounded }, () => runWorker()));
+}
+
 export const api = onRequest(
   {
     region: "us-central1",
     timeoutSeconds: 60,
+    // Keep warm capacity at zero to avoid ongoing compute charges.
     minInstances: 0,
-    // Keep warm capacity at zero and favor high per-instance concurrency to minimize idle spend.
     concurrency: 40,
     maxInstances: 3
   },
@@ -129,6 +195,61 @@ export const syncNewsEvery3Hours = onSchedule(
   }
 );
 
+export const prewarmSportsNewsEvery12Hours = onSchedule(
+  {
+    region: "us-central1",
+    schedule: "every 12 hours",
+    timeZone: "Etc/UTC",
+    timeoutSeconds: 540,
+    memory: "512MiB",
+    maxInstances: 1,
+    retryCount: 0
+  },
+  async () => {
+    if (!isSportsRefreshSchedulerEnabled()) {
+      logInfo("news.sports.refresh.scheduler.disabled", { schedule: "every 12 hours" });
+      return;
+    }
+
+    const startedAtMs = Date.now();
+    const maxUsers = getSportsRefreshMaxUsers();
+    const concurrency = getSportsRefreshConcurrency();
+    const userIds = await listSportsSchedulerUserIds(maxUsers);
+    const jobs = userIds.flatMap((userId) =>
+      SPORT_IDS.map((sport) => ({
+        userId,
+        sport
+      }))
+    );
+
+    let queuedCount = 0;
+    let failedCount = 0;
+
+    await runWithConcurrency(jobs, concurrency, async (job) => {
+      try {
+        await userSportsNewsService.requestRefresh(job.userId, job.sport);
+        queuedCount += 1;
+      } catch (error) {
+        failedCount += 1;
+        logError("news.sports.refresh.scheduler.enqueue_failed", {
+          user_id: job.userId,
+          sport: job.sport,
+          message: error instanceof Error ? error.message : String(error)
+        });
+      }
+    });
+
+    logInfo("news.sports.refresh.scheduler.complete", {
+      schedule: "every 12 hours",
+      duration_ms: Date.now() - startedAtMs,
+      user_count: userIds.length,
+      sport_count: SPORT_IDS.length,
+      queued_count: queuedCount,
+      failed_count: failedCount
+    });
+  }
+);
+
 export const processSportsRefreshJob = onDocumentWritten(
   {
     region: "us-central1",
@@ -147,13 +268,13 @@ export const processSportsRefreshJob = onDocumentWritten(
     const data = (after.data() ?? {}) as Record<string, unknown>;
     const status = String(data.status ?? "");
     const userId = String(data.userId ?? "").trim();
-    const sport = String(data.sport ?? "").trim().toLowerCase();
+    const sport = parseSportId(String(data.sport ?? ""));
 
-    if (status !== "queued" || !userId || sport !== "football") {
+    if (status !== "queued" || !userId || !sport) {
       return;
     }
 
-    const claimed = await userSportsNewsRepository.claimRefreshForUser(userId, "football");
+    const claimed = await userSportsNewsRepository.claimRefreshForUser(userId, sport);
     if (!claimed) {
       return;
     }
@@ -168,7 +289,7 @@ export const processSportsRefreshJob = onDocumentWritten(
         articleTimeoutMs: 12_000,
         deadlineMs: startedAtMs + 270_000
       });
-      await userSportsNewsRepository.finishRefreshForUser(userId, "football", {
+      await userSportsNewsRepository.finishRefreshForUser(userId, sport, {
         success: true
       });
       logInfo("news.sports.refresh.job.complete", {
@@ -177,7 +298,7 @@ export const processSportsRefreshJob = onDocumentWritten(
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      await userSportsNewsRepository.finishRefreshForUser(userId, "football", {
+      await userSportsNewsRepository.finishRefreshForUser(userId, sport, {
         success: false,
         errorMessage: message
       });

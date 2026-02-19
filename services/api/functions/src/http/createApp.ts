@@ -589,6 +589,75 @@ export function createApp(deps: CreateAppDeps): express.Express {
   );
 
   app.get(
+    "/v1/news/sports/feed",
+    withAsync(async (req, res) => {
+      if (!deps.userSportsNewsService) {
+        throw new ApiError(500, "server_misconfigured", "User sports news service is not configured.");
+      }
+
+      const limitRaw = Number(req.query.limit ?? "5");
+      const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(20, Math.floor(limitRaw))) : 5;
+      const cursorRaw = String(req.query.cursor ?? "").trim();
+      const sportsRaw = String(req.query.sports ?? "").trim();
+      const sports = sportsRaw
+        ? sportsRaw
+            .split(",")
+            .map((item) => item.trim())
+            .filter(Boolean)
+        : undefined;
+      const identity = getAuthIdentity(res);
+
+      let data;
+      try {
+        data = await deps.userSportsNewsService.listUserFeedStories(identity.uid, {
+          limit,
+          cursor: cursorRaw || undefined,
+          sports
+        });
+      } catch (error) {
+        if (error instanceof Error && /invalid sports feed cursor/i.test(error.message)) {
+          throw new ApiError(400, "bad_request", "Invalid cursor.");
+        }
+        if (error instanceof Error && /unsupported sport/i.test(error.message)) {
+          throw new ApiError(400, "bad_request", error.message);
+        }
+        throw error;
+      }
+
+      res.set("Cache-Control", "private, max-age=15");
+      res.json({
+        ok: true,
+        data
+      });
+    })
+  );
+
+  app.get(
+    "/v1/news/sports/stories/:storyId",
+    withAsync(async (req, res) => {
+      if (!deps.userSportsNewsService) {
+        throw new ApiError(500, "server_misconfigured", "User sports news service is not configured.");
+      }
+      const storyId = String(req.params.storyId ?? "").trim();
+      if (!storyId) {
+        throw new ApiError(400, "bad_request", "Missing required story id.");
+      }
+      const identity = getAuthIdentity(res);
+      const story = await deps.userSportsNewsService.getUserStory(identity.uid, storyId);
+      if (!story) {
+        throw new ApiError(404, "not_found", "Sports story not found.");
+      }
+      res.set("Cache-Control", "private, max-age=30");
+      res.json({
+        ok: true,
+        data: {
+          story
+        }
+      });
+    })
+  );
+
+  app.get(
     "/v1/news/sports/latest",
     withAsync(async (req, res) => {
       if (!deps.userSportsNewsService) {

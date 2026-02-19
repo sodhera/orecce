@@ -32,6 +32,10 @@ interface ApiErr {
 
 type ApiResult<T> = ApiOk<T> | ApiErr;
 
+interface RequestOptions {
+    signal?: AbortSignal;
+}
+
 // ── Helpers ─────────────────────────────────────────────────────
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
@@ -51,12 +55,14 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
 async function post<T>(
     path: string,
     body: Record<string, unknown>,
+    options?: RequestOptions,
 ): Promise<T> {
     const headers = await getAuthHeaders();
     const res = await fetch(`${API_BASE}${path}`, {
         method: "POST",
         headers,
         body: JSON.stringify(body),
+        signal: options?.signal,
     });
     const json = (await res.json()) as ApiResult<T>;
     if (!json.ok) {
@@ -68,6 +74,7 @@ async function post<T>(
 async function get<T>(
     path: string,
     query?: Record<string, string | number | undefined>,
+    options?: RequestOptions,
 ): Promise<T> {
     const headers = await getAuthHeaders();
     const params = new URLSearchParams();
@@ -86,6 +93,7 @@ async function get<T>(
     const res = await fetch(fullPath, {
         method: "GET",
         headers,
+        signal: options?.signal,
     });
     const json = (await res.json()) as ApiResult<T>;
     if (!json.ok) {
@@ -169,9 +177,37 @@ export interface GetNewsArticleResult {
     article: NewsArticleDetail;
 }
 
+export const SPORT_IDS = [
+    "football",
+    "basketball",
+    "cricket",
+    "american-football",
+    "baseball",
+    "tennis",
+    "motorsport",
+    "rugby",
+    "ice-hockey",
+    "boxing-mma",
+] as const;
+
+export type SportId = (typeof SPORT_IDS)[number];
+
+export const SPORT_DISPLAY_NAMES: Record<SportId, string> = {
+    football: "Football",
+    basketball: "Basketball",
+    cricket: "Cricket",
+    "american-football": "American Football",
+    baseball: "Baseball",
+    tennis: "Tennis",
+    motorsport: "Formula 1 / Motorsport",
+    rugby: "Rugby",
+    "ice-hockey": "Ice Hockey",
+    "boxing-mma": "Boxing / MMA",
+};
+
 export interface SportsStory {
     id: string;
-    sport: "football";
+    sport: SportId;
     sourceId: string;
     sourceName: string;
     title: string;
@@ -186,7 +222,7 @@ export interface SportsStory {
 }
 
 export interface GetSportsLatestResult {
-    sport: "football";
+    sport: SportId;
     stories: SportsStory[];
 }
 
@@ -210,13 +246,31 @@ export interface SportsSyncState {
 }
 
 export interface GetSportsStatusResult {
-    sport: "football";
+    sport: SportId;
     state: SportsSyncState;
 }
 
 export interface RequestSportsRefreshResult {
-    sport: "football";
+    sport: SportId;
     queued: boolean;
+}
+
+export interface GetSportsFeedResult {
+    items: SportsFeedItem[];
+    nextCursor: string | null;
+}
+
+export interface SportsFeedItem {
+    id: string;
+    sport: SportId;
+    title: string;
+    publishedAtMs?: number;
+    importanceScore: number;
+    preview: string;
+}
+
+export interface GetSportsStoryResult {
+    story: SportsStory;
 }
 
 export async function listNewsSources(): Promise<ListNewsSourcesResult> {
@@ -242,7 +296,7 @@ export async function getNewsArticle(
 }
 
 export async function getSportsLatest(
-    sport: "football",
+    sport: SportId,
     limit: number = 10,
     refresh: boolean = false,
 ): Promise<GetSportsLatestResult> {
@@ -253,8 +307,32 @@ export async function getSportsLatest(
     });
 }
 
+export async function getSportsFeed(
+    limit: number = 5,
+    cursor?: string,
+    sports?: SportId[],
+    options?: RequestOptions,
+): Promise<GetSportsFeedResult> {
+    return get<GetSportsFeedResult>("/news/sports/feed", {
+        limit,
+        cursor,
+        sports: sports?.length ? sports.join(",") : undefined,
+    }, options);
+}
+
+export async function getSportsStory(
+    storyId: string,
+    options?: RequestOptions,
+): Promise<GetSportsStoryResult> {
+    return get<GetSportsStoryResult>(
+        `/news/sports/stories/${encodeURIComponent(storyId)}`,
+        undefined,
+        options,
+    );
+}
+
 export async function getSportsStatus(
-    sport: "football",
+    sport: SportId,
 ): Promise<GetSportsStatusResult> {
     return get<GetSportsStatusResult>("/news/sports/status", {
         sport,
@@ -262,7 +340,7 @@ export async function getSportsStatus(
 }
 
 export async function requestSportsRefresh(
-    sport: "football",
+    sport: SportId,
 ): Promise<RequestSportsRefreshResult> {
     return post<RequestSportsRefreshResult>("/news/sports/refresh", {
         sport,

@@ -1,6 +1,6 @@
 import { createHash } from "crypto";
-import { Firestore, Timestamp } from "firebase-admin/firestore";
-import { SportId } from "./sportsNewsSources";
+import { FieldPath, Firestore, Timestamp } from "firebase-admin/firestore";
+import { parseSportId, SportId } from "./sportsNewsSources";
 import { SportsGameDraft, SportsStory } from "./sportsNewsService";
 
 function hashText(value: string): string {
@@ -14,6 +14,20 @@ function toMillis(value: unknown): number | undefined {
   return undefined;
 }
 
+function buildPreviewText(story: SportsStory): string {
+  const raw =
+    String(story.story ?? "").trim() ||
+    String(story.reconstructedArticle ?? "").trim() ||
+    String(story.bulletPoints[0] ?? "").trim();
+  if (!raw) {
+    return "Open to read the full article.";
+  }
+  if (raw.length <= 220) {
+    return raw;
+  }
+  return `${raw.slice(0, 217)}...`;
+}
+
 export interface UserSportsNewsRepository {
   enqueueRefreshForUser(userId: string, sport: SportId): Promise<void>;
   claimRefreshForUser(userId: string, sport: SportId): Promise<boolean>;
@@ -24,6 +38,32 @@ export interface UserSportsNewsRepository {
   upsertStoriesForUser(userId: string, sport: SportId, stories: SportsStory[]): Promise<void>;
   replaceStoriesForUser(userId: string, sport: SportId, stories: SportsStory[]): Promise<void>;
   listStoriesForUser(userId: string, sport: SportId, limit: number): Promise<SportsStory[]>;
+  getStoryForUser(userId: string, storyId: string): Promise<SportsStory | null>;
+  listFeedStoriesForUser(
+    userId: string,
+    limit: number,
+    cursor?: UserSportsFeedCursor,
+    sports?: SportId[]
+  ): Promise<UserSportsFeedPage>;
+}
+
+export interface UserSportsFeedCursor {
+  publishedAtMs: number | null;
+  docId: string;
+}
+
+export interface UserSportsFeedPage {
+  items: UserSportsFeedItem[];
+  nextCursor: UserSportsFeedCursor | null;
+}
+
+export interface UserSportsFeedItem {
+  id: string;
+  sport: SportId;
+  title: string;
+  publishedAtMs?: number;
+  importanceScore: number;
+  preview: string;
 }
 
 export type UserSportsSyncStep =
@@ -54,6 +94,51 @@ export class FirestoreUserSportsNewsRepository implements UserSportsNewsReposito
   private readonly refreshJobsCollection = "userSportsNewsRefreshJobs";
 
   constructor(private readonly db: Firestore) {}
+
+  private static fromStoryData(docId: string, data: Record<string, unknown>): SportsStory | null {
+    const sport = parseSportId(String(data.sport ?? ""));
+    if (!sport) {
+      return null;
+    }
+    return {
+      id: String(docId),
+      sport,
+      sourceId: String(data.sourceId ?? ""),
+      sourceName: String(data.sourceName ?? ""),
+      title: String(data.title ?? ""),
+      canonicalUrl: String(data.canonicalUrl ?? ""),
+      publishedAtMs: toMillis(data.publishedAt),
+      gameId: String(data.gameId ?? ""),
+      gameName: String(data.gameName ?? ""),
+      gameDateKey: String(data.gameDateKey ?? ""),
+      importanceScore: typeof data.importanceScore === "number" ? data.importanceScore : 0,
+      bulletPoints: Array.isArray(data.bulletPoints) ? data.bulletPoints.map((item) => String(item)) : [],
+      reconstructedArticle: String(data.reconstructedArticle ?? ""),
+      story: String(data.story ?? ""),
+      fullTextStatus: data.fullTextStatus === "ready" ? "ready" : "fallback",
+      summarySource: data.summarySource === "llm" ? "llm" : "fallback"
+    } satisfies SportsStory;
+  }
+
+  private static fromStoryDoc(doc: FirebaseFirestore.QueryDocumentSnapshot): SportsStory | null {
+    return this.fromStoryData(String(doc.id), (doc.data() ?? {}) as Record<string, unknown>);
+  }
+
+  private static fromFeedDoc(doc: FirebaseFirestore.QueryDocumentSnapshot): UserSportsFeedItem | null {
+    const data = (doc.data() ?? {}) as Record<string, unknown>;
+    const sport = parseSportId(String(data.sport ?? ""));
+    if (!sport) {
+      return null;
+    }
+    return {
+      id: String(doc.id),
+      sport,
+      title: String(data.title ?? ""),
+      publishedAtMs: toMillis(data.publishedAt),
+      importanceScore: typeof data.importanceScore === "number" ? data.importanceScore : 0,
+      preview: String(data.preview ?? "").trim() || "Open to read the full article."
+    } satisfies UserSportsFeedItem;
+  }
 
   private refreshDocRef(userId: string, sport: SportId): FirebaseFirestore.DocumentReference {
     const docId = hashText(`${userId}:${sport}:refresh`);
@@ -299,6 +384,7 @@ export class FirestoreUserSportsNewsRepository implements UserSportsNewsReposito
         bulletPoints: story.bulletPoints,
         reconstructedArticle: story.reconstructedArticle,
         story: story.story,
+        preview: buildPreviewText(story),
         fullTextStatus: story.fullTextStatus,
         summarySource: story.summarySource,
         rank: index + 1,
@@ -337,6 +423,7 @@ export class FirestoreUserSportsNewsRepository implements UserSportsNewsReposito
           bulletPoints: story.bulletPoints,
           reconstructedArticle: story.reconstructedArticle,
           story: story.story,
+          preview: buildPreviewText(story),
           fullTextStatus: story.fullTextStatus,
           summarySource: story.summarySource,
           rank: index + 1,
@@ -358,27 +445,10 @@ export class FirestoreUserSportsNewsRepository implements UserSportsNewsReposito
       .where("sport", "==", sport)
       .get();
 
-    const stories = snap.docs.map((doc) => {
-      const data = (doc.data() ?? {}) as Record<string, unknown>;
-      return {
-        id: String(doc.id),
-        sport,
-        sourceId: String(data.sourceId ?? ""),
-        sourceName: String(data.sourceName ?? ""),
-        title: String(data.title ?? ""),
-        canonicalUrl: String(data.canonicalUrl ?? ""),
-        publishedAtMs: toMillis(data.publishedAt),
-        gameId: String(data.gameId ?? ""),
-        gameName: String(data.gameName ?? ""),
-        gameDateKey: String(data.gameDateKey ?? ""),
-        importanceScore: typeof data.importanceScore === "number" ? data.importanceScore : 0,
-        bulletPoints: Array.isArray(data.bulletPoints) ? data.bulletPoints.map((item) => String(item)) : [],
-        reconstructedArticle: String(data.reconstructedArticle ?? ""),
-        story: String(data.story ?? ""),
-        fullTextStatus: data.fullTextStatus === "ready" ? "ready" : "fallback",
-        summarySource: data.summarySource === "llm" ? "llm" : "fallback"
-      } satisfies SportsStory;
-    });
+    const stories = snap.docs
+      .map((doc) => FirestoreUserSportsNewsRepository.fromStoryDoc(doc))
+      .filter((item): item is SportsStory => Boolean(item))
+      .filter((item) => item.sport === sport);
 
     stories.sort((a, b) => {
       if (b.importanceScore !== a.importanceScore) {
@@ -388,5 +458,79 @@ export class FirestoreUserSportsNewsRepository implements UserSportsNewsReposito
     });
 
     return stories.slice(0, boundedLimit);
+  }
+
+  async getStoryForUser(userId: string, storyId: string): Promise<SportsStory | null> {
+    const storyIdTrimmed = String(storyId ?? "").trim();
+    if (!storyIdTrimmed) {
+      return null;
+    }
+
+    const snap = await this.db.collection(this.storiesCollection).doc(storyIdTrimmed).get();
+    if (!snap.exists) {
+      return null;
+    }
+    const data = (snap.data() ?? {}) as Record<string, unknown>;
+    if (String(data.userId ?? "") !== userId) {
+      return null;
+    }
+    return FirestoreUserSportsNewsRepository.fromStoryData(storyIdTrimmed, data);
+  }
+
+  async listFeedStoriesForUser(
+    userId: string,
+    limit: number,
+    cursor?: UserSportsFeedCursor,
+    sports?: SportId[]
+  ): Promise<UserSportsFeedPage> {
+    const boundedLimit = Math.max(1, Math.min(20, Math.floor(limit)));
+    let query = this.db
+      .collection(this.storiesCollection)
+      .where("userId", "==", userId);
+
+    const selectedSports = Array.isArray(sports)
+      ? Array.from(new Set(sports.map((item) => item.trim()).filter(Boolean))) as SportId[]
+      : [];
+    if (selectedSports.length === 1) {
+      query = query.where("sport", "==", selectedSports[0]);
+    } else if (selectedSports.length > 1) {
+      query = query.where("sport", "in", selectedSports);
+    }
+
+    query = query
+      .select("sport", "title", "publishedAt", "importanceScore", "preview")
+      .orderBy("publishedAt", "desc")
+      .orderBy(FieldPath.documentId(), "desc")
+      .limit(boundedLimit + 1);
+
+    if (cursor) {
+      const publishedAtCursor = cursor.publishedAtMs === null ? null : Timestamp.fromMillis(cursor.publishedAtMs);
+      query = query.startAfter(publishedAtCursor, cursor.docId);
+    }
+
+    const snap = await query.get();
+    const docs = snap.docs;
+    const hasMore = docs.length > boundedLimit;
+    const pageDocs = hasMore ? docs.slice(0, boundedLimit) : docs;
+    const items = pageDocs
+      .map((doc) => FirestoreUserSportsNewsRepository.fromFeedDoc(doc))
+      .filter((item): item is UserSportsFeedItem => Boolean(item));
+
+    if (!hasMore || pageDocs.length === 0) {
+      return {
+        items,
+        nextCursor: null
+      };
+    }
+
+    const lastDoc = pageDocs[pageDocs.length - 1];
+    const lastPublishedAt = (lastDoc.data().publishedAt ?? null) as unknown;
+    return {
+      items,
+      nextCursor: {
+        publishedAtMs: toMillis(lastPublishedAt) ?? null,
+        docId: lastDoc.id
+      }
+    };
   }
 }

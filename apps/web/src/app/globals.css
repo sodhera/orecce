@@ -452,11 +452,23 @@ img {
 }
 
 .sports-post {
-  cursor: default;
+  cursor: pointer;
 }
 
 .sports-post:hover {
-  background: transparent;
+  background: var(--bg-hover);
+}
+
+.sports-post:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.sports-post-meta {
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .sports-inline-bullets {
@@ -483,10 +495,11 @@ img {
   text-decoration: underline;
 }
 
-.sports-story-title:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-  border-radius: 4px;
+.sports-story-preview {
+  margin-top: 8px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.45;
 }
 
 .sports-story-modal-overlay {
@@ -544,12 +557,38 @@ img {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 2px;
+  gap: 6px;
 }
 
 .sports-story-modal-bullets {
   margin-top: 12px;
   margin-bottom: 8px;
+}
+
+.sports-story-modal-article {
+  margin-top: 14px;
+  color: var(--text-primary);
+  font-size: 15px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.sports-load-more-trigger {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--bg-border);
+  color: var(--text-secondary);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.sports-load-more-trigger:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.sports-load-more-trigger:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
 }
 
 .utility-card {
@@ -806,6 +845,56 @@ img {
   font-size: 14px;
   color: var(--text-secondary);
   line-height: 1.5;
+}
+
+.sports-filter-actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+.sports-filter-action {
+  padding: 6px 12px;
+  border-radius: 9999px;
+  border: 1px solid var(--bg-border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.sports-filter-action:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.sports-filter-list {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sports-filter-pill {
+  padding: 7px 12px;
+  border-radius: 9999px;
+  border: 1px solid var(--bg-border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.sports-filter-pill:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.sports-filter-pill.active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft-bg);
 }
 
 .feed-tabs {

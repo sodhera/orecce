@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const defaultApiBaseUrl = "https://us-central1-audit-3a7ec.cloudfunctions.net/api";
+const defaultApiBaseUrl = "https://api-2ljiuwaa3a-uc.a.run.app";
 
 function normalizeBaseUrl(url: string): string {
   return url.trim().replace(/\/+$/, "");

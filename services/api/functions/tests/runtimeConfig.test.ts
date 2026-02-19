@@ -10,8 +10,11 @@ import {
   getSportsNewsArticleConcurrency,
   getSportsNewsMaxArticlesPerGame,
   getSportsNewsMinSourcesPerGame,
+  getSportsRefreshConcurrency,
+  getSportsRefreshMaxUsers,
   isNewsSyncEnabled,
   isSportsNewsLlmEnabled,
+  isSportsRefreshSchedulerEnabled,
   shouldFetchNewsFullText,
   shouldFetchSportsNewsFullText
 } from "../src/config/runtimeConfig";
@@ -116,5 +119,23 @@ describe("runtimeConfig", () => {
 
     process.env.SPORTS_NEWS_MIN_SOURCES_PER_GAME = "0";
     expect(getSportsNewsMinSourcesPerGame()).toBe(1);
+  });
+
+  it("keeps sports prewarm enabled by default and bounds scheduler tuning", () => {
+    delete process.env.SPORTS_REFRESH_SCHEDULE_ENABLED;
+    delete process.env.SPORTS_REFRESH_MAX_USERS;
+    delete process.env.SPORTS_REFRESH_CONCURRENCY;
+
+    expect(isSportsRefreshSchedulerEnabled()).toBe(true);
+    expect(getSportsRefreshMaxUsers()).toBe(100);
+    expect(getSportsRefreshConcurrency()).toBe(8);
+
+    process.env.SPORTS_REFRESH_SCHEDULE_ENABLED = "false";
+    process.env.SPORTS_REFRESH_MAX_USERS = "99999";
+    process.env.SPORTS_REFRESH_CONCURRENCY = "0";
+
+    expect(isSportsRefreshSchedulerEnabled()).toBe(false);
+    expect(getSportsRefreshMaxUsers()).toBe(5000);
+    expect(getSportsRefreshConcurrency()).toBe(1);
   });
 });

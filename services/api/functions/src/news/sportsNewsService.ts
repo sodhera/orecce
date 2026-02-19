@@ -11,7 +11,14 @@ import {
 } from "../config/runtimeConfig";
 import { fetchArticleFullText } from "./articleTextFetcher";
 import { parseFeedXml } from "./feedParser";
-import { SportFeedSource, SportId, SPORT_NEWS_SOURCES } from "./sportsNewsSources";
+import {
+  getSportDisplayName,
+  parseSportId,
+  SportFeedSource,
+  SportId,
+  SPORT_NEWS_SOURCES,
+  supportedSportsText
+} from "./sportsNewsSources";
 import { ParsedFeedArticle } from "./types";
 
 interface FetchFeedOptions {
@@ -264,8 +271,7 @@ function resolveTodayDateKey(timeZone: string): string {
 }
 
 function asSportId(value: string): SportId | null {
-  const normalized = String(value ?? "").trim().toLowerCase();
-  return normalized === "football" ? "football" : null;
+  return parseSportId(value);
 }
 
 function parseOpenAiText(payload: OpenAiResponse): string {
@@ -831,7 +837,7 @@ async function defaultGameClusterBuilder(input: GameClusterBuilderInput): Promis
         {
           role: "system",
           content: [
-            "You are a football editor.",
+            `You are a ${getSportDisplayName(input.sport).toLowerCase()} editor.`,
             "Group RSS articles into games that happened on the provided date.",
             "Use all relevant articles from the list.",
             "Output strict JSON only."
@@ -1012,7 +1018,7 @@ async function defaultGameStoryBuilder(input: GameStoryBuilderInput): Promise<Ga
         {
           role: "system",
           content: [
-            "You are a football match editor.",
+            `You are a ${getSportDisplayName(input.sport).toLowerCase()} match editor.`,
             "Produce one concise summary article for exactly one game using all provided sources.",
             "Use bullet points first (most important to least important).",
             "Then add a concise reconstruction paragraph in your own words.",
@@ -1146,7 +1152,7 @@ export class SportsNewsService {
   async fetchLatestStories(input: FetchSportsStoriesInput): Promise<FetchSportsStoriesResult> {
     const sport = asSportId(input.sport);
     if (!sport) {
-      throw new Error("Unsupported sport. Supported sports: football.");
+      throw new Error(`Unsupported sport. Supported sports: ${supportedSportsText()}.`);
     }
 
     const timeZone = validTimeZone(input.timeZone);

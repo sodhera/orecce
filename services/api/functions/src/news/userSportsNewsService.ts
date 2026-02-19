@@ -1,6 +1,11 @@
-import { SportId } from "./sportsNewsSources";
+import { parseSportId, SportId, SPORT_IDS, supportedSportsText } from "./sportsNewsSources";
 import { FetchSportsStoriesInput, SportsNewsService, SportsStory } from "./sportsNewsService";
-import { UserSportsNewsRepository, UserSportsSyncState } from "./userSportsNewsRepository";
+import {
+  UserSportsFeedCursor,
+  UserSportsFeedItem,
+  UserSportsNewsRepository,
+  UserSportsSyncState
+} from "./userSportsNewsRepository";
 import { getSportsNewsMinSourcesPerGame } from "../config/runtimeConfig";
 
 interface UserSportsNewsServiceDeps {
@@ -18,13 +23,122 @@ interface RefreshUserSportsStoriesInput {
   deadlineMs?: number;
 }
 
+interface UserSportsFeedResult {
+  items: UserSportsFeedItem[];
+  nextCursor: string | null;
+}
+
+interface ListUserFeedStoriesInput {
+  limit: number;
+  cursor?: string;
+  sports?: string[];
+}
+
+interface DecodedFeedCursor {
+  cursor: UserSportsFeedCursor;
+  sportsKey: string;
+}
+
+const FEED_CACHE_TTL_MS = 20_000;
+const STORY_CACHE_TTL_MS = 60_000;
+
 export class UserSportsNewsService {
   private readonly sportsNewsService: SportsNewsService;
   private readonly repository: UserSportsNewsRepository;
+  private readonly feedCache = new Map<string, { expiresAtMs: number; value: UserSportsFeedResult }>();
+  private readonly storyCache = new Map<string, { expiresAtMs: number; value: SportsStory | null }>();
 
   constructor(deps: UserSportsNewsServiceDeps) {
     this.sportsNewsService = deps.sportsNewsService;
     this.repository = deps.repository;
+  }
+
+  private static nowMs(): number {
+    return Date.now();
+  }
+
+  private static feedCacheKey(userId: string, limit: number, cursor: string | undefined, sportsKey: string): string {
+    return `${userId}|${limit}|${cursor ?? ""}|${sportsKey}`;
+  }
+
+  private static storyCacheKey(userId: string, storyId: string): string {
+    return `${userId}|${storyId}`;
+  }
+
+  private clearUserCaches(userId: string): void {
+    const feedPrefix = `${userId}|`;
+    for (const key of this.feedCache.keys()) {
+      if (key.startsWith(feedPrefix)) {
+        this.feedCache.delete(key);
+      }
+    }
+    for (const key of this.storyCache.keys()) {
+      if (key.startsWith(feedPrefix)) {
+        this.storyCache.delete(key);
+      }
+    }
+  }
+
+  private static normalizeSportsFilter(sports?: string[]): SportId[] {
+    if (!Array.isArray(sports) || sports.length === 0) {
+      return [];
+    }
+    const normalized: SportId[] = [];
+    for (const item of sports) {
+      const sport = UserSportsNewsService.normalizeSport(item);
+      if (!normalized.includes(sport)) {
+        normalized.push(sport);
+      }
+    }
+    if (normalized.length === SPORT_IDS.length) {
+      return [];
+    }
+    return normalized;
+  }
+
+  private static sportsFilterKey(sports: SportId[]): string {
+    return sports.slice().sort().join("|");
+  }
+
+  private static encodeFeedCursor(cursor: UserSportsFeedCursor, sportsKey: string): string {
+    const payload = JSON.stringify({
+      p: cursor.publishedAtMs,
+      d: cursor.docId,
+      s: sportsKey
+    });
+    return Buffer.from(payload, "utf8").toString("base64url");
+  }
+
+  private static decodeFeedCursor(value?: string): DecodedFeedCursor | undefined {
+    const raw = String(value ?? "").trim();
+    if (!raw) {
+      return undefined;
+    }
+    try {
+      const decoded = Buffer.from(raw, "base64url").toString("utf8");
+      const parsed = JSON.parse(decoded) as Record<string, unknown>;
+      const docId = String(parsed.d ?? "").trim();
+      if (!docId) {
+        throw new Error("Invalid sports feed cursor.");
+      }
+      const sportsKey = String(parsed.s ?? "");
+      const publishedRaw = parsed.p;
+      const publishedAtMs =
+        publishedRaw === null
+          ? null
+          : typeof publishedRaw === "number" && Number.isFinite(publishedRaw)
+            ? Math.floor(publishedRaw)
+            : null;
+      return {
+        cursor: {
+          publishedAtMs,
+          docId
+        },
+        sportsKey
+      };
+    } catch {
+      throw new Error("Invalid sports feed cursor.");
+    }
   }
 
   private static resolveDateKey(timestampMs: number, timeZone: string): string {
@@ -48,11 +162,11 @@ export class UserSportsNewsService {
   }
 
   private static normalizeSport(sport: string): SportId {
-    const normalized = String(sport ?? "").trim().toLowerCase();
-    if (normalized !== "football") {
-      throw new Error("Unsupported sport. Supported sports: football.");
+    const normalized = parseSportId(sport);
+    if (!normalized) {
+      throw new Error(`Unsupported sport. Supported sports: ${supportedSportsText()}.`);
     }
-    return "football";
+    return normalized;
   }
 
   private async updateSyncState(userId: string, sport: SportId, state: UserSportsSyncState): Promise<void> {
@@ -184,6 +298,7 @@ export class UserSportsNewsService {
         });
       }
       await this.repository.replaceStoriesForUser(input.userId, fetched.sport, mergedStories);
+      this.clearUserCaches(input.userId);
       await this.updateSyncState(input.userId, sport, {
         status: "complete",
         step: "complete",
@@ -218,6 +333,7 @@ export class UserSportsNewsService {
       if (existingStories.length) {
         const safeExistingStories = existingStories.filter((story) => UserSportsNewsService.isAcceptableSportsStory(story));
         await this.repository.replaceStoriesForUser(input.userId, sport, safeExistingStories);
+        this.clearUserCaches(input.userId);
         return {
           sport,
           stories: safeExistingStories.slice(0, boundedLimit)
@@ -234,6 +350,54 @@ export class UserSportsNewsService {
       sport: normalized,
       stories
     };
+  }
+
+  async listUserFeedStories(userId: string, input: ListUserFeedStoriesInput): Promise<UserSportsFeedResult> {
+    const boundedLimit = Math.max(1, Math.min(20, Math.floor(input.limit)));
+    const normalizedSports = UserSportsNewsService.normalizeSportsFilter(input.sports);
+    const sportsKey = UserSportsNewsService.sportsFilterKey(normalizedSports);
+    const decodedCursor = UserSportsNewsService.decodeFeedCursor(input.cursor);
+    if (decodedCursor && decodedCursor.sportsKey !== sportsKey) {
+      throw new Error("Invalid sports feed cursor.");
+    }
+    const cacheKey = UserSportsNewsService.feedCacheKey(userId, boundedLimit, input.cursor, sportsKey);
+    const cached = this.feedCache.get(cacheKey);
+    if (cached && cached.expiresAtMs > UserSportsNewsService.nowMs()) {
+      return cached.value;
+    }
+    const page = await this.repository.listFeedStoriesForUser(
+      userId,
+      boundedLimit,
+      decodedCursor?.cursor,
+      normalizedSports
+    );
+    const result = {
+      items: page.items,
+      nextCursor: page.nextCursor ? UserSportsNewsService.encodeFeedCursor(page.nextCursor, sportsKey) : null
+    };
+    this.feedCache.set(cacheKey, {
+      value: result,
+      expiresAtMs: UserSportsNewsService.nowMs() + FEED_CACHE_TTL_MS
+    });
+    return result;
+  }
+
+  async getUserStory(userId: string, storyId: string): Promise<SportsStory | null> {
+    const storyIdTrimmed = String(storyId ?? "").trim();
+    if (!storyIdTrimmed) {
+      return null;
+    }
+    const cacheKey = UserSportsNewsService.storyCacheKey(userId, storyIdTrimmed);
+    const cached = this.storyCache.get(cacheKey);
+    if (cached && cached.expiresAtMs > UserSportsNewsService.nowMs()) {
+      return cached.value;
+    }
+    const story = await this.repository.getStoryForUser(userId, storyIdTrimmed);
+    this.storyCache.set(cacheKey, {
+      value: story,
+      expiresAtMs: UserSportsNewsService.nowMs() + STORY_CACHE_TTL_MS
+    });
+    return story;
   }
 
   async getUserSyncState(userId: string, sport: string): Promise<{ sport: SportId; state: UserSportsSyncState }> {

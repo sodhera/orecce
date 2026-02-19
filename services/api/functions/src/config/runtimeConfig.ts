@@ -1,5 +1,3 @@
-import * as functionsV1 from "firebase-functions/v1";
-
 function normalizeSecret(rawValue: string | undefined): string {
   const trimmed = String(rawValue ?? "").trim();
   if (!trimmed) {
@@ -18,11 +16,8 @@ function normalizeSecret(rawValue: string | undefined): string {
 }
 
 function readFirebaseConfig(): Record<string, unknown> {
-  try {
-    return (functionsV1.config?.() ?? {}) as Record<string, unknown>;
-  } catch {
-    return {};
-  }
+  // Runtime Config via functions.config() is deprecated. Keep env-only config.
+  return {};
 }
 
 function getNestedConfigString(path: string[]): string | undefined {
@@ -161,6 +156,22 @@ export function getSportsNewsArticleConcurrency(): number {
 
 export function getSportsNewsMinSourcesPerGame(): number {
   return parseBoundedInt(process.env.SPORTS_NEWS_MIN_SOURCES_PER_GAME, 1, 1, 2);
+}
+
+export function isSportsRefreshSchedulerEnabled(): boolean {
+  const raw = process.env.SPORTS_REFRESH_SCHEDULE_ENABLED?.trim();
+  if (!raw) {
+    return true;
+  }
+  return raw.toLowerCase() !== "false";
+}
+
+export function getSportsRefreshMaxUsers(): number {
+  return parseBoundedInt(process.env.SPORTS_REFRESH_MAX_USERS, 100, 1, 5000);
+}
+
+export function getSportsRefreshConcurrency(): number {
+  return parseBoundedInt(process.env.SPORTS_REFRESH_CONCURRENCY, 8, 1, 40);
 }
 
 export function getNewsCrawlerUserAgent(): string {

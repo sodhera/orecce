@@ -34,6 +34,10 @@ Background jobs:
   - Stores full article text in `newsArticleTextChunks` (chunked, verbatim extraction from source pages)
   - Stores per-source sync health in `newsSourceState`
   - Stores run-level audit summaries in `newsSyncRuns`
+- `prewarmSportsNewsEvery12Hours` (Cloud Scheduler: every 12 hours, 540s timeout)
+  - Enumerates known users in `users`
+  - Queues per-user refresh jobs for each supported sport category
+  - Reuses the same `userSportsNewsRefreshJobs` queue and worker pipeline as on-demand refresh
 
 Detailed API contracts: `docs/API.md`
 Machine-readable OpenAPI spec: `docs/openapi.yaml`
@@ -71,6 +75,11 @@ SPORTS_NEWS_FETCH_FULL_TEXT=true
 SPORTS_NEWS_MIN_SOURCES_PER_GAME=1
 SPORTS_NEWS_MAX_ARTICLES_PER_GAME=3
 SPORTS_NEWS_ARTICLE_CONCURRENCY=2
+
+# optional sports prewarm scheduling
+SPORTS_REFRESH_SCHEDULE_ENABLED=true
+SPORTS_REFRESH_MAX_USERS=100
+SPORTS_REFRESH_CONCURRENCY=8
 ```
 
 3. (Optional deploy config) Set Firebase runtime config:

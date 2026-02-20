@@ -1200,6 +1200,61 @@ img {
   white-space: pre-wrap;
 }
 
+/* ── Markdown inside posts ── */
+.post-markdown {
+  white-space: normal;
+}
+
+.post-markdown p {
+  margin: 0 0 6px;
+}
+
+.post-markdown p:last-child {
+  margin-bottom: 0;
+}
+
+.post-markdown strong {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.post-markdown em {
+  font-style: italic;
+}
+
+.post-markdown a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.post-markdown a:hover {
+  text-decoration: underline;
+}
+
+.post-markdown ul,
+.post-markdown ol {
+  margin: 4px 0;
+  padding-left: 20px;
+}
+
+.post-markdown li {
+  margin-bottom: 2px;
+}
+
+.post-markdown blockquote {
+  border-left: 3px solid var(--bg-border);
+  margin: 6px 0;
+  padding-left: 12px;
+  color: var(--text-secondary);
+}
+
+.post-markdown code {
+  background: var(--bg-secondary);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
 .post-source-link {
   display: inline-block;
   margin-top: 10px;
@@ -1270,6 +1325,90 @@ img {
 
 .post-save.active {
   color: var(--accent);
+}
+
+/* ── Post Thread ── */
+.post-thread-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 6px 0;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.post-thread-indicator:hover {
+  opacity: 0.8;
+}
+
+.post-thread-indicator svg {
+  width: 14px;
+  height: 14px;
+}
+
+.post-thread-slides {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height 0.35s ease;
+}
+
+
+
+.post-thread-slide {
+  display: flex;
+  gap: 12px;
+  padding-top: 12px;
+  position: relative;
+}
+
+.post-thread-line {
+  position: relative;
+  width: 2px;
+  flex-shrink: 0;
+  margin-left: 4px;
+  background: var(--bg-border);
+  border-radius: 1px;
+}
+
+.post-thread-slide-content {
+  flex: 1;
+  font-size: 15px;
+  line-height: 1.45;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  padding-bottom: 4px;
+}
+
+.post-thread-collapse {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 6px 0;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.post-thread-collapse:hover {
+  color: var(--text-primary);
+}
+
+.post-thread-collapse svg {
+  width: 14px;
+  height: 14px;
 }
 
 /* ── Right Sidebar ── */

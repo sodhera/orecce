@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import PostCard, { type Post } from "./PostCard";
+import PostCard, { type Post, type Slide } from "./PostCard";
 import {
     getNewsArticle,
     listNewsArticles,
@@ -34,9 +33,12 @@ const FEED_MODES = ["BIOGRAPHY", "TRIVIA", "NICHE"] as const;
 function apiPostToPost(p: ApiPost): Post {
     return {
         id: p.id,
+        post_type: "single",
         topic: p.mode,
         title: p.title,
-        text_content: p.body,
+        slides: [
+            { slide_number: 1, type: "standalone" as const, text: p.body },
+        ],
         date: new Date(p.createdAtMs).toLocaleDateString("en-US", {
             month: "short",
             day: "numeric",
@@ -61,12 +63,19 @@ type NewsArticleWithText = NewsArticleListItem & { fullText?: string };
 function newsArticleToPost(article: NewsArticleWithText): Post {
     return {
         id: article.id,
+        post_type: "single",
         topic: article.sourceName || "NEWS",
         title: article.title,
-        text_content:
-            article.fullText?.trim() ||
-            article.summary ||
-            "No article text available.",
+        slides: [
+            {
+                slide_number: 1,
+                type: "standalone" as const,
+                text:
+                    article.fullText?.trim() ||
+                    article.summary ||
+                    "No article text available.",
+            },
+        ],
         date: formatDateFromMs(article.publishedAtMs),
         sourceUrl: article.canonicalUrl || undefined,
     };
@@ -191,47 +200,47 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
                 const items =
                     mode === "ALL"
                         ? await (async () => {
-                              const settled = await Promise.allSettled(
-                                  FEED_MODES.map((m) =>
-                                      listPosts(m, profile, 20),
-                                  ),
-                              );
+                            const settled = await Promise.allSettled(
+                                FEED_MODES.map((m) =>
+                                    listPosts(m, profile, 20),
+                                ),
+                            );
 
-                              const successful = settled
-                                  .filter(
-                                      (
-                                          result,
-                                      ): result is PromiseFulfilledResult<{
-                                          items: ApiPost[];
-                                          nextCursor: string | null;
-                                      }> => result.status === "fulfilled",
-                                  )
-                                  .flatMap((result) => result.value.items);
+                            const successful = settled
+                                .filter(
+                                    (
+                                        result,
+                                    ): result is PromiseFulfilledResult<{
+                                        items: ApiPost[];
+                                        nextCursor: string | null;
+                                    }> => result.status === "fulfilled",
+                                )
+                                .flatMap((result) => result.value.items);
 
-                              if (successful.length === 0) {
-                                  const firstError = settled.find(
-                                      (
-                                          result,
-                                      ): result is PromiseRejectedResult =>
-                                          result.status === "rejected",
-                                  );
-                                  throw (
-                                      firstError?.reason ??
-                                      new Error("Failed to fetch posts.")
-                                  );
-                              }
+                            if (successful.length === 0) {
+                                const firstError = settled.find(
+                                    (
+                                        result,
+                                    ): result is PromiseRejectedResult =>
+                                        result.status === "rejected",
+                                );
+                                throw (
+                                    firstError?.reason ??
+                                    new Error("Failed to fetch posts.")
+                                );
+                            }
 
-                              const deduped = new Map<string, ApiPost>();
-                              successful
-                                  .sort((a, b) => b.createdAtMs - a.createdAtMs)
-                                  .forEach((item) => {
-                                      if (!deduped.has(item.id)) {
-                                          deduped.set(item.id, item);
-                                      }
-                                  });
+                            const deduped = new Map<string, ApiPost>();
+                            successful
+                                .sort((a, b) => b.createdAtMs - a.createdAtMs)
+                                .forEach((item) => {
+                                    if (!deduped.has(item.id)) {
+                                        deduped.set(item.id, item);
+                                    }
+                                });
 
-                              return Array.from(deduped.values()).slice(0, 20);
-                          })()
+                            return Array.from(deduped.values()).slice(0, 20);
+                        })()
                         : (await listPosts(mode, profile, 20)).items;
 
                 if (!cancelled) {
@@ -318,10 +327,10 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
                 </div>
             )}
             {mode === "NEWS" && !loading && newsSources.length === 0 && (
-                    <div className="feed-news-empty">
-                        No news sources available right now.
-                    </div>
-                )}
+                <div className="feed-news-empty">
+                    No news sources available right now.
+                </div>
+            )}
 
             {/* Posts */}
             <div className="feed-posts-container">
@@ -364,8 +373,8 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
                         {error
                             ? `Error: ${error}`
                             : mode === "NEWS"
-                              ? "No news articles yet for this source."
-                              : "No posts yet."}
+                                ? "No news articles yet for this source."
+                                : "No posts yet."}
                     </div>
                 ) : (
                     visiblePosts.map((post, index) => (

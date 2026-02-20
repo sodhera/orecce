@@ -1,14 +1,34 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import PostCard, { type Post } from "./PostCard";
-import { MOCK_POSTS } from "@/lib/mockPosts";
-
-const SAVED_POSTS: Post[] = MOCK_POSTS.slice(0, 3).map((post, index) => ({
-    ...post,
-    id: `saved-${index + 1}`,
-}));
+import { fetchPublicPosts } from "@/lib/firestorePosts";
 
 export default function SavedFeed() {
+    const [savedPosts, setSavedPosts] = useState<Post[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        let cancelled = false;
+        fetchPublicPosts(3)
+            .then((posts) => {
+                if (!cancelled) {
+                    setSavedPosts(
+                        posts.map((post, index) => ({
+                            ...post,
+                            id: `saved-${index + 1}`,
+                        })),
+                    );
+                }
+            })
+            .finally(() => {
+                if (!cancelled) setLoading(false);
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
     return (
         <main className="feed">
             <div className="feed-header">
@@ -23,7 +43,17 @@ export default function SavedFeed() {
             </div>
 
             <div className="feed-posts-container">
-                {SAVED_POSTS.length === 0 ? (
+                {loading ? (
+                    <div
+                        style={{
+                            padding: 40,
+                            textAlign: "center",
+                            color: "var(--text-secondary)",
+                        }}
+                    >
+                        Loading saved posts…
+                    </div>
+                ) : savedPosts.length === 0 ? (
                     <div
                         style={{
                             padding: 40,
@@ -34,7 +64,7 @@ export default function SavedFeed() {
                         You have no saved posts yet.
                     </div>
                 ) : (
-                    SAVED_POSTS.map((post) => (
+                    savedPosts.map((post) => (
                         <PostCard key={post.id} post={post} />
                     ))
                 )}

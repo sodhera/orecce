@@ -14,7 +14,7 @@ import {
     type NewsSource,
 } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
-import { MOCK_POSTS } from "@/lib/mockPosts";
+import { fetchPublicPosts } from "@/lib/firestorePosts";
 
 // ── Config ──────────────────────────────────────────────────────
 const VISIBLE_GUEST_POSTS = 3; // posts shown before the gate
@@ -140,7 +140,7 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
         };
     }, [mode, isAuthenticated]);
 
-    // ── Fetch posts (authenticated) or use mock posts ───────────
+    // ── Fetch posts (authenticated) or fetch from Firestore ────
     useEffect(() => {
         if (!isAuthenticated) {
             if (mode === "NEWS") {
@@ -151,10 +151,26 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
                 return;
             }
 
-            setPosts(MOCK_POSTS);
-            setLoading(false);
-            setShowGate(false);
-            return;
+            let cancelled = false;
+            setLoading(true);
+            fetchPublicPosts()
+                .then((firestorePosts) => {
+                    if (!cancelled) {
+                        setPosts(firestorePosts);
+                        setShowGate(false);
+                    }
+                })
+                .catch((err) => {
+                    if (!cancelled) {
+                        setError((err as Error).message);
+                    }
+                })
+                .finally(() => {
+                    if (!cancelled) setLoading(false);
+                });
+            return () => {
+                cancelled = true;
+            };
         }
 
         let cancelled = false;

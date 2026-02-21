@@ -14,7 +14,7 @@ import {
     type NewsSource,
 } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
-import { fetchPublicPosts } from "@/lib/firestorePosts";
+import { fetchPublicPosts, fetchReccePosts } from "@/lib/firestorePosts";
 
 // ── Config ──────────────────────────────────────────────────────
 const VISIBLE_GUEST_POSTS = 3; // posts shown before the gate
@@ -22,6 +22,7 @@ const VISIBLE_GUEST_POSTS = 3; // posts shown before the gate
 const CATEGORIES = [
     { value: "SPORTS", label: "Sports" },
     { value: "ALL", label: "All" },
+    { value: "RECCE:paul_graham", label: "Paul Graham" },
     { value: "BIOGRAPHY", label: "Biographies" },
     { value: "TRIVIA", label: "Trivia" },
     { value: "NICHE", label: "Niche" },
@@ -142,6 +143,31 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
 
     // ── Fetch posts (authenticated) or fetch from Firestore ────
     useEffect(() => {
+        // ── Recce feeds (works for both guest and auth) ────────
+        if (mode.startsWith("RECCE:")) {
+            const recceName = mode.split(":")[1];
+            let cancelled = false;
+            setLoading(true);
+            setError(null);
+            setPosts([]);
+            fetchReccePosts(recceName)
+                .then((reccePosts) => {
+                    if (!cancelled) {
+                        setPosts(reccePosts);
+                        setShowGate(false);
+                    }
+                })
+                .catch((err) => {
+                    if (!cancelled) setError((err as Error).message);
+                })
+                .finally(() => {
+                    if (!cancelled) setLoading(false);
+                });
+            return () => {
+                cancelled = true;
+            };
+        }
+
         if (!isAuthenticated) {
             if (mode === "NEWS") {
                 setPosts([]);

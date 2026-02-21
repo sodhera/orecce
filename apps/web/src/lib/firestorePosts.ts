@@ -24,3 +24,50 @@ export async function fetchPublicPosts(maxPosts = 20): Promise<Post[]> {
         } as Post;
     });
 }
+
+/**
+ * Fetch posts from a followed recce.
+ *
+ * Each doc in `recces/blogs/{recceName}` (e.g. "13sentences") holds
+ * a `posts` array whose items match the PostCard slide format.
+ * We read every essay doc, flatten all posts, and return them.
+ */
+export async function fetchReccePosts(
+    recceName: string,
+    maxPosts = 50,
+): Promise<Post[]> {
+    const recceRef = collection(db, "recces", "blogs", recceName);
+    const snapshot = await getDocs(recceRef);
+
+    const all: Post[] = [];
+
+    for (const doc of snapshot.docs) {
+        const data = doc.data();
+        const posts = (data.posts ?? []) as Array<{
+            post_type?: string;
+            theme?: string;
+            slides?: Array<{
+                slide_number: number;
+                type: string;
+                text: string;
+            }>;
+        }>;
+
+        posts.forEach((p, idx) => {
+            all.push({
+                id: `${doc.id}__${idx}`,
+                post_type: (p.post_type as "carousel" | "single") ?? "single",
+                topic: recceName,
+                title: p.theme ?? doc.id,
+                slides: (p.slides ?? []).map((s) => ({
+                    slide_number: s.slide_number,
+                    type: s.type as "hook" | "body" | "closer" | "standalone",
+                    text: s.text,
+                })),
+                date: "",
+            });
+        });
+    }
+
+    return all.slice(0, maxPosts);
+}

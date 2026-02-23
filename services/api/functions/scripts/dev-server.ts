@@ -4,6 +4,7 @@ import { OpenAiGateway } from "../src/llm/openAiGateway";
 import { PrefillService } from "../src/services/prefillService";
 import { PostGenerationService } from "../src/services/postGenerationService";
 import { ReccesRecommendationService } from "../src/services/reccesRecommendationService";
+import { InMemoryReccesUserProfileRepository } from "../src/recces/reccesUserProfileRepository";
 import { loadDotEnv } from "./loadDotEnv";
 import { InMemoryRepository } from "./inMemoryRepository";
 import { StaticReccesRepository } from "./staticReccesRepository";
@@ -21,7 +22,8 @@ const postGenerationService = new PostGenerationService(repository, gateway);
 const prefillService = new PrefillService(repository, gateway);
 const reccesRecommendationService = new ReccesRecommendationService(
   new StaticReccesRepository(),
-  repository
+  repository,
+  new InMemoryReccesUserProfileRepository()
 );
 const app = createApp({
   repository,

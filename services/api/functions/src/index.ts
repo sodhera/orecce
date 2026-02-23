@@ -27,6 +27,7 @@ import { NewsReadService } from "./news/newsReadService";
 import { DEFAULT_NEWS_SOURCES } from "./news/newsSources";
 import { NewsIngestionService } from "./news/newsIngestionService";
 import { FirestoreReccesRepository } from "./recces/firestoreReccesRepository";
+import { FirestoreReccesUserProfileRepository } from "./recces/firestoreReccesUserProfileRepository";
 import { SportsNewsService } from "./news/sportsNewsService";
 import { parseSportId, SPORT_IDS } from "./news/sportsNewsSources";
 import { FirestoreUserSportsNewsRepository } from "./news/userSportsNewsRepository";
@@ -47,7 +48,12 @@ const authVerifier = new FirebaseAuthVerifier();
 const newsRepository = new FirestoreNewsRepository(getFirestore());
 const newsReadService = new NewsReadService(getFirestore());
 const reccesRepository = new FirestoreReccesRepository(getFirestore());
-const reccesRecommendationService = new ReccesRecommendationService(reccesRepository, repository);
+const reccesUserProfileRepository = new FirestoreReccesUserProfileRepository(getFirestore());
+const reccesRecommendationService = new ReccesRecommendationService(
+  reccesRepository,
+  repository,
+  reccesUserProfileRepository
+);
 const sportsNewsService = new SportsNewsService();
 const userSportsNewsRepository = new FirestoreUserSportsNewsRepository(getFirestore());
 const userSportsNewsService = new UserSportsNewsService({

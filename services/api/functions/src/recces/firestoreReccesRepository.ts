@@ -1,4 +1,5 @@
 import { Firestore, Timestamp } from "firebase-admin/firestore";
+import { buildReccesPostId, parseReccesPostId } from "./postId";
 
 export interface ReccesSlide {
   slideNumber: number;
@@ -19,8 +20,20 @@ export interface ReccesEssayDocument {
   updatedAtMs?: number;
 }
 
+export interface ReccesResolvedPost {
+  id: string;
+  authorId: string;
+  essayId: string;
+  postIndex: number;
+  theme: string;
+  postType: string;
+  slides: ReccesSlide[];
+  fullText: string;
+}
+
 export interface ReccesRepository {
   listEssayDocuments(authorId: string): Promise<ReccesEssayDocument[]>;
+  getPostById(postId: string): Promise<ReccesResolvedPost | null>;
 }
 
 function toMillis(value: unknown): number | undefined {
@@ -101,5 +114,50 @@ export class FirestoreReccesRepository implements ReccesRepository {
         } as ReccesEssayDocument;
       })
       .filter((item): item is ReccesEssayDocument => Boolean(item));
+  }
+
+  async getPostById(postId: string): Promise<ReccesResolvedPost | null> {
+    const parsed = parseReccesPostId(postId);
+    if (!parsed) {
+      return null;
+    }
+
+    const snap = await this.db
+      .collection(this.rootCollection)
+      .doc(this.blogsDocument)
+      .collection(parsed.authorId)
+      .doc(parsed.essayId)
+      .get();
+
+    if (!snap.exists) {
+      return null;
+    }
+
+    const data = (snap.data() ?? {}) as Record<string, unknown>;
+    const rawPosts = Array.isArray(data.posts) ? data.posts : [];
+    if (parsed.postIndex < 0 || parsed.postIndex >= rawPosts.length) {
+      return null;
+    }
+
+    const post = readPost(rawPosts[parsed.postIndex]);
+    if (!post) {
+      return null;
+    }
+
+    const slideText = post.slides
+      .map((slide) => slide.text.trim())
+      .filter(Boolean)
+      .join(" ");
+
+    return {
+      id: buildReccesPostId(parsed.authorId, parsed.essayId, parsed.postIndex),
+      authorId: parsed.authorId,
+      essayId: parsed.essayId,
+      postIndex: parsed.postIndex,
+      theme: post.theme,
+      postType: post.postType,
+      slides: post.slides,
+      fullText: `${post.theme}. ${slideText}`.trim()
+    };
   }
 }

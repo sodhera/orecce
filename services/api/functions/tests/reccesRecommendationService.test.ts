@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ReccesEssayDocument, ReccesRepository } from "../src/recces/firestoreReccesRepository";
+import { InMemoryReccesUserProfileRepository } from "../src/recces/reccesUserProfileRepository";
 import {
   ReccesRecommendationService,
   buildReccesPostId
@@ -11,6 +12,37 @@ class FakeReccesRepository implements ReccesRepository {
 
   async listEssayDocuments(authorId: string): Promise<ReccesEssayDocument[]> {
     return this.docsByAuthor[authorId] ?? [];
+  }
+
+  async getPostById(postId: string) {
+    const [authorId, essayId, postIndexRaw] = String(postId).split(":");
+    const postIndex = Number(postIndexRaw);
+    if (!authorId || !essayId || !Number.isFinite(postIndex)) {
+      return null;
+    }
+    const docs = this.docsByAuthor[authorId] ?? [];
+    const essay = docs.find((item) => item.essayId === essayId);
+    if (!essay) {
+      return null;
+    }
+    const post = essay.posts[Math.floor(postIndex)];
+    if (!post) {
+      return null;
+    }
+    const slideText = post.slides
+      .map((slide) => slide.text.trim())
+      .filter(Boolean)
+      .join(" ");
+    return {
+      id: buildReccesPostId(authorId, essayId, Math.floor(postIndex)),
+      authorId,
+      essayId,
+      postIndex: Math.floor(postIndex),
+      theme: post.theme,
+      postType: post.postType,
+      slides: post.slides,
+      fullText: `${post.theme}. ${slideText}`.trim()
+    };
   }
 }
 
@@ -98,7 +130,8 @@ describe("ReccesRecommendationService", () => {
     const docs = buildDocs();
     const service = new ReccesRecommendationService(
       new FakeReccesRepository({ paul_graham: docs }),
-      repo
+      repo,
+      new InMemoryReccesUserProfileRepository()
     );
 
     const likedPostId = buildReccesPostId("paul_graham", "startup", 0);
@@ -130,7 +163,8 @@ describe("ReccesRecommendationService", () => {
     const docs = buildDocs();
     const service = new ReccesRecommendationService(
       new FakeReccesRepository({ paul_graham: docs }),
-      repo
+      repo,
+      new InMemoryReccesUserProfileRepository()
     );
 
     const seedPostId = buildReccesPostId("paul_graham", "programming", 0);
@@ -151,7 +185,8 @@ describe("ReccesRecommendationService", () => {
     const docs = buildDocs();
     const service = new ReccesRecommendationService(
       new FakeReccesRepository({ paul_graham: docs }),
-      repo
+      repo,
+      new InMemoryReccesUserProfileRepository()
     );
 
     const excludedId = buildReccesPostId("paul_graham", "startup2", 0);
@@ -164,5 +199,39 @@ describe("ReccesRecommendationService", () => {
 
     expect(result.items.some((item) => item.id === excludedId)).toBe(false);
     expect(result.items.length).toBeGreaterThan(0);
+  });
+
+  it("maintains distinct profile signals per user", async () => {
+    const repo = new InMemoryRepository();
+    const docs = buildDocs();
+    const service = new ReccesRecommendationService(
+      new FakeReccesRepository({ paul_graham: docs }),
+      repo,
+      new InMemoryReccesUserProfileRepository()
+    );
+
+    await service.recordFeedbackSignal("profile-user-a", buildReccesPostId("paul_graham", "startup", 0), "upvote");
+    await service.recordFeedbackSignal("profile-user-a", buildReccesPostId("paul_graham", "startup2", 0), "upvote");
+    await service.recordFeedbackSignal("profile-user-b", buildReccesPostId("paul_graham", "programming", 0), "upvote");
+    await service.recordFeedbackSignal("profile-user-b", buildReccesPostId("paul_graham", "programming", 1), "upvote");
+
+    const [userA, userB] = await Promise.all([
+      service.recommend({
+        userId: "profile-user-a",
+        authorId: "paul_graham",
+        limit: 1
+      }),
+      service.recommend({
+        userId: "profile-user-b",
+        authorId: "paul_graham",
+        limit: 1
+      })
+    ]);
+
+    expect(userA.items[0]?.essayId).not.toBe("programming");
+    expect(userB.items[0]?.essayId).toBe("programming");
+    expect(userA.items[0]?.essayId).not.toBe(userB.items[0]?.essayId);
+    expect(userA.meta.profileSignalsUsed).toBe(2);
+    expect(userB.meta.profileSignalsUsed).toBe(2);
   });
 });

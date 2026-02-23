@@ -1,4 +1,5 @@
 import { ReccesEssayDocument, ReccesRepository } from "../src/recces/firestoreReccesRepository";
+import { buildReccesPostId, parseReccesPostId } from "../src/recces/postId";
 
 const STATIC_DATASET: Record<string, ReccesEssayDocument[]> = {
   paul_graham: [
@@ -139,5 +140,38 @@ export class StaticReccesRepository implements ReccesRepository {
   async listEssayDocuments(authorId: string): Promise<ReccesEssayDocument[]> {
     const key = String(authorId ?? "").trim();
     return STATIC_DATASET[key] ?? [];
+  }
+
+  async getPostById(postId: string) {
+    const parsed = parseReccesPostId(postId);
+    if (!parsed) {
+      return null;
+    }
+
+    const docs = STATIC_DATASET[parsed.authorId] ?? [];
+    const essay = docs.find((item) => item.essayId === parsed.essayId);
+    if (!essay) {
+      return null;
+    }
+    const post = essay.posts[parsed.postIndex];
+    if (!post) {
+      return null;
+    }
+
+    const slideText = post.slides
+      .map((slide) => slide.text.trim())
+      .filter(Boolean)
+      .join(" ");
+
+    return {
+      id: buildReccesPostId(parsed.authorId, parsed.essayId, parsed.postIndex),
+      authorId: parsed.authorId,
+      essayId: parsed.essayId,
+      postIndex: parsed.postIndex,
+      theme: post.theme,
+      postType: post.postType,
+      slides: post.slides,
+      fullText: `${post.theme}. ${slideText}`.trim()
+    };
   }
 }

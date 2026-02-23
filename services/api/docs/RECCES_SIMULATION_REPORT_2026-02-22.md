@@ -96,3 +96,40 @@ Note:
 3. Increase candidate pool for long-session quality:
    - use the full Recces corpus and/or topic expansion candidates.
 4. Introduce feed precompute for large corpora and longer sessions to stabilize quality and avoid repetitive fallbacks.
+
+## Update: Per-User Profile Verification (2026-02-23)
+
+### Objective
+- Verify that each user now has an individual persistent recommendation profile and that feedback updates profile state automatically.
+
+### What Was Run
+1. Full API validation:
+```bash
+./services/api/scripts/prepush-check.sh
+```
+2. Local scroll simulation:
+```bash
+npm --prefix services/api/functions run dev:server
+BASE=http://127.0.0.1:8787 ROUNDS=10 LIMIT=8 RUN_ID=profile_local_20260223 node services/api/scripts/recces-scroll-sim.mjs
+```
+3. Targeted multi-user probe (same dataset, different users, different feedback histories), then:
+- request `POST /v1/recommendations/recces`
+- inspect `meta.profileSignalsUsed` and `meta.profileThemesTracked`.
+
+### Artifacts
+- `services/api/.sim-results/profile_local_20260223.log`
+- `services/api/.sim-results/profile_local_20260223.json`
+- `services/api/.sim-results/devserver_profile_local_20260223.log`
+- `services/api/.sim-results/devserver_profile_probe2_20260223.log`
+
+### Results
+1. API checks passed after the change (types, tests, build).
+2. Simulation completed successfully with 3 personas x 10 rounds.
+3. Recommendation metadata now reports profile state per user:
+   - `profileSignalsUsed`
+   - `profileThemesTracked`
+4. In targeted probe, two users each showed independent profile counters (`profileSignalsUsed=2` and `profileThemesTracked=2` per user), confirming profile separation by `user_id`.
+
+### Interpretation
+- The recommendation system now includes a persistent per-user profile layer (`userRecommendationProfiles/{uid}`) on top of session + feedback-based ranking.
+- Profile updates occur during normal feedback writes, so no extra client endpoint is required.

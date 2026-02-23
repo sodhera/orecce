@@ -1,6 +1,8 @@
 import { ListFeedbackResult, Repository } from "../types/contracts";
-import { StoredFeedback } from "../types/domain";
+import { FeedbackType, StoredFeedback } from "../types/domain";
 import { ReccesEssayDocument, ReccesRepository } from "../recces/firestoreReccesRepository";
+import { buildReccesPostId } from "../recces/postId";
+import { normalizeThemeKey, ReccesUserProfileRepository } from "../recces/reccesUserProfileRepository";
 
 const MAX_FEEDBACK_PAGES = 4;
 const FEEDBACK_PAGE_SIZE = 50;
@@ -77,6 +79,8 @@ export interface ReccesRecommendationResult {
     candidates: number;
     seedsUsed: number;
     feedbackSignalsUsed: number;
+    profileSignalsUsed: number;
+    profileThemesTracked: number;
   };
 }
 
@@ -100,10 +104,6 @@ interface ScoredCandidate {
   score: number;
   similarityScore: number;
   reasons: string[];
-}
-
-export function buildReccesPostId(authorId: string, essayId: string, postIndex: number): string {
-  return `${authorId}:${essayId}:${postIndex}`;
 }
 
 function tokenize(text: string): string[] {
@@ -213,8 +213,17 @@ function mergeFeedbackSignals(
 export class ReccesRecommendationService {
   constructor(
     private readonly reccesRepository: ReccesRepository,
-    private readonly repository: Repository
+    private readonly repository: Repository,
+    private readonly userProfileRepository: ReccesUserProfileRepository
   ) {}
+
+  async recordFeedbackSignal(userId: string, postId: string, feedbackType: FeedbackType): Promise<void> {
+    const resolved = await this.reccesRepository.getPostById(postId);
+    if (!resolved) {
+      return;
+    }
+    await this.userProfileRepository.updateThemeWeight(userId, resolved.theme, feedbackType);
+  }
 
   async recommend(input: ReccesRecommendationRequest): Promise<ReccesRecommendationResult> {
     const authorId = String(input.authorId ?? "").trim() || "paul_graham";
@@ -229,14 +238,19 @@ export class ReccesRecommendationService {
           authorId,
           candidates: 0,
           seedsUsed: 0,
-          feedbackSignalsUsed: 0
+          feedbackSignalsUsed: 0,
+          profileSignalsUsed: 0,
+          profileThemesTracked: 0
         }
       };
     }
 
     const postById = new Map(flattened.map((post) => [post.id, post] as const));
     const validIds = new Set(postById.keys());
-    const feedback = await this.readRecentFeedback(input.userId);
+    const [feedback, profile] = await Promise.all([
+      this.readRecentFeedback(input.userId),
+      this.userProfileRepository.getProfile(input.userId)
+    ]);
     const signals = mergeFeedbackSignals(feedback, validIds);
 
     const excluded = new Set(
@@ -269,7 +283,14 @@ export class ReccesRecommendationService {
       excluded.add(seed.id);
     }
 
-    const scored = this.scoreCandidates(flattened, seedPosts, excluded, input.userId, signals.positives);
+    const scored = this.scoreCandidates(
+      flattened,
+      seedPosts,
+      excluded,
+      input.userId,
+      signals.positives,
+      profile.themeWeights
+    );
     const selected = this.selectWithDiversity(scored, limit);
 
     return {
@@ -291,7 +312,9 @@ export class ReccesRecommendationService {
         authorId,
         candidates: flattened.length,
         seedsUsed: seedPosts.length,
-        feedbackSignalsUsed: signals.usedSignals
+        feedbackSignalsUsed: signals.usedSignals,
+        profileSignalsUsed: profile.signalCount,
+        profileThemesTracked: Object.keys(profile.themeWeights).length
       }
     };
   }
@@ -321,7 +344,8 @@ export class ReccesRecommendationService {
     seedPosts: FlattenedPost[],
     excluded: Set<string>,
     userId: string,
-    likedPostIds: Set<string>
+    likedPostIds: Set<string>,
+    profileThemeWeights: Record<string, number>
   ): ScoredCandidate[] {
     const scoreWithoutSeeds = seedPosts.length === 0;
     const likedThemes = new Set(
@@ -340,9 +364,11 @@ export class ReccesRecommendationService {
         }, 0);
 
         const likedThemeBoost = likedThemes.has(post.theme) ? 0.08 : 0;
+        const profileThemeWeight = profileThemeWeights[normalizeThemeKey(post.theme)] ?? 0;
+        const profileThemeBoost = Math.max(-0.14, Math.min(0.16, profileThemeWeight * 0.06));
         const baseScore = scoreWithoutSeeds
-          ? 0.35 + randomBoost
-          : maxSeedSimilarity * 0.88 + likedThemeBoost + randomBoost;
+          ? 0.35 + profileThemeBoost + randomBoost
+          : maxSeedSimilarity * 0.88 + likedThemeBoost + profileThemeBoost + randomBoost;
 
         const reasons: string[] = [];
         if (maxSeedSimilarity >= 0.12) {
@@ -350,6 +376,11 @@ export class ReccesRecommendationService {
         }
         if (likedThemeBoost > 0) {
           reasons.push("matches_liked_theme");
+        }
+        if (profileThemeBoost >= 0.03) {
+          reasons.push("matches_profile_history");
+        } else if (profileThemeBoost <= -0.03) {
+          reasons.push("downranks_disliked_theme");
         }
         if (!reasons.length) {
           reasons.push("topic_exploration");
@@ -396,3 +427,5 @@ export class ReccesRecommendationService {
     return selected;
   }
 }
+
+export { buildReccesPostId };

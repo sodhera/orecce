@@ -608,6 +608,19 @@ export function createApp(deps: CreateAppDeps): express.Express {
         type: body.feedback_type
       });
 
+      if (deps.reccesRecommendationService) {
+        try {
+          await deps.reccesRecommendationService.recordFeedbackSignal(identity.uid, body.post_id, body.feedback_type);
+        } catch (error) {
+          logError("recces.profile.feedback_signal_failed", {
+            user_id: identity.uid,
+            post_id: body.post_id,
+            feedback_type: body.feedback_type,
+            message: error instanceof Error ? error.message : String(error)
+          });
+        }
+      }
+
       res.json({ ok: true, data: feedback });
     })
   );

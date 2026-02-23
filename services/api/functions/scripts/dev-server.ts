@@ -3,8 +3,11 @@ import { createApp } from "../src/http/createApp";
 import { OpenAiGateway } from "../src/llm/openAiGateway";
 import { PrefillService } from "../src/services/prefillService";
 import { PostGenerationService } from "../src/services/postGenerationService";
+import { ReccesRecommendationService } from "../src/services/reccesRecommendationService";
+import { InMemoryReccesUserProfileRepository } from "../src/recces/reccesUserProfileRepository";
 import { loadDotEnv } from "./loadDotEnv";
 import { InMemoryRepository } from "./inMemoryRepository";
+import { StaticReccesRepository } from "./staticReccesRepository";
 
 loadDotEnv();
 
@@ -17,10 +20,16 @@ const repository = new InMemoryRepository();
 const gateway = new OpenAiGateway();
 const postGenerationService = new PostGenerationService(repository, gateway);
 const prefillService = new PrefillService(repository, gateway);
+const reccesRecommendationService = new ReccesRecommendationService(
+  new StaticReccesRepository(),
+  repository,
+  new InMemoryReccesUserProfileRepository()
+);
 const app = createApp({
   repository,
   postGenerationService,
   prefillService,
+  reccesRecommendationService,
   requireAuth: false,
   defaultPrefillPostsPerMode: getDefaultPrefillPostsPerMode()
 });
@@ -30,6 +39,6 @@ app.listen(port, () => {
   console.log(`Local dev server listening on http://127.0.0.1:${port}`);
   // eslint-disable-next-line no-console
   console.log(
-    "Endpoints: /health, /v1/users/me, /v1/posts/list, /v1/posts/generate, /v1/posts/feedback, /v1/posts/feedback/list"
+    "Endpoints: /health, /v1/users/me, /v1/posts/list, /v1/posts/generate, /v1/posts/feedback, /v1/posts/feedback/list, /v1/recommendations/recces"
   );
 });

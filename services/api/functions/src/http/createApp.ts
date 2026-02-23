@@ -7,6 +7,7 @@ import { SportsNewsService } from "../news/sportsNewsService";
 import { UserSportsNewsService } from "../news/userSportsNewsService";
 import { PrefillService } from "../services/prefillService";
 import { PostGenerationService } from "../services/postGenerationService";
+import { ReccesRecommendationService } from "../services/reccesRecommendationService";
 import { Repository } from "../types/contracts";
 import { ApiError } from "../types/errors";
 import { logError, logInfo } from "../utils/logging";
@@ -16,6 +17,7 @@ import {
   generatePostRequestSchema,
   listFeedbackRequestSchema,
   listPostsRequestSchema,
+  recommendReccesRequestSchema,
   regeneratePrefillsRequestSchema,
   setPromptPreferencesSchema,
   updateUserProfileSchema
@@ -28,6 +30,7 @@ interface CreateAppDeps {
   newsReadService?: NewsReadService;
   sportsNewsService?: SportsNewsService;
   userSportsNewsService?: UserSportsNewsService;
+  reccesRecommendationService?: ReccesRecommendationService;
   authVerifier?: AuthVerifier;
   requireAuth: boolean;
   defaultPrefillPostsPerMode: number;
@@ -116,6 +119,18 @@ function summarizeBody(path: string, body: unknown): Record<string, unknown> | n
       post_id: payload.post_id ?? null,
       page_size: payload.page_size ?? null,
       has_cursor: Boolean(payload.cursor)
+    };
+  }
+
+  if (path === "/v1/recommendations/recces") {
+    const recent = Array.isArray(payload.recent_post_ids) ? payload.recent_post_ids.length : 0;
+    const excluded = Array.isArray(payload.exclude_post_ids) ? payload.exclude_post_ids.length : 0;
+    return {
+      author_id: payload.author_id ?? null,
+      limit: payload.limit ?? null,
+      has_seed_post_id: Boolean(payload.seed_post_id),
+      recent_post_ids_count: recent,
+      exclude_post_ids_count: excluded
     };
   }
 
@@ -544,6 +559,38 @@ export function createApp(deps: CreateAppDeps): express.Express {
   );
 
   app.post(
+    "/v1/recommendations/recces",
+    withAsync(async (req, res) => {
+      if (!deps.reccesRecommendationService) {
+        throw new ApiError(500, "server_misconfigured", "Recces recommendation service is not configured.");
+      }
+
+      const parsed = recommendReccesRequestSchema.safeParse(req.body ?? {});
+      if (!parsed.success) {
+        throw new ApiError(400, "bad_request", "Invalid recommendation request.", parsed.error.flatten());
+      }
+
+      const identity = getAuthIdentity(res);
+      const body = parsed.data;
+      assertUserIdCompatible(body.user_id, identity.uid);
+
+      const recommendations = await deps.reccesRecommendationService.recommend({
+        userId: identity.uid,
+        authorId: body.author_id,
+        limit: body.limit,
+        seedPostId: body.seed_post_id,
+        recentPostIds: body.recent_post_ids,
+        excludePostIds: body.exclude_post_ids
+      });
+
+      res.json({
+        ok: true,
+        data: recommendations
+      });
+    })
+  );
+
+  app.post(
     "/v1/posts/feedback",
     withAsync(async (req, res) => {
       const parsed = feedbackRequestSchema.safeParse(req.body ?? {});
@@ -560,6 +607,19 @@ export function createApp(deps: CreateAppDeps): express.Express {
         postId: body.post_id,
         type: body.feedback_type
       });
+
+      if (deps.reccesRecommendationService) {
+        try {
+          await deps.reccesRecommendationService.recordFeedbackSignal(identity.uid, body.post_id, body.feedback_type);
+        } catch (error) {
+          logError("recces.profile.feedback_signal_failed", {
+            user_id: identity.uid,
+            post_id: body.post_id,
+            feedback_type: body.feedback_type,
+            message: error instanceof Error ? error.message : String(error)
+          });
+        }
+      }
 
       res.json({ ok: true, data: feedback });
     })

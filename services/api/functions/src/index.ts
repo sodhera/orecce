@@ -26,6 +26,8 @@ import { FirestoreNewsRepository } from "./news/firestoreNewsRepository";
 import { NewsReadService } from "./news/newsReadService";
 import { DEFAULT_NEWS_SOURCES } from "./news/newsSources";
 import { NewsIngestionService } from "./news/newsIngestionService";
+import { FirestoreReccesRepository } from "./recces/firestoreReccesRepository";
+import { FirestoreReccesUserProfileRepository } from "./recces/firestoreReccesUserProfileRepository";
 import { SportsNewsService } from "./news/sportsNewsService";
 import { parseSportId, SPORT_IDS } from "./news/sportsNewsSources";
 import { FirestoreUserSportsNewsRepository } from "./news/userSportsNewsRepository";
@@ -34,6 +36,7 @@ import { FirestoreRepository } from "./repositories/firestoreRepository";
 import { logError, logInfo } from "./utils/logging";
 import { PrefillService } from "./services/prefillService";
 import { PostGenerationService } from "./services/postGenerationService";
+import { ReccesRecommendationService } from "./services/reccesRecommendationService";
 
 initializeApp();
 
@@ -44,6 +47,13 @@ const prefillService = new PrefillService(repository, gateway);
 const authVerifier = new FirebaseAuthVerifier();
 const newsRepository = new FirestoreNewsRepository(getFirestore());
 const newsReadService = new NewsReadService(getFirestore());
+const reccesRepository = new FirestoreReccesRepository(getFirestore());
+const reccesUserProfileRepository = new FirestoreReccesUserProfileRepository(getFirestore());
+const reccesRecommendationService = new ReccesRecommendationService(
+  reccesRepository,
+  repository,
+  reccesUserProfileRepository
+);
 const sportsNewsService = new SportsNewsService();
 const userSportsNewsRepository = new FirestoreUserSportsNewsRepository(getFirestore());
 const userSportsNewsService = new UserSportsNewsService({
@@ -59,6 +69,7 @@ const app = createApp({
   postGenerationService,
   prefillService,
   newsReadService,
+  reccesRecommendationService,
   sportsNewsService,
   userSportsNewsService,
   authVerifier,

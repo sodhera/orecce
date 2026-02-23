@@ -167,6 +167,17 @@ OPENAI_MODEL=gpt-5-mini npm --prefix functions run dev:server
 BASE=http://127.0.0.1:8787 POST_LOAD=4 SCROLL_ROUNDS=1 MODE=BIOGRAPHY PROFILE="Bill Gates" node ./scripts/scroll-sim-real.mjs
 ```
 
+Recommendation session simulation (scroll/open/feedback/recommend loop):
+```bash
+npm --prefix functions run dev:server
+BASE=http://127.0.0.1:8787 ROUNDS=10 LIMIT=8 node ./scripts/recces-scroll-sim.mjs
+```
+
+Run against deployed API (requires Firebase ID token):
+```bash
+BASE=https://<region>-<project>.cloudfunctions.net/api AUTH_TOKEN="<firebase_id_token>" AUTHOR_ID=paul_graham node ./scripts/recces-scroll-sim.mjs
+```
+
 ## Deploy
 ```bash
 npm --prefix functions run build

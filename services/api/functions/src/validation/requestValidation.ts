@@ -45,3 +45,12 @@ export const updateUserProfileSchema = z.object({
 export const regeneratePrefillsRequestSchema = z.object({
   posts_per_mode: z.number().int().min(1).max(60).optional()
 });
+
+export const recommendReccesRequestSchema = z.object({
+  user_id: z.string().trim().min(1).max(128).optional(),
+  author_id: z.string().trim().min(1).max(120).default("paul_graham"),
+  limit: z.number().int().min(1).max(30).default(12),
+  seed_post_id: z.string().trim().min(3).max(220).optional(),
+  recent_post_ids: z.array(z.string().trim().min(3).max(220)).max(100).optional(),
+  exclude_post_ids: z.array(z.string().trim().min(3).max(220)).max(100).optional()
+});

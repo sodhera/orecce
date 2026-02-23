@@ -10,6 +10,8 @@ const WAIT_MS = Number(process.env.WAIT_MS ?? "0");
 const AUTH_TOKEN = process.env.AUTH_TOKEN ?? "";
 const RUN_ID = process.env.RUN_ID ?? `${Date.now()}`;
 const ALLOW_DOWNVOTE = String(process.env.ALLOW_DOWNVOTE ?? "false").toLowerCase() === "true";
+const USE_SERVER_IDENTITY =
+  String(process.env.USE_SERVER_IDENTITY ?? (AUTH_TOKEN.trim() ? "true" : "false")).toLowerCase() === "true";
 
 const USERS = [
   {
@@ -56,6 +58,16 @@ async function post(path, body) {
     throw new Error(`${path} failed (${response.status}): ${details}`);
   }
   return json.data;
+}
+
+function withUser(payload, userId) {
+  if (USE_SERVER_IDENTITY) {
+    return payload;
+  }
+  return {
+    ...payload,
+    user_id: userId
+  };
 }
 
 function affinity(item, preferences) {
@@ -110,13 +122,18 @@ async function runUser(user) {
   const feedbackByPost = new Map();
 
   for (let i = 0; i < ROUNDS; i += 1) {
-    let recs = await post("/v1/recommendations/recces", {
-      user_id: user.id,
-      author_id: AUTHOR_ID,
-      limit: LIMIT,
-      recent_post_ids: recent.slice(-RECENT_WINDOW),
-      exclude_post_ids: Array.from(seen)
-    });
+    let recs = await post(
+      "/v1/recommendations/recces",
+      withUser(
+        {
+          author_id: AUTHOR_ID,
+          limit: LIMIT,
+          recent_post_ids: recent.slice(-RECENT_WINDOW),
+          exclude_post_ids: Array.from(seen)
+        },
+        user.id
+      )
+    );
 
     if (!Array.isArray(recs.items) || recs.items.length === 0) {
       // If corpus is small, recycle older seen posts while still suppressing very recent repeats.
@@ -126,35 +143,50 @@ async function runUser(user) {
           seen.add(postId);
         }
       }
-      recs = await post("/v1/recommendations/recces", {
-        user_id: user.id,
-        author_id: AUTHOR_ID,
-        limit: LIMIT,
-        recent_post_ids: recent.slice(-RECENT_WINDOW),
-        exclude_post_ids: Array.from(seen)
-      });
+      recs = await post(
+        "/v1/recommendations/recces",
+        withUser(
+          {
+            author_id: AUTHOR_ID,
+            limit: LIMIT,
+            recent_post_ids: recent.slice(-RECENT_WINDOW),
+            exclude_post_ids: Array.from(seen)
+          },
+          user.id
+        )
+      );
     }
 
     if (!Array.isArray(recs.items) || recs.items.length === 0) {
       // Last fallback for tiny datasets: allow all historical posts except immediate recency window.
-      recs = await post("/v1/recommendations/recces", {
-        user_id: user.id,
-        author_id: AUTHOR_ID,
-        limit: LIMIT,
-        recent_post_ids: recent.slice(-RECENT_WINDOW),
-        exclude_post_ids: []
-      });
+      recs = await post(
+        "/v1/recommendations/recces",
+        withUser(
+          {
+            author_id: AUTHOR_ID,
+            limit: LIMIT,
+            recent_post_ids: recent.slice(-RECENT_WINDOW),
+            exclude_post_ids: []
+          },
+          user.id
+        )
+      );
     }
 
     if (!Array.isArray(recs.items) || recs.items.length === 0) {
       // Final fallback: drop recency constraints for very small corpora.
-      recs = await post("/v1/recommendations/recces", {
-        user_id: user.id,
-        author_id: AUTHOR_ID,
-        limit: LIMIT,
-        recent_post_ids: [],
-        exclude_post_ids: []
-      });
+      recs = await post(
+        "/v1/recommendations/recces",
+        withUser(
+          {
+            author_id: AUTHOR_ID,
+            limit: LIMIT,
+            recent_post_ids: [],
+            exclude_post_ids: []
+          },
+          user.id
+        )
+      );
     }
 
     if (!Array.isArray(recs.items) || recs.items.length === 0) {
@@ -169,11 +201,16 @@ async function runUser(user) {
     recent.push(chosen.id);
     if (feedbackType) {
       feedbackByPost.set(chosen.id, feedbackType);
-      await post("/v1/posts/feedback", {
-        user_id: user.id,
-        post_id: chosen.id,
-        feedback_type: feedbackType
-      });
+      await post(
+        "/v1/posts/feedback",
+        withUser(
+          {
+            post_id: chosen.id,
+            feedback_type: feedbackType
+          },
+          user.id
+        )
+      );
     }
 
     rounds.push({

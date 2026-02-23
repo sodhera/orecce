@@ -120,5 +120,5 @@ BASE=http://127.0.0.1:8787 ROUNDS=10 LIMIT=8 node services/api/scripts/recces-sc
 ```
 - Cloud run:
 ```bash
-BASE=https://<region>-<project>.cloudfunctions.net/api AUTH_TOKEN="<firebase_id_token>" node services/api/scripts/recces-scroll-sim.mjs
+BASE=https://<region>-<project>.cloudfunctions.net/api AUTH_TOKEN="<firebase_id_token>" USE_SERVER_IDENTITY=true node services/api/scripts/recces-scroll-sim.mjs
 ```

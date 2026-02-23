@@ -59,19 +59,40 @@ Artifacts:
 3. Because feedback was sparse (many `no_feedback` rounds), the model received weak personalization signals.
 
 ## Deployment Check
-- Attempted cloud simulation against:
-  - `https://us-central1-audit-3a7ec.cloudfunctions.net/api`
-- Result:
-  - `/health` works.
-  - `/v1/recommendations/recces` returned `Cannot POST /v1/recommendations/recces`.
-- Conclusion:
-  - the new recommendation endpoint is implemented locally but not yet deployed to cloud.
+Initial deployment check:
+1. `/health` worked on cloud.
+2. `/v1/recommendations/recces` initially failed with `Cannot POST /v1/recommendations/recces` because endpoint had not been deployed yet.
+
+Follow-up cloud rollout:
+1. Deployed updated `api` function and Firestore indexes.
+2. First cloud recommendation calls failed with `FAILED_PRECONDITION` while new feedback index was building.
+3. After index build completion, cloud recommendation requests and feedback writes succeeded.
+
+Cloud simulation run (successful):
+```bash
+BASE=https://api-2ljiuwaa3a-uc.a.run.app \
+AUTH_TOKEN="<firebase_id_token>" \
+USE_SERVER_IDENTITY=true \
+ROUNDS=10 LIMIT=20 RUN_ID=cloudfinal AUTHOR_ID=paul_graham \
+node services/api/scripts/recces-scroll-sim.mjs
+```
+
+Cloud output summary:
+- `services/api/.sim-results/cloudfinal.json`
+- `candidates`: 1712 (real corpus)
+- 30 rounds total (3 personas x 10 rounds) completed successfully
+- total runtime: ~39.6s
+- user-1 relevance lift: +0.2
+- user-2 relevance lift: +0.2
+- user-3 relevance lift: 0
+
+Note:
+- In authenticated mode (`USE_SERVER_IDENTITY=true`), all personas use the same auth identity for writes. This validates cloud functionality and endpoint behavior, but is not a strict multi-account experiment.
 
 ## Recommendations
-1. Deploy current API changes to cloud so real Firestore corpus simulations can run against production-like data.
-2. Expand interaction signals beyond `upvote/downvote/skip`:
+1. Expand interaction signals beyond `upvote/downvote/skip`:
    - add `view`, `dwell_ms`, and hide events.
+2. Run multi-account cloud simulation (distinct Firebase users per persona) for cleaner personalization isolation.
 3. Increase candidate pool for long-session quality:
    - use the full Recces corpus and/or topic expansion candidates.
 4. Introduce feed precompute for large corpora and longer sessions to stabilize quality and avoid repetitive fallbacks.
-

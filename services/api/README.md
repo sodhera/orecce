@@ -175,7 +175,7 @@ BASE=http://127.0.0.1:8787 ROUNDS=10 LIMIT=8 node ./scripts/recces-scroll-sim.mj
 
 Run against deployed API (requires Firebase ID token):
 ```bash
-BASE=https://<region>-<project>.cloudfunctions.net/api AUTH_TOKEN="<firebase_id_token>" AUTHOR_ID=paul_graham node ./scripts/recces-scroll-sim.mjs
+BASE=https://<region>-<project>.cloudfunctions.net/api AUTH_TOKEN="<firebase_id_token>" USE_SERVER_IDENTITY=true AUTHOR_ID=paul_graham node ./scripts/recces-scroll-sim.mjs
 ```
 
 ## Deploy

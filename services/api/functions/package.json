@@ -8,8 +8,10 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "clean": "rm -rf lib",
+    "start": "node lib/server.js",
     "dev:generate": "tsx scripts/dev-generate.ts",
     "dev:server": "tsx scripts/dev-server.ts",
+    "dev:supabase": "tsx src/server.ts",
     "seed:emulator": "tsx scripts/seed-emulator.ts",
     "sync:news:emulator": "tsx scripts/sync-news-emulator.ts",
     "backfill:news:fulltext:emulator": "tsx scripts/backfill-news-fulltext-emulator.ts",
@@ -21,7 +23,9 @@
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.49.1",
     "cors": "^2.8.5",
+    "dotenv": "^17.3.1",
     "express": "^4.21.2",
     "fast-xml-parser": "^4.5.3",
     "firebase-admin": "^12.7.0",

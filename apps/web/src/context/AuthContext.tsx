@@ -8,20 +8,12 @@ import {
     useEffect,
     ReactNode,
 } from "react";
-import {
-    onAuthStateChanged,
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    signInWithPopup,
-    signInWithRedirect,
-    GoogleAuthProvider,
-    signOut,
-    updateProfile,
-    User as FirebaseUser,
-} from "firebase/auth";
-import { auth } from "@/lib/firebaseConfig";
+import { Session, User as SupabaseUser } from "@supabase/supabase-js";
+import { supabase } from "@/lib/supabaseClient";
 
-const API_BASE = "https://api-2ljiuwaa3a-uc.a.run.app/v1";
+const API_BASE =
+    process.env.NEXT_PUBLIC_API_BASE_URL ??
+    "https://api-2ljiuwaa3a-uc.a.run.app/v1";
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -48,11 +40,16 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 // ── Helpers ────────────────────────────────────────────────────
 
-function mapFirebaseUser(fb: FirebaseUser): User {
+function mapSupabaseUser(su: SupabaseUser): User {
+    const meta = su.user_metadata ?? {};
     return {
-        id: fb.uid,
-        name: fb.displayName ?? fb.email?.split("@")[0] ?? "User",
-        email: fb.email ?? "",
+        id: su.id,
+        name:
+            meta.full_name ??
+            meta.name ??
+            su.email?.split("@")[0] ??
+            "User",
+        email: su.email ?? "",
     };
 }
 
@@ -60,93 +57,102 @@ function mapFirebaseUser(fb: FirebaseUser): User {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
-    const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
+    const [session, setSession] = useState<Session | null>(null);
     const [loading, setLoading] = useState(true);
     const [showAuthModal, setShowAuthModal] = useState(false);
 
-    // Listen for Firebase auth state changes (handles persistence + refresh)
+    // Listen for Supabase auth state changes
     useEffect(() => {
-        const unsub = onAuthStateChanged(auth, (fb) => {
-            if (fb) {
-                setFirebaseUser(fb);
-                setUser(mapFirebaseUser(fb));
+        // Get initial session
+        supabase.auth.getSession().then(({ data: { session: s } }) => {
+            setSession(s);
+            if (s?.user) {
+                setUser(mapSupabaseUser(s.user));
             } else {
-                setFirebaseUser(null);
                 setUser(null);
             }
             setLoading(false);
         });
-        return unsub;
+
+        // Subscribe to changes
+        const {
+            data: { subscription },
+        } = supabase.auth.onAuthStateChange((_event, s) => {
+            setSession(s);
+            if (s?.user) {
+                setUser(mapSupabaseUser(s.user));
+            } else {
+                setUser(null);
+            }
+            setLoading(false);
+        });
+
+        return () => subscription.unsubscribe();
     }, []);
 
     // After auth, lazily create user profile + prefill posts on backend
     useEffect(() => {
-        if (!firebaseUser) return;
+        if (!session?.access_token) return;
         (async () => {
             try {
-                const token = await firebaseUser.getIdToken(true);
                 await fetch(`${API_BASE}/users/me`, {
-                    headers: { Authorization: `Bearer ${token}` },
+                    headers: {
+                        Authorization: `Bearer ${session.access_token}`,
+                    },
                 });
             } catch {
                 // Backend may not be running — non-blocking
             }
         })();
-    }, [firebaseUser]);
+    }, [session]);
 
     const login = useCallback(async (email: string, password: string) => {
-        await signInWithEmailAndPassword(auth, email, password);
+        const { error } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+        });
+        if (error) throw error;
         setShowAuthModal(false);
     }, []);
 
     const signup = useCallback(
         async (name: string, email: string, password: string) => {
-            const cred = await createUserWithEmailAndPassword(
-                auth,
+            const { data, error } = await supabase.auth.signUp({
                 email,
                 password,
-            );
-            await updateProfile(cred.user, { displayName: name });
-            // Refresh local state with updated display name
-            setUser(mapFirebaseUser(cred.user));
+                options: {
+                    data: { full_name: name },
+                },
+            });
+            if (error) throw error;
+            if (data.user) {
+                setUser(mapSupabaseUser(data.user));
+            }
             setShowAuthModal(false);
         },
         [],
     );
 
     const loginWithGoogle = useCallback(async () => {
-        const provider = new GoogleAuthProvider();
-        provider.setCustomParameters({ prompt: "select_account" });
-
-        try {
-            await signInWithPopup(auth, provider);
-            setShowAuthModal(false);
-            return;
-        } catch (err) {
-            const code = (err as { code?: string }).code ?? "";
-            const shouldFallbackToRedirect =
-                code === "auth/popup-blocked" ||
-                code === "auth/cancelled-popup-request" ||
-                code === "auth/popup-closed-by-user" ||
-                code === "auth/operation-not-supported-in-this-environment";
-
-            if (!shouldFallbackToRedirect) {
-                throw err;
-            }
-        }
-
-        // Fallback for mobile browsers / popup-restricted environments.
-        await signInWithRedirect(auth, provider);
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: "google",
+            options: {
+                queryParams: { prompt: "select_account" },
+                redirectTo: typeof window !== "undefined" ? window.location.origin : undefined,
+            },
+        });
+        if (error) throw error;
+        setShowAuthModal(false);
     }, []);
 
     const logout = useCallback(async () => {
-        await signOut(auth);
+        await supabase.auth.signOut();
     }, []);
 
     const getIdToken = useCallback(async (): Promise<string | null> => {
-        if (!firebaseUser) return null;
-        return firebaseUser.getIdToken();
-    }, [firebaseUser]);
+        if (!session) return null;
+        return session.access_token;
+    }, [session]);
 
     return (
         <AuthContext.Provider

@@ -1,17 +1,10 @@
 import { useState, useEffect } from 'react';
-import {
-    User,
-    Auth,
-    onAuthStateChanged,
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    signOut as firebaseSignOut,
-    sendPasswordResetEmail,
-} from 'firebase/auth';
-import { auth } from '../config/firebase';
+import { Session, User } from '@supabase/supabase-js';
+import { supabase } from '../config/supabase';
 
 interface AuthState {
     user: User | null;
+    session: Session | null;
     isLoading: boolean;
     error: string | null;
 }
@@ -26,17 +19,29 @@ interface AuthActions {
 
 export function useAuth(): AuthState & AuthActions {
     const [user, setUser] = useState<User | null>(null);
+    const [session, setSession] = useState<Session | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     // Listen to auth state changes
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-            setUser(firebaseUser);
+        // Get initial session
+        supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+            setSession(initialSession);
+            setUser(initialSession?.user ?? null);
             setIsLoading(false);
         });
 
-        return () => unsubscribe();
+        // Subscribe to auth changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+            (_event, newSession) => {
+                setSession(newSession);
+                setUser(newSession?.user ?? null);
+                setIsLoading(false);
+            }
+        );
+
+        return () => subscription.unsubscribe();
     }, []);
 
     // Sign in with email and password
@@ -44,11 +49,17 @@ export function useAuth(): AuthState & AuthActions {
         try {
             setIsLoading(true);
             setError(null);
-            await signInWithEmailAndPassword(auth, email, password);
+            const { error: authError } = await supabase.auth.signInWithPassword({
+                email,
+                password
+            });
+            if (authError) {
+                setError(getErrorMessage(authError.message));
+                return false;
+            }
             return true;
         } catch (err: unknown) {
-            const errorCode = (err as { code?: string }).code || '';
-            setError(getErrorMessage(errorCode));
+            setError(err instanceof Error ? err.message : 'An error occurred');
             return false;
         } finally {
             setIsLoading(false);
@@ -60,11 +71,17 @@ export function useAuth(): AuthState & AuthActions {
         try {
             setIsLoading(true);
             setError(null);
-            await createUserWithEmailAndPassword(auth, email, password);
+            const { error: authError } = await supabase.auth.signUp({
+                email,
+                password
+            });
+            if (authError) {
+                setError(getErrorMessage(authError.message));
+                return false;
+            }
             return true;
         } catch (err: unknown) {
-            const errorCode = (err as { code?: string }).code || '';
-            setError(getErrorMessage(errorCode));
+            setError(err instanceof Error ? err.message : 'An error occurred');
             return false;
         } finally {
             setIsLoading(false);
@@ -75,10 +92,9 @@ export function useAuth(): AuthState & AuthActions {
     const signOut = async (): Promise<void> => {
         try {
             setIsLoading(true);
-            await firebaseSignOut(auth);
+            await supabase.auth.signOut();
         } catch (err: unknown) {
-            const errorCode = (err as { code?: string }).code || '';
-            setError(getErrorMessage(errorCode));
+            setError(err instanceof Error ? err.message : 'An error occurred');
         } finally {
             setIsLoading(false);
         }
@@ -89,11 +105,14 @@ export function useAuth(): AuthState & AuthActions {
         try {
             setIsLoading(true);
             setError(null);
-            await sendPasswordResetEmail(auth, email);
+            const { error: authError } = await supabase.auth.resetPasswordForEmail(email);
+            if (authError) {
+                setError(getErrorMessage(authError.message));
+                return false;
+            }
             return true;
         } catch (err: unknown) {
-            const errorCode = (err as { code?: string }).code || '';
-            setError(getErrorMessage(errorCode));
+            setError(err instanceof Error ? err.message : 'An error occurred');
             return false;
         } finally {
             setIsLoading(false);
@@ -105,6 +124,7 @@ export function useAuth(): AuthState & AuthActions {
 
     return {
         user,
+        session,
         isLoading,
         error,
         signIn,
@@ -115,30 +135,16 @@ export function useAuth(): AuthState & AuthActions {
     };
 }
 
-// Map Firebase error codes to user-friendly messages
-function getErrorMessage(code: string): string {
-    switch (code) {
-        case 'auth/invalid-email':
-            return 'Invalid email address';
-        case 'auth/user-disabled':
-            return 'This account has been disabled';
-        case 'auth/user-not-found':
-            return 'No account found with this email';
-        case 'auth/wrong-password':
-            return 'Incorrect password';
-        case 'auth/email-already-in-use':
-            return 'An account already exists with this email';
-        case 'auth/weak-password':
-            return 'Password should be at least 6 characters';
-        case 'auth/too-many-requests':
-            return 'Too many attempts. Please try again later';
-        case 'auth/network-request-failed':
-            return 'Network error. Please check your connection';
-        case 'auth/invalid-credential':
-            return 'Invalid email or password';
-        default:
-            return 'An error occurred. Please try again';
-    }
+// Map Supabase error messages to user-friendly messages
+function getErrorMessage(message: string): string {
+    const lower = message.toLowerCase();
+    if (lower.includes('invalid login')) return 'Invalid email or password';
+    if (lower.includes('email not confirmed')) return 'Please verify your email address';
+    if (lower.includes('user already registered')) return 'An account already exists with this email';
+    if (lower.includes('password')) return 'Password should be at least 6 characters';
+    if (lower.includes('rate limit')) return 'Too many attempts. Please try again later';
+    if (lower.includes('network')) return 'Network error. Please check your connection';
+    return message || 'An error occurred. Please try again';
 }
 
 export default useAuth;

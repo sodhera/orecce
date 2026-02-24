@@ -1,55 +1,15 @@
-import { useState } from 'react';
-import * as Google from 'expo-auth-session/providers/google';
+import { useState, useEffect, useCallback } from 'react';
+import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import Constants from 'expo-constants';
-import { Platform } from 'react-native';
-import { GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
-import { auth } from '../config/firebase';
+import { supabase } from '../config/supabase';
 
-// Required for web browser to close properly after auth
 WebBrowser.maybeCompleteAuthSession();
 
-type ExpoExtra = {
-    googleWebClientId?: string;
-    googleIosClientId?: string;
-    googleAndroidClientId?: string;
-};
-
-type ProcessEnv = Record<string, string | undefined>;
-type ProcessLike = { env?: ProcessEnv };
-
-const runtimeEnv = (globalThis as { process?: ProcessLike }).process?.env ?? {};
-const expoExtra = (Constants.expoConfig?.extra ?? {}) as ExpoExtra;
-
-const GOOGLE_WEB_CLIENT_ID =
-    runtimeEnv.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? expoExtra.googleWebClientId ?? '';
-const GOOGLE_IOS_CLIENT_ID =
-    runtimeEnv.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? expoExtra.googleIosClientId ?? '';
-const GOOGLE_ANDROID_CLIENT_ID =
-    runtimeEnv.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID ?? expoExtra.googleAndroidClientId ?? '';
-
-const DEFAULT_CLIENT_ID =
-    GOOGLE_WEB_CLIENT_ID || GOOGLE_IOS_CLIENT_ID || GOOGLE_ANDROID_CLIENT_ID || 'MISSING_GOOGLE_CLIENT_ID';
-
-const MISSING_CLIENT_ID_MESSAGE = 'Google sign in is not configured. Add Google OAuth client IDs.';
-
-function getMissingClientIds(): string[] {
-    const missing: string[] = [];
-
-    if (!GOOGLE_WEB_CLIENT_ID) {
-        missing.push('EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID');
-    }
-
-    if (Platform.OS === 'ios' && !GOOGLE_IOS_CLIENT_ID) {
-        missing.push('EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID');
-    }
-
-    if (Platform.OS === 'android' && !GOOGLE_ANDROID_CLIENT_ID) {
-        missing.push('EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID');
-    }
-
-    return missing;
-}
+const GOOGLE_CLIENT_ID =
+    Constants.expoConfig?.extra?.googleWebClientId ??
+    process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ??
+    '';
 
 interface GoogleAuthState {
     isLoading: boolean;
@@ -64,65 +24,68 @@ export function useGoogleAuth(): GoogleAuthState & GoogleAuthActions {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const [request, _response, promptAsync] = Google.useIdTokenAuthRequest({
-        webClientId: GOOGLE_WEB_CLIENT_ID || DEFAULT_CLIENT_ID,
-        iosClientId: GOOGLE_IOS_CLIENT_ID || DEFAULT_CLIENT_ID,
-        androidClientId: GOOGLE_ANDROID_CLIENT_ID || DEFAULT_CLIENT_ID,
-        selectAccount: true,
-    });
+    const [request, response, promptAsync] = AuthSession.useAuthRequest(
+        {
+            clientId: GOOGLE_CLIENT_ID,
+            redirectUri: AuthSession.makeRedirectUri(),
+            responseType: AuthSession.ResponseType.IdToken,
+            scopes: ['openid', 'profile', 'email'],
+        },
+        { authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth' }
+    );
 
-    const signInWithGoogle = async () => {
+    useEffect(() => {
+        if (response?.type !== 'success') return;
+
+        const idToken = response.params?.id_token;
+        if (!idToken) {
+            setError('No ID token received from Google');
+            setIsLoading(false);
+            return;
+        }
+
+        // Sign in to Supabase with the Google ID token
+        (async () => {
+            try {
+                const { error: authError } = await supabase.auth.signInWithIdToken({
+                    provider: 'google',
+                    token: idToken,
+                });
+                if (authError) {
+                    setError(authError.message);
+                }
+            } catch (err: unknown) {
+                setError(err instanceof Error ? err.message : 'Google sign-in failed');
+            } finally {
+                setIsLoading(false);
+            }
+        })();
+    }, [response]);
+
+    const signInWithGoogle = useCallback(async (): Promise<boolean> => {
         try {
             setIsLoading(true);
             setError(null);
 
-            const missingClientIds = getMissingClientIds();
-            if (missingClientIds.length > 0) {
-                setError(`${MISSING_CLIENT_ID_MESSAGE} Missing: ${missingClientIds.join(', ')}`);
-                return false;
-            }
-
             if (!request) {
-                setError('Google sign in is still initializing. Please try again.');
+                setError('Google Auth is not ready');
+                setIsLoading(false);
                 return false;
             }
 
             const result = await promptAsync();
-
-            if (result.type === 'success') {
-                const authResult = result as typeof result & {
-                    authentication?: { idToken?: string; accessToken?: string };
-                };
-                const idToken = result.params.id_token || authResult.authentication?.idToken;
-                const accessToken = result.params.access_token || authResult.authentication?.accessToken;
-                const credential = idToken
-                    ? GoogleAuthProvider.credential(idToken)
-                    : accessToken
-                        ? GoogleAuthProvider.credential(null, accessToken)
-                        : null;
-
-                if (!credential) {
-                    setError('Google sign in did not return a usable token.');
-                    return false;
-                }
-
-                await signInWithCredential(auth, credential);
-                return true;
-            } else if (result.type === 'cancel') {
-                return false;
-            } else {
-                setError('Failed to sign in with Google');
+            if (result.type !== 'success') {
+                setIsLoading(false);
                 return false;
             }
+            // The useEffect above will handle the Supabase sign-in
+            return true;
         } catch (err: unknown) {
-            console.error('Google sign in error:', err);
-            const errorMessage = (err as { message?: string }).message || 'Failed to sign in with Google';
-            setError(errorMessage);
-            return false;
-        } finally {
+            setError(err instanceof Error ? err.message : 'Google sign-in failed');
             setIsLoading(false);
+            return false;
         }
-    };
+    }, [request, promptAsync]);
 
     return {
         isLoading,

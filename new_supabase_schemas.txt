@@ -1,0 +1,191 @@
+-- 1. Enable extensions for better search (optional but recommended)
+create extension if not exists pg_trgm;
+
+-- ==========================================
+-- A. CONTENT LAYER (Static Data)
+-- ==========================================
+
+-- 1. Authors (Virtual Profiles like Paul Graham)
+create table public.authors (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  bio text,
+  avatar_url text,
+  website_url text,
+  created_at timestamptz default now()
+);
+
+-- 2. Global Topics (Broad categories users follow, e.g., "Startups")
+create table public.topics (
+  id uuid primary key default gen_random_uuid(),
+  slug text unique not null,
+  display_name text not null,
+  created_at timestamptz default now()
+);
+
+-- 3. Posts (The Essays / Carousels)
+create table public.posts (
+  id uuid primary key default gen_random_uuid(),
+  author_id uuid references public.authors(id) not null,
+  
+  -- Core Content Structure
+  post_type text check (post_type in ('carousel', 'single', 'quote')) not null default 'carousel',
+  theme text, -- e.g., "The Deal Everyone Misses"
+  source_title text, -- e.g., "Paul Graham: Emails..."
+  
+  -- THE JSON PAYLOAD: Stores your array of slides
+  slides jsonb not null default '[]'::jsonb,
+  
+  -- Discovery & Search
+  tags text[], -- Specific keywords e.g. ['Airbnb', 'Fred Wilson']
+  
+  -- Ranking Metrics
+  global_popularity_score float default 0,
+  published_at date, -- Original publish date
+  created_at timestamptz default now()
+);
+
+-- 4. Post_Topics Junction (Linking Posts to Global Topics)
+create table public.post_topics (
+  post_id uuid references public.posts(id) on delete cascade,
+  topic_id uuid references public.topics(id) on delete cascade,
+  primary key (post_id, topic_id)
+);
+
+-- ==========================================
+-- B. USER LAYER (Dynamic Data)
+-- ==========================================
+
+-- 5. User Follows Authors
+create table public.user_author_follows (
+  user_id uuid references auth.users(id) on delete cascade not null,
+  author_id uuid references public.authors(id) on delete cascade not null,
+  created_at timestamptz default now(),
+  primary key (user_id, author_id)
+);
+
+-- 6. User Follows Topics
+create table public.user_topic_follows (
+  user_id uuid references auth.users(id) on delete cascade not null,
+  topic_id uuid references public.topics(id) on delete cascade not null,
+  created_at timestamptz default now(),
+  primary key (user_id, topic_id)
+);
+
+-- 7. User History (Tracks what is READ/UNREAD)
+create table public.user_history (
+  user_id uuid references auth.users(id) on delete cascade not null,
+  post_id uuid references public.posts(id) on delete cascade not null,
+  
+  -- Status: 'viewed' (scrolled past), 'read' (clicked/finished), 'saved'
+  status text check (status in ('viewed', 'read', 'saved', 'skipped')) default 'viewed',
+  
+  interacted_at timestamptz default now(),
+  primary key (user_id, post_id)
+);
+
+-- ==========================================
+-- C. INDEXES (For Speed)
+-- ==========================================
+
+-- Make fetching the feed fast
+create index idx_posts_author on public.posts(author_id);
+create index idx_posts_tags on public.posts using gin(tags); -- Fast array search
+create index idx_posts_slides on public.posts using gin(slides); -- Search inside JSON
+create index idx_history_user on public.user_history(user_id, status);
+
+-- ==========================================
+-- D. THE "MAGIC" FEED FUNCTION
+-- ==========================================
+-- This function runs on the server to generate the personalized feed.
+-- It automatically handles the "Exclusion" logic.
+
+create or replace function get_personalized_feed(
+  p_limit int default 10,
+  p_offset int default 0
+)
+returns table (
+  post_id uuid,
+  theme text,
+  author_name text,
+  author_avatar text,
+  slides jsonb,
+  post_type text,
+  match_reason text
+)
+language plpgsql
+security definer
+as $$
+declare
+  v_user_id uuid := auth.uid();
+begin
+  return query
+  with 
+  -- 1. Get authors the user follows
+  my_authors as (
+    select author_id from user_author_follows where user_id = v_user_id
+  ),
+  -- 2. Get topics the user follows
+  my_topics as (
+    select topic_id from user_topic_follows where user_id = v_user_id
+  ),
+  -- 3. Get IDs of posts the user has explicitly READ or SKIPPED
+  exclude_posts as (
+    select post_id from user_history 
+    where user_id = v_user_id 
+    and status in ('read', 'skipped')
+  )
+  
+  select distinct on (p.id)
+    p.id,
+    p.theme,
+    a.name as author_name,
+    a.avatar_url,
+    p.slides,
+    p.post_type,
+    case 
+      when p.author_id in (select author_id from my_authors) then 'Following Author'
+      else 'Following Topic'
+    end as match_reason
+  from posts p
+  join authors a on p.author_id = a.id
+  left join post_topics pt on p.id = pt.post_id
+  where 
+    -- LOGIC: Must match (Author OR Topic)
+    (
+      p.author_id in (select author_id from my_authors)
+      OR
+      pt.topic_id in (select topic_id from my_topics)
+    )
+    -- LOGIC: Must NOT be in the exclude list
+    AND p.id not in (select post_id from exclude_posts)
+    
+  -- RANKING: Show highest popularity first, then newest
+  order by p.id, p.global_popularity_score desc
+  limit p_limit offset p_offset;
+end;
+$$;
+
+-- ==========================================
+-- E. SECURITY (Row Level Security)
+-- ==========================================
+
+-- Enable RLS on all tables
+alter table authors enable row level security;
+alter table posts enable row level security;
+alter table user_history enable row level security;
+
+-- 1. Public Data (Everyone can read posts/authors)
+create policy "Public authors are viewable by everyone" on authors for select using (true);
+create policy "Public posts are viewable by everyone" on posts for select using (true);
+create policy "Public topics are viewable by everyone" on topics for select using (true);
+
+-- 2. User Data (Users can only see/edit their own history and follows)
+create policy "Users manage their own history" on user_history
+  for all using (auth.uid() = user_id);
+
+create policy "Users manage their own author follows" on user_author_follows
+  for all using (auth.uid() = user_id);
+
+create policy "Users manage their own topic follows" on user_topic_follows
+  for all using (auth.uid() = user_id);

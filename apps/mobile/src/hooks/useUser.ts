@@ -1,18 +1,18 @@
 /**
  * useUser hook - Unified user data management
  * 
- * This hook combines Firebase Auth user data with the backend User model,
+ * This hook combines Supabase Auth user data with the backend User model,
  * providing a single source of truth for user profile information.
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { User as FirebaseUser, onAuthStateChanged } from 'firebase/auth';
-import { auth } from '../config/firebase';
+import { User as SupabaseUser } from '@supabase/supabase-js';
+import { supabase } from '../config/supabase';
 import { api, User, UserProfile } from '../services/api';
 
 interface UseUserState {
-    /** Firebase Auth user (for auth status, email verification, etc.) */
-    firebaseUser: FirebaseUser | null;
+    /** Supabase Auth user (for auth status, email verification, etc.) */
+    authUser: SupabaseUser | null;
     /** Backend user profile (for displayName, photoURL, preferences) */
     user: User | null;
     /** Whether the initial data is still loading */
@@ -33,44 +33,68 @@ interface UseUserActions {
 }
 
 export function useUser(): UseUserState & UseUserActions {
-    const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
+    const [authUser, setAuthUser] = useState<SupabaseUser | null>(null);
     const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     // Track auth state and fetch backend user
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
-            setFirebaseUser(fbUser);
+        // Get initial session
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            const currentUser = session?.user ?? null;
+            setAuthUser(currentUser);
 
-            if (fbUser) {
-                try {
-                    // Sync with backend (creates user if doesn't exist)
-                    const backendUser = await api.syncCurrentUser();
-                    setUser(backendUser);
-                    setError(null);
-                } catch (err: any) {
-                    console.error('[useUser] Failed to sync user:', err);
-                    setError(err.error || err.message || 'Failed to load user');
-                    // Don't block the UI - user can still use the app with Firebase Auth data
-                }
+            if (currentUser) {
+                api.syncCurrentUser()
+                    .then((backendUser) => {
+                        setUser(backendUser);
+                        setError(null);
+                    })
+                    .catch((err: any) => {
+                        console.error('[useUser] Failed to sync user:', err);
+                        setError(err.error || err.message || 'Failed to load user');
+                    })
+                    .finally(() => setIsLoading(false));
             } else {
                 setUser(null);
+                setIsLoading(false);
             }
-
-            setIsLoading(false);
         });
 
-        return () => unsubscribe();
+        // Subscribe to auth changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+            async (_event, session) => {
+                const currentUser = session?.user ?? null;
+                setAuthUser(currentUser);
+
+                if (currentUser) {
+                    try {
+                        const backendUser = await api.syncCurrentUser();
+                        setUser(backendUser);
+                        setError(null);
+                    } catch (err: any) {
+                        console.error('[useUser] Failed to sync user:', err);
+                        setError(err.error || err.message || 'Failed to load user');
+                    }
+                } else {
+                    setUser(null);
+                }
+
+                setIsLoading(false);
+            }
+        );
+
+        return () => subscription.unsubscribe();
     }, []);
 
     // Refresh user data from backend
     const refresh = useCallback(async () => {
-        if (!firebaseUser) return;
+        if (!authUser) return;
 
         try {
             setIsLoading(true);
-            const backendUser = await api.getUser(firebaseUser.uid);
+            const backendUser = await api.getUser(authUser.id);
             setUser(backendUser);
             setError(null);
         } catch (err: any) {
@@ -79,17 +103,17 @@ export function useUser(): UseUserState & UseUserActions {
         } finally {
             setIsLoading(false);
         }
-    }, [firebaseUser]);
+    }, [authUser]);
 
     // Update user profile
     const updateProfile = useCallback(async (profile: Partial<UserProfile>) => {
-        if (!firebaseUser) {
+        if (!authUser) {
             setError('User not authenticated');
             return null;
         }
 
         try {
-            const updatedUser = await api.updateUserProfile(firebaseUser.uid, profile);
+            const updatedUser = await api.updateUserProfile(authUser.id, profile);
             setUser(updatedUser);
             setError(null);
             return updatedUser;
@@ -98,7 +122,7 @@ export function useUser(): UseUserState & UseUserActions {
             setError(err.error || err.message || 'Failed to update profile');
             return null;
         }
-    }, [firebaseUser]);
+    }, [authUser]);
 
     // Clear error
     const clearError = useCallback(() => {
@@ -106,11 +130,11 @@ export function useUser(): UseUserState & UseUserActions {
     }, []);
 
     return {
-        firebaseUser,
+        authUser,
         user,
         isLoading,
         error,
-        isAuthenticated: !!firebaseUser,
+        isAuthenticated: !!authUser,
         refresh,
         updateProfile,
         clearError,
@@ -118,24 +142,24 @@ export function useUser(): UseUserState & UseUserActions {
 }
 
 /**
- * Helper to get display name from either backend user or Firebase user.
+ * Helper to get display name from either backend user or Supabase user.
  * Prioritizes backend user data.
  */
-export function getDisplayName(user: User | null, firebaseUser: FirebaseUser | null): string {
+export function getDisplayName(user: User | null, authUser: SupabaseUser | null): string {
     // First try backend user profile
     if (user?.profile?.displayName) {
         return user.profile.displayName;
     }
-    // Fall back to Firebase Auth displayName
-    if (firebaseUser?.displayName) {
-        return firebaseUser.displayName;
-    }
+    // Fall back to Supabase Auth user_metadata
+    const meta = authUser?.user_metadata;
+    if (meta?.full_name) return meta.full_name;
+    if (meta?.name) return meta.name;
     // Fall back to email prefix
     if (user?.email) {
         return user.email.split('@')[0];
     }
-    if (firebaseUser?.email) {
-        return firebaseUser.email.split('@')[0];
+    if (authUser?.email) {
+        return authUser.email.split('@')[0];
     }
     return 'User';
 }
@@ -143,8 +167,8 @@ export function getDisplayName(user: User | null, firebaseUser: FirebaseUser | n
 /**
  * Helper to get user initials for avatar.
  */
-export function getUserInitials(user: User | null, firebaseUser: FirebaseUser | null): string {
-    const name = getDisplayName(user, firebaseUser);
+export function getUserInitials(user: User | null, authUser: SupabaseUser | null): string {
+    const name = getDisplayName(user, authUser);
 
     // If it's a full name, get initials
     const parts = name.trim().split(/\s+/);

@@ -5,13 +5,15 @@
  * It handles authentication, error handling, and request/response typing.
  */
 
-import { auth } from '../config/firebase';
+import { supabase } from '../config/supabase';
 
 // =============================================================================
 // CONFIGURATION
 // =============================================================================
 
-const API_BASE_URL = 'https://us-central1-audit-3a7ec.cloudfunctions.net/api';
+const API_BASE_URL =
+    process.env.EXPO_PUBLIC_API_BASE_URL ??
+    'https://us-central1-audit-3a7ec.cloudfunctions.net/api';
 
 // =============================================================================
 // TYPES
@@ -40,14 +42,14 @@ export interface ApiError {
 // =============================================================================
 
 /**
- * Get the current user's Firebase ID token for API authentication.
+ * Get the current user's Supabase access token for API authentication.
  */
 async function getAuthToken(): Promise<string> {
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
         throw new Error('User not authenticated');
     }
-    return currentUser.getIdToken();
+    return session.access_token;
 }
 
 /**
@@ -111,18 +113,17 @@ export async function updateUserProfile(
 }
 
 /**
- * Sync the current Firebase Auth user with the backend.
+ * Sync the current Supabase Auth user with the backend.
  * This should be called after login/signup to ensure the user document exists.
  */
 export async function syncCurrentUser(): Promise<User | null> {
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.user) {
         return null;
     }
 
     try {
-        // Get user from backend (creates if doesn't exist)
-        const user = await getUser(currentUser.uid);
+        const user = await getUser(session.user.id);
         return user;
     } catch (error) {
         console.error('[api] Failed to sync user:', error);

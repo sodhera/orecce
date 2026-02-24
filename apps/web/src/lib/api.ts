@@ -1,6 +1,8 @@
-import { auth } from "./firebaseConfig";
+import { supabase } from "./supabaseClient";
 
-const API_BASE = "https://api-2ljiuwaa3a-uc.a.run.app/v1";
+const API_BASE =
+    process.env.NEXT_PUBLIC_API_BASE_URL ??
+    "https://api-2ljiuwaa3a-uc.a.run.app/v1";
 
 // ── Types ───────────────────────────────────────────────────────
 
@@ -39,23 +41,15 @@ interface RequestOptions {
 // ── Helpers ─────────────────────────────────────────────────────
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
-    await auth.authStateReady();
-    const user = auth.currentUser;
-    if (!user) {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session?.access_token) {
         throw new Error("Authentication required.");
     }
 
-    const token = await user.getIdToken();
-    if (!token) {
-        throw new Error("Authentication required.");
-    }
-
-    const headers: Record<string, string> = {
+    return {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${session.access_token}`,
     };
-
-    return headers;
 }
 
 async function parseApiResult<T>(res: Response): Promise<ApiResult<T>> {
@@ -80,14 +74,13 @@ async function post<T>(
     });
 
     if (res.status === 401) {
-        const user = auth.currentUser;
-        if (user) {
-            const retryToken = await user.getIdToken(true);
+        const { data: { session: refreshed } } = await supabase.auth.refreshSession();
+        if (refreshed?.access_token) {
             res = await fetch(`${API_BASE}${path}`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${retryToken}`,
+                    Authorization: `Bearer ${refreshed.access_token}`,
                 },
                 body: JSON.stringify(body),
                 signal: options?.signal,
@@ -128,14 +121,13 @@ async function get<T>(
     });
 
     if (res.status === 401) {
-        const user = auth.currentUser;
-        if (user) {
-            const retryToken = await user.getIdToken(true);
+        const { data: { session: refreshed } } = await supabase.auth.refreshSession();
+        if (refreshed?.access_token) {
             res = await fetch(fullPath, {
                 method: "GET",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${retryToken}`,
+                    Authorization: `Bearer ${refreshed.access_token}`,
                 },
                 signal: options?.signal,
             });
@@ -383,12 +375,12 @@ export interface GetSportsLatestResult {
 export interface SportsSyncState {
     status: "idle" | "running" | "complete" | "error";
     step:
-        | "idle"
-        | "looking_games"
-        | "games_found"
-        | "preparing_articles"
-        | "complete"
-        | "error";
+    | "idle"
+    | "looking_games"
+    | "games_found"
+    | "preparing_articles"
+    | "complete"
+    | "error";
     message: string;
     totalGames: number;
     processedGames: number;

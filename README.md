@@ -44,16 +44,30 @@ This repo is split into clean monorepo domains:
 Default cloud API base:
 - `https://us-central1-audit-3a7ec.cloudfunctions.net/api`
 
-## Automatic deploy on push
-- GitHub Actions workflow: `.github/workflows/deploy-functions.yml`
-- Trigger: push to `main`
-- Deploys: Firebase Functions (`api`, `onAuthUserCreate`, `syncNewsEvery3Hours`) + Firestore rules/indexes
-- Required GitHub settings:
-  - Repository secret: `GCP_SA_KEY` (JSON for a service account with Firebase deploy permissions)
-  - Repository variable (optional): `FIREBASE_PROJECT_ID` (defaults to `audit-3a7ec`)
+## Automatic deploy/publish on push
+- API workflow: `.github/workflows/deploy-functions.yml`
+  - Trigger: push to `main`
+  - Deploys: Firebase Functions (`api`, `onAuthUserCreate`, `syncNewsEvery3Hours`) + Firestore rules/indexes
+  - Required GitHub settings:
+    - Repository secret: `GCP_SA_KEY` (JSON for a service account with Firebase deploy permissions)
+    - Repository variable (optional): `FIREBASE_PROJECT_ID` (defaults to `audit-3a7ec`)
 
-Frontend note:
-- The frontend is local-only right now. Pushes do not deploy any web/mobile hosting.
+- Web workflow: `.github/workflows/deploy-web.yml`
+  - Trigger: push to `main` when `apps/web/**` changes
+  - Deploys: production web app to Vercel
+  - Required GitHub secrets:
+    - `VERCEL_TOKEN`
+    - `VERCEL_ORG_ID`
+    - `VERCEL_PROJECT_ID`
+
+- Mobile workflow: `.github/workflows/publish-mobile-update.yml`
+  - Trigger: push to `main` when `apps/mobile/**` changes
+  - Publishes: Expo EAS OTA update to branch `production`
+  - Required GitHub secret:
+    - `EXPO_TOKEN`
+  - One-time setup in `apps/mobile` before this workflow can succeed:
+    - `npx --yes eas-cli@latest update:configure`
+    - Commit the resulting `app.json` changes (`expo.updates.url` and `expo.extra.eas.projectId`)
 
 ## Run app clients separately
 ### Mobile app

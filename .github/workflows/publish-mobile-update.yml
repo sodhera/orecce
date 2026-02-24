@@ -1,0 +1,52 @@
+name: Publish Mobile Update
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "apps/mobile/**"
+
+concurrency:
+  group: publish-mobile-update-main
+  cancel-in-progress: false
+
+jobs:
+  publish-mobile-update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Validate Expo config
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "Missing required secret: EXPO_TOKEN"
+            exit 1
+          fi
+
+          if ! jq -e '.expo.updates.url and .expo.extra.eas.projectId' apps/mobile/app.json > /dev/null; then
+            echo "apps/mobile/app.json is missing Expo EAS update configuration."
+            echo "Run: npx --yes eas-cli@latest update:configure (in apps/mobile), commit app.json changes, and push again."
+            exit 1
+          fi
+
+      - name: Install mobile dependencies
+        run: npm --prefix apps/mobile ci
+
+      - name: Mobile typecheck
+        run: npm --prefix apps/mobile run typecheck
+
+      - name: Publish OTA update to production branch
+        working-directory: apps/mobile
+        run: npx --yes eas-cli@latest update --branch production --message "main ${GITHUB_SHA::7}" --non-interactive

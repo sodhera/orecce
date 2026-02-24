@@ -53,7 +53,21 @@ img {
 
 /* ── Scrollbar ── */
 ::-webkit-scrollbar {
-  width: 0px;
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-hover);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
 }
 
 /* ── Main Layout ── */

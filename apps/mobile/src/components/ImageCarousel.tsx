@@ -5,8 +5,6 @@ import {
     FlatList,
     Dimensions,
     StyleSheet,
-    NativeSyntheticEvent,
-    NativeScrollEvent,
     ViewToken,
     ImageSourcePropType,
 } from 'react-native';
@@ -19,6 +17,10 @@ export interface ImageCarouselProps {
     images: (string | ImageSourcePropType)[];
     /** Size of the carousel (defaults to screen width with padding) */
     size?: number;
+    /** Optional explicit width (overrides size when provided) */
+    width?: number;
+    /** Optional explicit height (defaults to width when omitted) */
+    height?: number;
     /** Border radius for the images */
     borderRadius?: number;
 }
@@ -30,10 +32,13 @@ export interface ImageCarouselProps {
 export function ImageCarousel({
     images,
     size = SCREEN_WIDTH - 32, // Default: full width minus padding
+    width,
+    height,
     borderRadius = 8,
 }: ImageCarouselProps) {
     const [activeIndex, setActiveIndex] = useState(0);
-    const flatListRef = useRef<FlatList<string | ImageSourcePropType>>(null);
+    const resolvedWidth = width ?? size;
+    const resolvedHeight = height ?? resolvedWidth;
 
     // Handle viewable items change to update the active index
     const onViewableItemsChanged = useRef(
@@ -51,7 +56,7 @@ export function ImageCarousel({
     // If no images, show placeholder
     if (!images || images.length === 0) {
         return (
-            <View style={[styles.placeholder, { width: size, height: size, borderRadius }]}>
+            <View style={[styles.placeholder, { width: resolvedWidth, height: resolvedHeight, borderRadius }]}>
                 <View style={styles.placeholderInner} />
             </View>
         );
@@ -60,10 +65,10 @@ export function ImageCarousel({
     // Single image - no carousel needed
     if (images.length === 1) {
         return (
-            <View style={[styles.container, { width: size }]}>
+            <View style={[styles.container, { width: resolvedWidth }]}>
                 <Image
                     source={typeof images[0] === 'string' ? { uri: images[0] } : images[0]}
-                    style={[styles.image, { width: size, height: size, borderRadius }]}
+                    style={[styles.image, { width: resolvedWidth, height: resolvedHeight, borderRadius }]}
                     resizeMode="cover"
                 />
             </View>
@@ -72,9 +77,8 @@ export function ImageCarousel({
 
     // Multiple images - render carousel with indicators
     return (
-        <View style={[styles.container, { width: size }]}>
+        <View style={[styles.container, { width: resolvedWidth }]}>
             <FlatList
-                ref={flatListRef}
                 data={images}
                 horizontal
                 pagingEnabled
@@ -86,13 +90,13 @@ export function ImageCarousel({
                 renderItem={({ item }) => (
                     <Image
                         source={typeof item === 'string' ? { uri: item } : item}
-                        style={[styles.image, { width: size, height: size, borderRadius }]}
+                        style={[styles.image, { width: resolvedWidth, height: resolvedHeight, borderRadius }]}
                         resizeMode="cover"
                     />
                 )}
                 getItemLayout={(_, index) => ({
-                    length: size,
-                    offset: size * index,
+                    length: resolvedWidth,
+                    offset: resolvedWidth * index,
                     index,
                 })}
             />

@@ -1,46 +1,42 @@
 import React from 'react';
-import { StyleSheet, View, FlatList, RefreshControl, Animated } from 'react-native';
-import { FeedPostCard, FeedPostData, CategoryList } from '../components';
+import {
+    StyleSheet,
+    View,
+    FlatList,
+    RefreshControl,
+    Animated,
+    Text,
+    TouchableOpacity,
+    LayoutChangeEvent,
+    ViewToken,
+} from 'react-native';
+import { FeedPostCard, FeedPostData } from '../components';
 import { colors } from '../styles/colors';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/RootNavigator';
 import { useToast } from '../context/ToastContext';
 
-// Placeholder feed data with sample images
-// Using picsum.photos for placeholder images
 const FEED_DATA: FeedPostData[] = [
     {
         id: '1',
         type: 'image',
-        images: [
-            require('../../assets/images/post_1.png'),
-        ],
+        images: [require('../../assets/images/post_1.png')],
         topic: 'AI Agents',
-        caption: 'Codex released an App on Mac. You can now run agents parallely within the same app window.  They’re also giving 2x tokens for a limited time. Skills and automation allows users to connect tools to their codex app, which is an opportunity for Orecce integration.',
+        caption: 'Codex released a Mac app. You can run multiple agents in the same window, which opens the door for tighter Orecce workflows.',
         votes: 248,
         userVote: 0,
         isSaved: false,
         date: 'Jan 27, 2026',
     },
-    // {
-    //     id: '6',
-    //     type: 'text',
-    //     topic: 'Thoughts',
-    //     content: 'This is a text-only post to test the new functionality. It should not display any image placeholder. The text is long enough to demonstrate line wrapping and potential truncation if it exceeds the limit. We want to ensure that the layout remains stable and looks good even without visual media attached. #textonly #update',
-    //     votes: 12,
-    //     userVote: 0,
-    //     isSaved: false,
-    //     date: 'Jan 22, 2026',
-    // },
     {
         id: '2',
         type: 'image',
         images: [require('../../assets/images/post_2.png')],
         topic: 'Venture Capital',
-        caption: 'QIA expanded its venture capital programme to $3B from $1B and introduced a new 10 year residency program for entrepreneurs.',
+        caption: 'QIA expanded its VC program from $1B to $3B and introduced a 10-year founder residency lane.',
         votes: 89,
-        userVote: 1, // Already upvoted
+        userVote: 0,
         isSaved: false,
         date: 'Jan 26, 2026',
     },
@@ -49,7 +45,7 @@ const FEED_DATA: FeedPostData[] = [
         type: 'image',
         images: [require('../../assets/images/post_3.png')],
         topic: 'Startups',
-        caption: 'Y Combinator released requests for startups including “AI-Native Agencies” - a category that Orecce might fall into. Other categories include Cursor for product managers, AI-native hedge funds, Stablecoin Financial Services, AI for government, Modern metal mills, AI guidance for physical work',
+        caption: 'YC RFS includes AI-native agencies, stablecoin services, and AI for physical work categories.',
         votes: 1024,
         userVote: 0,
         isSaved: true,
@@ -63,66 +59,188 @@ const FEED_DATA: FeedPostData[] = [
             },
         ],
     },
-    // {
-    //     id: '5',
-    //     type: 'image',
-    //     images: [
-    //         'https://picsum.photos/seed/post5a/800/800',
-    //         'https://picsum.photos/seed/post5b/800/800',
-    //         'https://picsum.photos/seed/post5c/800/800',
-    //         'https://picsum.photos/seed/post5d/800/800',
-    //     ],
-    //     topic: 'Photography',
-    //     caption: 'Urban photography walk through downtown 📸',
-    //     votes: 567,
-    //     userVote: 0,
-    //     isSaved: false,
-    //     date: 'Jan 23, 2026',
-    // },
+    {
+        id: '4',
+        type: 'image',
+        images: [require('../../assets/images/post_2.png')],
+        topic: 'Climate Tech',
+        caption: 'Grid software startups are reducing curtailment by combining realtime demand prediction with battery orchestration.',
+        votes: 173,
+        userVote: 0,
+        isSaved: false,
+        date: 'Jan 24, 2026',
+    },
+    {
+        id: '5',
+        type: 'image',
+        images: [require('../../assets/images/post_3.png')],
+        topic: 'Developer Tools',
+        caption: 'Teams are moving from prompt libraries to eval-driven product loops that continuously measure model quality.',
+        votes: 331,
+        userVote: 0,
+        isSaved: false,
+        date: 'Jan 23, 2026',
+    },
+    {
+        id: '6',
+        type: 'text',
+        topic: 'Security',
+        content: 'AI-generated phishing is now high-volume and personalized. Startups focused on defensive copilots and anomaly detection are seeing strong enterprise pull.',
+        votes: 211,
+        userVote: 0,
+        isSaved: false,
+        date: 'Jan 22, 2026',
+    },
 ];
+
+const DEFAULT_FEED_HEIGHT = 640;
+
+function rankNovelRecommendations(
+    posts: FeedPostData[],
+    interactedPostIds: string[],
+    topicInteractionCounts: Record<string, number>
+): FeedPostData[] {
+    const interactedSet = new Set(interactedPostIds);
+    const unseenPosts = posts.filter((post) => !interactedSet.has(post.id));
+    const maxVotes = unseenPosts.reduce((max, post) => Math.max(max, post.votes ?? 0), 1);
+
+    return unseenPosts
+        .map((post) => {
+            const topicPenalty = post.topic ? (topicInteractionCounts[post.topic] ?? 0) : 0;
+            const noveltyScore = 1 / (1 + topicPenalty);
+            const engagementScore = (post.votes ?? 0) / maxVotes;
+            const deterministicDiversityBoost = ((Number.parseInt(post.id, 10) || 1) % 7) * 0.01;
+            const recommendationScore = noveltyScore * 0.72 + engagementScore * 0.23 + deterministicDiversityBoost;
+
+            return { post, recommendationScore };
+        })
+        .sort((a, b) => b.recommendationScore - a.recommendationScore)
+        .map(({ post }) => post);
+}
 
 export function HomeScreen() {
     const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
     const [refreshing, setRefreshing] = React.useState(false);
-    const [posts, setPosts] = React.useState<FeedPostData[]>(FEED_DATA);
     const [isScrolling, setIsScrolling] = React.useState(false);
     const [isLoading, setIsLoading] = React.useState(true);
-    const skeletonPulse = React.useRef(new Animated.Value(0.6)).current;
+    const [feedHeight, setFeedHeight] = React.useState(0);
+    const [activeIndex, setActiveIndex] = React.useState(0);
+    const [posts, setPosts] = React.useState<FeedPostData[]>(FEED_DATA);
+    const [interactedPostIds, setInteractedPostIds] = React.useState<string[]>([]);
+    const [topicInteractionCounts, setTopicInteractionCounts] = React.useState<Record<string, number>>({});
+    const skeletonPulse = React.useRef(new Animated.Value(0.5)).current;
+    const flatListRef = React.useRef<FlatList<FeedPostData>>(null);
+    const { showToast } = useToast();
+
+    const recommendedPosts = React.useMemo(
+        () => rankNovelRecommendations(posts, interactedPostIds, topicInteractionCounts),
+        [posts, interactedPostIds, topicInteractionCounts]
+    );
+
+    const resolvedFeedHeight = feedHeight > 0 ? feedHeight : DEFAULT_FEED_HEIGHT;
+
+    const onViewableItemsChanged = React.useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+        const visible = viewableItems[0];
+        if (visible?.index != null) {
+            setActiveIndex(visible.index);
+        }
+    }).current;
+
+    const viewabilityConfig = React.useRef({
+        itemVisiblePercentThreshold: 80,
+    }).current;
 
     React.useEffect(() => {
         const loop = Animated.loop(
             Animated.sequence([
-                Animated.timing(skeletonPulse, { toValue: 0.3, duration: 500, useNativeDriver: true }),
-                Animated.timing(skeletonPulse, { toValue: 0.9, duration: 500, useNativeDriver: true }),
+                Animated.timing(skeletonPulse, { toValue: 0.25, duration: 550, useNativeDriver: true }),
+                Animated.timing(skeletonPulse, { toValue: 0.85, duration: 550, useNativeDriver: true }),
             ])
         );
-        loop.start();
 
+        loop.start();
         const timer = setTimeout(() => {
             setIsLoading(false);
             loop.stop();
-        }, 2000);
+        }, 1000);
 
         return () => {
-            loop.stop();
             clearTimeout(timer);
+            loop.stop();
         };
     }, [skeletonPulse]);
 
-    const onRefresh = React.useCallback(() => {
-        setRefreshing(true);
-        // Simulate refresh
-        setTimeout(() => setRefreshing(false), 1500);
+    React.useEffect(() => {
+        if (recommendedPosts.length === 0) {
+            setActiveIndex(0);
+            return;
+        }
+
+        if (activeIndex >= recommendedPosts.length) {
+            const nextIndex = recommendedPosts.length - 1;
+            setActiveIndex(nextIndex);
+            flatListRef.current?.scrollToIndex({ index: nextIndex, animated: false });
+        }
+    }, [activeIndex, recommendedPosts.length]);
+
+    const handleFeedLayout = React.useCallback((event: LayoutChangeEvent) => {
+        const nextHeight = Math.round(event.nativeEvent.layout.height);
+        if (nextHeight > 0 && nextHeight !== feedHeight) {
+            setFeedHeight(nextHeight);
+        }
+    }, [feedHeight]);
+
+    const trackInteraction = React.useCallback((postId: string) => {
+        const interactedPost = posts.find((post) => post.id === postId);
+
+        setInteractedPostIds((current) => {
+            if (current.includes(postId)) {
+                return current;
+            }
+
+            if (interactedPost?.topic) {
+                const topic = interactedPost.topic;
+                setTopicInteractionCounts((topicCounts) => ({
+                    ...topicCounts,
+                    [topic]: (topicCounts[topic] ?? 0) + 1,
+                }));
+            }
+
+            return [...current, postId];
+        });
+    }, [posts]);
+
+    const handleResetRecommendations = React.useCallback(() => {
+        setInteractedPostIds([]);
+        setTopicInteractionCounts({});
+        setActiveIndex(0);
+        requestAnimationFrame(() => {
+            flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
+        });
     }, []);
 
+    const onRefresh = React.useCallback(() => {
+        setRefreshing(true);
+        setTimeout(() => {
+            if (recommendedPosts.length === 0) {
+                handleResetRecommendations();
+            }
+            setRefreshing(false);
+        }, 800);
+    }, [handleResetRecommendations, recommendedPosts.length]);
+
     const handleGoInDepth = (postId: string) => {
-        const post = posts.find((p) => p.id === postId);
-        if (post) {
-            navigation.navigate('PostDetails', { post });
+        const post = posts.find((candidate) => candidate.id === postId);
+        if (!post) {
+            return;
         }
+
+        trackInteraction(postId);
+        navigation.navigate('PostDetails', { post });
     };
 
     const handleUpvote = (postId: string) => {
+        trackInteraction(postId);
         setPosts((currentPosts) =>
             currentPosts.map((post) => {
                 if (post.id !== postId) return post;
@@ -132,15 +250,12 @@ export function HomeScreen() {
                 let voteDelta: number;
 
                 if (currentVote === 1) {
-                    // Already upvoted, remove upvote
                     newVote = 0;
                     voteDelta = -1;
                 } else if (currentVote === -1) {
-                    // Was downvoted, switch to upvote (+2 total)
                     newVote = 1;
                     voteDelta = 2;
                 } else {
-                    // No vote, add upvote
                     newVote = 1;
                     voteDelta = 1;
                 }
@@ -155,6 +270,7 @@ export function HomeScreen() {
     };
 
     const handleDownvote = (postId: string) => {
+        trackInteraction(postId);
         setPosts((currentPosts) =>
             currentPosts.map((post) => {
                 if (post.id !== postId) return post;
@@ -164,15 +280,12 @@ export function HomeScreen() {
                 let voteDelta: number;
 
                 if (currentVote === -1) {
-                    // Already downvoted, remove downvote
                     newVote = 0;
                     voteDelta = 1;
                 } else if (currentVote === 1) {
-                    // Was upvoted, switch to downvote (-2 total)
                     newVote = -1;
                     voteDelta = -2;
                 } else {
-                    // No vote, add downvote
                     newVote = -1;
                     voteDelta = -1;
                 }
@@ -186,148 +299,244 @@ export function HomeScreen() {
         );
     };
 
-    const { showToast } = useToast();
-
     const handleSave = (postId: string) => {
+        trackInteraction(postId);
         setPosts((currentPosts) =>
             currentPosts.map((post) => {
-                if (post.id === postId) {
-                    const newIsSaved = !post.isSaved;
-
-                    // Show toast
-                    if (newIsSaved) {
-                        showToast({
-                            message: 'Saved',
-                            type: 'save',
-                            actionLabel: 'View',
-                            onAction: () => navigation.navigate('Main', { screen: 'Saved' } as any),
-                        });
-                    } else {
-                        showToast({
-                            message: 'Removed from saved',
-                            type: 'unsave',
-                        });
-                    }
-
-                    return { ...post, isSaved: newIsSaved };
+                if (post.id !== postId) {
+                    return post;
                 }
-                return post;
+
+                const newIsSaved = !post.isSaved;
+                if (newIsSaved) {
+                    showToast({
+                        message: 'Saved',
+                        type: 'save',
+                        actionLabel: 'View',
+                        onAction: () => navigation.navigate('Main', { screen: 'Saved' } as any),
+                    });
+                } else {
+                    showToast({
+                        message: 'Removed from saved',
+                        type: 'unsave',
+                    });
+                }
+
+                return { ...post, isSaved: newIsSaved };
             })
         );
     };
 
     const handleShare = (postId: string) => {
+        trackInteraction(postId);
         console.log('Share post:', postId);
-        // TODO: Implement share functionality
     };
 
-    const handleTopicPress = (postId: string) => {
-        console.log('Topic pressed for post:', postId);
-        // TODO: Navigate to topic feed
-    };
+    const renderSkeleton = () => (
+        <FlatList
+            style={styles.container}
+            data={[1, 2]}
+            keyExtractor={(item) => `skeleton-${item}`}
+            pagingEnabled
+            renderItem={() => (
+                <View style={[styles.slideWrapper, { height: resolvedFeedHeight }]}>
+                    <Animated.View style={[styles.skeletonCard, { opacity: skeletonPulse }]}>
+                        <View style={styles.skeletonMeta} />
+                        <View style={styles.skeletonImage} />
+                        <View style={styles.skeletonCaptionShort} />
+                        <View style={styles.skeletonCaptionLong} />
+                    </Animated.View>
+                </View>
+            )}
+            showsVerticalScrollIndicator={false}
+        />
+    );
 
     if (isLoading) {
-        const skeletonItems = [1, 2, 3];
         return (
-            <FlatList
-                style={styles.container}
-                contentContainerStyle={styles.contentContainer}
-                data={skeletonItems}
-                keyExtractor={(item) => `skeleton-${item}`}
-                ListHeaderComponent={<CategoryList />}
-                renderItem={() => (
-                    <Animated.View style={[styles.skeletonCard, { opacity: skeletonPulse }]}>
-                        <View style={styles.skeletonHeader} />
-                        <View style={styles.skeletonImage} />
-                        <View style={styles.skeletonTextShort} />
-                        <View style={styles.skeletonTextLong} />
-                    </Animated.View>
-                )}
-                ItemSeparatorComponent={() => <View style={styles.separator} />}
-                showsVerticalScrollIndicator={false}
-            />
+            <View style={styles.container} onLayout={handleFeedLayout}>
+                {renderSkeleton()}
+            </View>
         );
     }
 
     return (
-        <FlatList
-            style={styles.container}
-            contentContainerStyle={styles.contentContainer}
-            ListHeaderComponent={<CategoryList />}
-            data={posts}
-            renderItem={({ item }) => (
-                <FeedPostCard
-                    post={item}
-                    onUpvote={handleUpvote}
-                    onDownvote={handleDownvote}
-                    onSave={handleSave}
-                    onShare={handleShare}
-                    onPress={handleTopicPress}
-                    onGoInDepth={handleGoInDepth}
-                    isMenuForceClose={isScrolling}
-                />
+        <View style={styles.container} onLayout={handleFeedLayout}>
+            <FlatList
+                ref={flatListRef}
+                data={recommendedPosts}
+                keyExtractor={(item) => item.id}
+                pagingEnabled
+                snapToAlignment="start"
+                snapToInterval={resolvedFeedHeight}
+                decelerationRate="fast"
+                disableIntervalMomentum
+                renderItem={({ item }) => (
+                    <View style={[styles.slideWrapper, { height: resolvedFeedHeight }]}>
+                        <FeedPostCard
+                            post={item}
+                            variant="slide"
+                            slideHeight={resolvedFeedHeight}
+                            onUpvote={handleUpvote}
+                            onDownvote={handleDownvote}
+                            onSave={handleSave}
+                            onShare={handleShare}
+                            onGoInDepth={handleGoInDepth}
+                            isMenuForceClose={isScrolling}
+                        />
+                    </View>
+                )}
+                getItemLayout={(_, index) => ({
+                    length: resolvedFeedHeight,
+                    offset: resolvedFeedHeight * index,
+                    index,
+                })}
+                showsVerticalScrollIndicator={false}
+                onScrollBeginDrag={() => setIsScrolling(true)}
+                onScrollEndDrag={() => setIsScrolling(false)}
+                onMomentumScrollEnd={() => setIsScrolling(false)}
+                onViewableItemsChanged={onViewableItemsChanged}
+                viewabilityConfig={viewabilityConfig}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        tintColor={colors.white}
+                    />
+                }
+                ListEmptyComponent={
+                    <View style={[styles.emptyState, { height: resolvedFeedHeight }]}>
+                        <Text style={styles.emptyTitle}>No unseen posts right now</Text>
+                        <Text style={styles.emptySubtitle}>
+                            We hide anything you already interacted with. Reset to see them again.
+                        </Text>
+                        <TouchableOpacity style={styles.resetButton} onPress={handleResetRecommendations}>
+                            <Text style={styles.resetButtonText}>Reset recommendations</Text>
+                        </TouchableOpacity>
+                    </View>
+                }
+            />
+
+            <View pointerEvents="none" style={styles.feedPill}>
+                <Text style={styles.feedPillText}>For You</Text>
+            </View>
+
+            {recommendedPosts.length > 0 && (
+                <View pointerEvents="none" style={styles.indexPill}>
+                    <Text style={styles.indexPillText}>
+                        {Math.min(activeIndex + 1, recommendedPosts.length)}/{recommendedPosts.length}
+                    </Text>
+                </View>
             )}
-            keyExtractor={(item) => item.id}
-            showsVerticalScrollIndicator={false}
-            onScrollBeginDrag={() => setIsScrolling(true)}
-            onScrollEndDrag={() => setIsScrolling(false)}
-            onMomentumScrollEnd={() => setIsScrolling(false)}
-            refreshControl={
-                <RefreshControl
-                    refreshing={refreshing}
-                    onRefresh={onRefresh}
-                    tintColor={colors.primary}
-                />
-            }
-            ItemSeparatorComponent={() => <View style={styles.separator} />}
-        />
+        </View>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: colors.background,
+        backgroundColor: '#020617',
     },
-    contentContainer: {
-        paddingTop: 8,
-        paddingBottom: 16,
+    slideWrapper: {
+        backgroundColor: '#020617',
     },
-    separator: {
-        height: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.surface,
+    feedPill: {
+        position: 'absolute',
+        top: 12,
+        left: 16,
+        backgroundColor: 'rgba(15, 23, 42, 0.66)',
+        borderWidth: 1,
+        borderColor: 'rgba(203, 213, 225, 0.35)',
+        borderRadius: 999,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
     },
-    skeletonCard: {
-        backgroundColor: colors.background,
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        borderRadius: 12,
+    feedPillText: {
+        color: colors.white,
+        fontSize: 12,
+        fontWeight: '700',
+        letterSpacing: 0.5,
     },
-    skeletonHeader: {
-        width: 140,
-        height: 16,
-        borderRadius: 8,
-        backgroundColor: colors.surface,
-        marginBottom: 12,
+    indexPill: {
+        position: 'absolute',
+        top: 12,
+        right: 16,
+        backgroundColor: 'rgba(15, 23, 42, 0.66)',
+        borderWidth: 1,
+        borderColor: 'rgba(203, 213, 225, 0.35)',
+        borderRadius: 999,
+        paddingHorizontal: 10,
+        paddingVertical: 6,
     },
-    skeletonImage: {
-        height: 200,
-        borderRadius: 12,
-        backgroundColor: colors.surface,
-        marginBottom: 12,
+    indexPillText: {
+        color: '#E2E8F0',
+        fontSize: 12,
+        fontWeight: '700',
     },
-    skeletonTextShort: {
-        width: '40%',
-        height: 12,
-        borderRadius: 6,
-        backgroundColor: colors.surface,
+    emptyState: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 24,
+    },
+    emptyTitle: {
+        color: colors.white,
+        fontSize: 20,
+        fontWeight: '700',
         marginBottom: 8,
     },
-    skeletonTextLong: {
-        width: '75%',
-        height: 12,
-        borderRadius: 6,
-        backgroundColor: colors.surface,
+    emptySubtitle: {
+        color: '#CBD5E1',
+        textAlign: 'center',
+        fontSize: 14,
+        lineHeight: 20,
+        marginBottom: 18,
+    },
+    resetButton: {
+        borderWidth: 1,
+        borderColor: 'rgba(203, 213, 225, 0.55)',
+        borderRadius: 999,
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        backgroundColor: 'rgba(15, 23, 42, 0.78)',
+    },
+    resetButtonText: {
+        color: colors.white,
+        fontSize: 13,
+        fontWeight: '700',
+    },
+    skeletonCard: {
+        marginHorizontal: 10,
+        marginVertical: 8,
+        borderRadius: 22,
+        backgroundColor: '#0F172A',
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        flex: 1,
+    },
+    skeletonMeta: {
+        width: 140,
+        height: 22,
+        borderRadius: 999,
+        backgroundColor: '#1E293B',
+        marginBottom: 14,
+    },
+    skeletonImage: {
+        flex: 1,
+        borderRadius: 18,
+        backgroundColor: '#1E293B',
+        marginBottom: 14,
+    },
+    skeletonCaptionShort: {
+        width: '60%',
+        height: 10,
+        borderRadius: 8,
+        backgroundColor: '#334155',
+        marginBottom: 8,
+    },
+    skeletonCaptionLong: {
+        width: '85%',
+        height: 10,
+        borderRadius: 8,
+        backgroundColor: '#334155',
     },
 });

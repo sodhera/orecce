@@ -1,9 +1,20 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ImageSourcePropType, Pressable, GestureResponderEvent } from 'react-native';
+import {
+    View,
+    Text,
+    TouchableOpacity,
+    StyleSheet,
+    ImageSourcePropType,
+    Pressable,
+    GestureResponderEvent,
+    Dimensions,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ImageCarousel } from './ImageCarousel';
 import { colors } from '../styles/colors';
 import { BottomSheetMenu } from './BottomSheetMenu';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export interface SourceLink {
     id: string;
@@ -43,7 +54,6 @@ interface FeedPostCardProps {
     onDownvote?: (postId: string) => void;
     onSave?: (postId: string) => void;
     onShare?: (postId: string) => void;
-    onPress?: (postId: string) => void;
     onGoInDepth?: (postId: string) => void;
     /** When true, forces any open menu to close (e.g., on scroll) */
     isMenuForceClose?: boolean;
@@ -51,6 +61,10 @@ interface FeedPostCardProps {
     showFullContent?: boolean;
     /** If true, adapts layout for details screen: hides top menu/header, replaces actions with metadata at bottom */
     detailsMode?: boolean;
+    /** Use the immersive vertical slide layout in Home feed */
+    variant?: 'default' | 'slide';
+    /** Slide card height from the parent feed viewport */
+    slideHeight?: number;
 }
 
 /**
@@ -63,11 +77,12 @@ export function FeedPostCard({
     onDownvote,
     onSave,
     onShare,
-    onPress,
     onGoInDepth,
     isMenuForceClose,
     showFullContent = false,
     detailsMode = false,
+    variant = 'default',
+    slideHeight,
 }: FeedPostCardProps) {
     const [menuVisible, setMenuVisible] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
@@ -106,6 +121,182 @@ export function FeedPostCard({
     };
 
     const isCardPressDisabled = !onGoInDepth || detailsMode;
+    const isSlideMode = variant === 'slide' && !detailsMode;
+
+    if (isSlideMode) {
+        const cardHeight = Math.max(420, slideHeight ?? SCREEN_WIDTH * 1.3);
+        const mediaWidth = SCREEN_WIDTH - 20;
+        const mediaHeight = cardHeight - 12;
+        const slideCaption = (post.type === 'image' ? post.caption : post.content) ?? '';
+        const canExpand = slideCaption.length > 160;
+
+        return (
+            <Pressable
+                style={({ pressed }) => [
+                    styles.slideContainer,
+                    { height: cardHeight },
+                    !isCardPressDisabled && pressed && styles.slideContainerPressed,
+                ]}
+                disabled={isCardPressDisabled}
+                onPress={() => onGoInDepth?.(post.id)}
+            >
+                <BottomSheetMenu
+                    visible={menuVisible}
+                    onClose={() => setMenuVisible(false)}
+                >
+                    <TouchableOpacity
+                        style={styles.bottomSheetItem}
+                        onPress={(event) => handleShare(event)}
+                        activeOpacity={0.7}
+                    >
+                        <View style={styles.iconContainer}>
+                            <Ionicons name="share-outline" size={24} color={colors.textPrimary} />
+                        </View>
+                        <Text style={styles.bottomSheetItemText}>Share</Text>
+                    </TouchableOpacity>
+
+                    <View style={styles.bottomSheetDivider} />
+
+                    <TouchableOpacity
+                        style={styles.bottomSheetItem}
+                        onPress={(event) => handleSave(event)}
+                        activeOpacity={0.7}
+                    >
+                        <View style={styles.iconContainer}>
+                            <Ionicons
+                                name={post.isSaved ? 'bookmark' : 'bookmark-outline'}
+                                size={24}
+                                color={colors.textPrimary}
+                            />
+                        </View>
+                        <Text style={[styles.bottomSheetItemText, post.isSaved && styles.menuItemTextSaved]}>
+                            {post.isSaved ? 'Remove from Saved' : 'Save'}
+                        </Text>
+                    </TouchableOpacity>
+                </BottomSheetMenu>
+
+                <View style={[styles.slideMediaContainer, { height: mediaHeight }]}>
+                    {post.type === 'image' ? (
+                        <ImageCarousel
+                            images={post.images}
+                            width={mediaWidth}
+                            height={mediaHeight}
+                            borderRadius={22}
+                        />
+                    ) : (
+                        <View style={[styles.slideTextOnly, { width: mediaWidth, height: mediaHeight }]}>
+                            <Text style={styles.slideTextOnlyTitle}>{post.topic ?? 'Post'}</Text>
+                            <Text style={styles.slideTextOnlyBody} numberOfLines={8}>
+                                {post.content}
+                            </Text>
+                        </View>
+                    )}
+
+                    <View pointerEvents="none" style={styles.slideTopFade} />
+                    <View pointerEvents="none" style={styles.slideBottomFade} />
+
+                    <View style={styles.slideHeader}>
+                        <View style={styles.slideMeta}>
+                            {post.topic && <Text style={styles.slideTopic}>{post.topic}</Text>}
+                            {post.date && <Text style={styles.slideDate}>{post.date}</Text>}
+                        </View>
+                        <TouchableOpacity
+                            style={styles.slideMenuButton}
+                            onPress={handleOpenMenu}
+                            activeOpacity={0.7}
+                        >
+                            <Ionicons name="ellipsis-horizontal" size={20} color={colors.white} />
+                        </TouchableOpacity>
+                    </View>
+
+                    <View style={styles.slideFooter}>
+                        <View style={styles.slideCopy}>
+                            {slideCaption.length > 0 && (
+                                <Text
+                                    style={styles.slideCaption}
+                                    numberOfLines={showFullContent || isExpanded ? undefined : 3}
+                                >
+                                    {slideCaption}
+                                </Text>
+                            )}
+                            {canExpand && !showFullContent && !isExpanded && (
+                                <TouchableOpacity
+                                    onPress={(event) => {
+                                        event.stopPropagation();
+                                        setIsExpanded(true);
+                                    }}
+                                    style={styles.slideMoreTap}
+                                >
+                                    <Text style={styles.slideMoreText}>See more</Text>
+                                </TouchableOpacity>
+                            )}
+                            {canExpand && !showFullContent && isExpanded && (
+                                <TouchableOpacity
+                                    onPress={(event) => {
+                                        event.stopPropagation();
+                                        setIsExpanded(false);
+                                    }}
+                                    style={styles.slideMoreTap}
+                                >
+                                    <Text style={styles.slideMoreText}>See less</Text>
+                                </TouchableOpacity>
+                            )}
+                        </View>
+
+                        <View style={styles.slideActionRail}>
+                            <Text style={styles.slideVotes}>{post.votes ?? 0}</Text>
+                            <TouchableOpacity
+                                style={styles.slideActionButton}
+                                onPress={(event) => {
+                                    event.stopPropagation();
+                                    onUpvote?.(post.id);
+                                }}
+                                activeOpacity={0.75}
+                            >
+                                <Ionicons
+                                    name={isUpvoted ? 'arrow-up-circle' : 'arrow-up-circle-outline'}
+                                    size={30}
+                                    color={colors.white}
+                                />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={styles.slideActionButton}
+                                onPress={(event) => {
+                                    event.stopPropagation();
+                                    onDownvote?.(post.id);
+                                }}
+                                activeOpacity={0.75}
+                            >
+                                <Ionicons
+                                    name={isDownvoted ? 'arrow-down-circle' : 'arrow-down-circle-outline'}
+                                    size={30}
+                                    color={colors.white}
+                                />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={styles.slideActionButton}
+                                onPress={(event) => handleSave(event)}
+                                activeOpacity={0.75}
+                            >
+                                <Ionicons
+                                    name={post.isSaved ? 'bookmark' : 'bookmark-outline'}
+                                    size={24}
+                                    color={colors.white}
+                                />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={styles.slideActionButton}
+                                onPress={(event) => handleShare(event)}
+                                activeOpacity={0.75}
+                            >
+                                <Ionicons name="share-social-outline" size={24} color={colors.white} />
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Pressable>
+        );
+    }
 
     return (
         <Pressable
@@ -117,10 +308,6 @@ export function FeedPostCard({
             onPress={() => onGoInDepth?.(post.id)}
             android_ripple={isCardPressDisabled ? undefined : { color: colors.surface }}
         >
-            {/* Menu button moved to header */}
-
-            {/* Bottom Sheet Menu - Hidden in detailsMode */}
-            {/* Bottom Sheet Menu - Hidden in detailsMode */}
             {!detailsMode && (
                 <BottomSheetMenu
                     visible={menuVisible}
@@ -168,15 +355,15 @@ export function FeedPostCard({
                         )}
                     </View>
 
-                        <TouchableOpacity
-                            style={styles.menuButton}
-                            onPress={handleOpenMenu}
-                            activeOpacity={0.7}
-                        >
-                            <Ionicons name="ellipsis-horizontal" size={20} color={colors.textSecondary} />
-                        </TouchableOpacity>
-                    </View>
-                )}
+                    <TouchableOpacity
+                        style={styles.menuButton}
+                        onPress={handleOpenMenu}
+                        activeOpacity={0.7}
+                    >
+                        <Ionicons name="ellipsis-horizontal" size={20} color={colors.textSecondary} />
+                    </TouchableOpacity>
+                </View>
+            )}
 
             {/* Image Carousel (Only for Image Posts) */}
             {post.type === 'image' && (
@@ -286,63 +473,193 @@ export function FeedPostCard({
             </View>
 
             {/* Caption (Only for Image Posts - rendered BELOW actions) */}
-            {
-                post.type === 'image' && post.caption && (
-                    <View style={styles.captionContainer}>
-                        {/* Measurement Text (Hidden) - Only needed if not showing full content */}
-                        {!showFullContent && (
-                            <Text
-                                style={[styles.captionText, styles.hiddenText]}
-                                onTextLayout={(e) => {
-                                    if (e.nativeEvent.lines.length > 2 && !isTextTruncated) {
-                                        setIsTextTruncated(true);
-                                    }
-                                }}
-                            >
-                                {post.caption.slice(0, 400)}
-                            </Text>
-                        )}
-
-                        {/* Visible Text */}
+            {post.type === 'image' && post.caption && (
+                <View style={styles.captionContainer}>
+                    {!showFullContent && (
                         <Text
-                            style={styles.captionText}
-                            numberOfLines={showFullContent || isExpanded ? undefined : 2}
+                            style={[styles.captionText, styles.hiddenText]}
+                            onTextLayout={(e) => {
+                                if (e.nativeEvent.lines.length > 2 && !isTextTruncated) {
+                                    setIsTextTruncated(true);
+                                }
+                            }}
                         >
                             {post.caption.slice(0, 400)}
-
-                            {!showFullContent && isExpanded && isTextTruncated && (
-                                <Text
-                                    onPress={(event) => {
-                                        event.stopPropagation();
-                                        setIsExpanded(false);
-                                    }}
-                                    onPressIn={() => setIsSeeLessPressed(true)}
-                                    onPressOut={() => setIsSeeLessPressed(false)}
-                                    style={[styles.moreButton, isSeeLessPressed && { opacity: 0.5 }]}
-                                    suppressHighlighting={true}
-                                >
-                                    {' See less'}
-                                </Text>
-                            )}
                         </Text>
-                        {!showFullContent && isTextTruncated && !isExpanded && (
-                            <TouchableOpacity
+                    )}
+
+                    <Text
+                        style={styles.captionText}
+                        numberOfLines={showFullContent || isExpanded ? undefined : 2}
+                    >
+                        {post.caption.slice(0, 400)}
+
+                        {!showFullContent && isExpanded && isTextTruncated && (
+                            <Text
                                 onPress={(event) => {
                                     event.stopPropagation();
-                                    setIsExpanded(true);
+                                    setIsExpanded(false);
                                 }}
+                                onPressIn={() => setIsSeeLessPressed(true)}
+                                onPressOut={() => setIsSeeLessPressed(false)}
+                                style={[styles.moreButton, isSeeLessPressed && { opacity: 0.5 }]}
+                                suppressHighlighting={true}
                             >
-                                <Text style={styles.moreButton}>See more</Text>
-                            </TouchableOpacity>
+                                {' See less'}
+                            </Text>
                         )}
-                    </View>
-                )
-            }
-        </Pressable >
+                    </Text>
+                    {!showFullContent && isTextTruncated && !isExpanded && (
+                        <TouchableOpacity
+                            onPress={(event) => {
+                                event.stopPropagation();
+                                setIsExpanded(true);
+                            }}
+                        >
+                            <Text style={styles.moreButton}>See more</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
+            )}
+        </Pressable>
     );
 }
 
 const styles = StyleSheet.create({
+    slideContainer: {
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        backgroundColor: '#020617',
+    },
+    slideContainerPressed: {
+        opacity: 0.92,
+    },
+    slideMediaContainer: {
+        borderRadius: 22,
+        overflow: 'hidden',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#0F172A',
+    },
+    slideTextOnly: {
+        backgroundColor: '#0F172A',
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 24,
+    },
+    slideTextOnlyTitle: {
+        fontSize: 22,
+        lineHeight: 28,
+        fontWeight: '800',
+        color: colors.white,
+        marginBottom: 12,
+    },
+    slideTextOnlyBody: {
+        fontSize: 16,
+        lineHeight: 24,
+        color: '#D7E0EC',
+        textAlign: 'center',
+    },
+    slideTopFade: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 130,
+        backgroundColor: 'rgba(2, 6, 23, 0.5)',
+    },
+    slideBottomFade: {
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: 0,
+        height: 210,
+        backgroundColor: 'rgba(2, 6, 23, 0.7)',
+    },
+    slideHeader: {
+        position: 'absolute',
+        top: 14,
+        left: 14,
+        right: 14,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    slideMeta: {
+        backgroundColor: 'rgba(15, 23, 42, 0.6)',
+        borderRadius: 999,
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    slideTopic: {
+        color: colors.white,
+        fontSize: 13,
+        fontWeight: '700',
+        marginRight: 8,
+    },
+    slideDate: {
+        color: '#CBD5E1',
+        fontSize: 12,
+        fontWeight: '500',
+    },
+    slideMenuButton: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: 'rgba(15, 23, 42, 0.6)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    slideFooter: {
+        position: 'absolute',
+        left: 16,
+        right: 16,
+        bottom: 20,
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+    },
+    slideCopy: {
+        flex: 1,
+        paddingRight: 14,
+    },
+    slideCaption: {
+        color: colors.white,
+        fontSize: 15,
+        lineHeight: 22,
+        fontWeight: '500',
+    },
+    slideMoreTap: {
+        marginTop: 4,
+        alignSelf: 'flex-start',
+    },
+    slideMoreText: {
+        color: '#E2E8F0',
+        fontSize: 13,
+        fontWeight: '700',
+    },
+    slideActionRail: {
+        width: 46,
+        alignItems: 'center',
+    },
+    slideVotes: {
+        color: '#E2E8F0',
+        fontSize: 12,
+        fontWeight: '700',
+        marginBottom: 8,
+    },
+    slideActionButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: 'rgba(15, 23, 42, 0.45)',
+        borderWidth: 1,
+        borderColor: 'rgba(226, 232, 240, 0.25)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginBottom: 10,
+    },
     container: {
         backgroundColor: colors.background,
         paddingHorizontal: 16,

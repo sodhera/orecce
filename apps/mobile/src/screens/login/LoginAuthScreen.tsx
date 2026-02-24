@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Keyboard } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Keyboard, Alert } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,7 +20,7 @@ type Props = {
 
 export const LoginAuthScreen: React.FC<Props> = ({ navigation, route }) => {
     const { onCancel } = route.params;
-    const { signInWithGoogle, isLoading: googleLoading } = useGoogleAuth();
+    const { signInWithGoogle, isLoading: googleLoading, error: googleError } = useGoogleAuth();
     const insets = useSafeAreaInsets();
 
     // Handle hardware back button / beforeRemove
@@ -32,6 +32,12 @@ export const LoginAuthScreen: React.FC<Props> = ({ navigation, route }) => {
 
         return unsubscribe;
     }, [navigation, onCancel]);
+
+    useEffect(() => {
+        if (googleError) {
+            Alert.alert('Google sign in', googleError);
+        }
+    }, [googleError]);
 
     const handleBack = () => {
         onCancel();

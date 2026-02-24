@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import PostCard, { type Post } from "./PostCard";
 import ReccesBlogFeed from "./ReccesBlogFeed";
@@ -115,6 +115,38 @@ function mergeUniquePosts(
     return merged.sort((a, b) => (b.createdAtMs ?? 0) - (a.createdAtMs ?? 0));
 }
 
+function rankNovelRecommendations(
+    posts: Post[],
+    interactedPostIds: string[],
+    topicInteractionCounts: Record<string, number>,
+): Post[] {
+    const interactedSet = new Set(interactedPostIds);
+    const unseenPosts = posts.filter((post) => !interactedSet.has(post.id));
+
+    if (unseenPosts.length === 0) {
+        return [];
+    }
+
+    const createdValues = unseenPosts.map((post) => post.createdAtMs ?? 0);
+    const newest = Math.max(...createdValues);
+    const oldest = Math.min(...createdValues);
+    const ageSpan = Math.max(1, newest - oldest);
+
+    return unseenPosts
+        .map((post) => {
+            const topicPenalty = topicInteractionCounts[post.topic] ?? 0;
+            const noveltyScore = 1 / (1 + topicPenalty);
+            const recencyScore = ((post.createdAtMs ?? oldest) - oldest) / ageSpan;
+            const diversityBoost = (post.id.length % 7) * 0.01;
+            const recommendationScore =
+                noveltyScore * 0.7 + recencyScore * 0.26 + diversityBoost;
+
+            return { post, recommendationScore };
+        })
+        .sort((a, b) => b.recommendationScore - a.recommendationScore)
+        .map(({ post }) => post);
+}
+
 // ── Component ───────────────────────────────────────────────────
 
 interface FeedProps {
@@ -138,6 +170,10 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
     const [hasMore, setHasMore] = useState(false);
     const [fetchingMore, setFetchingMore] = useState(false);
     const [hasUserScrolled, setHasUserScrolled] = useState(false);
+    const [interactedPostIds, setInteractedPostIds] = useState<string[]>([]);
+    const [topicInteractionCounts, setTopicInteractionCounts] = useState<
+        Record<string, number>
+    >({});
 
     const loadMoreRef = useRef<HTMLDivElement | null>(null);
     const activeContextRef = useRef("");
@@ -270,6 +306,8 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
         setAllModeCursors(EMPTY_MODE_CURSORS);
         setHasUserScrolled(false);
         setFetchingMore(false);
+        setInteractedPostIds([]);
+        setTopicInteractionCounts({});
 
         if (!isAuthenticated) {
             setPosts([]);
@@ -530,8 +568,38 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
         };
     }, [isAuthenticated, mode, loading]);
 
+    const trackPostInteraction = useCallback((postId: string, topic: string) => {
+        setInteractedPostIds((current) => {
+            if (current.includes(postId)) {
+                return current;
+            }
+
+            setTopicInteractionCounts((existing) => ({
+                ...existing,
+                [topic]: (existing[topic] ?? 0) + 1,
+            }));
+
+            return [...current, postId];
+        });
+    }, []);
+
+    const resetRecommendations = useCallback(() => {
+        setInteractedPostIds([]);
+        setTopicInteractionCounts({});
+    }, []);
+
     // ── Determine which posts to render ─────────────────────────
-    const visiblePosts = posts;
+    const visiblePosts = useMemo(
+        () =>
+            mode === "BLOGS"
+                ? posts
+                : rankNovelRecommendations(
+                      posts,
+                      interactedPostIds,
+                      topicInteractionCounts,
+                  ),
+        [interactedPostIds, mode, posts, topicInteractionCounts],
+    );
 
     return (
         <main className="feed">
@@ -586,7 +654,7 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
             {mode === "BLOGS" ? (
                 <ReccesBlogFeed />
             ) : (
-            <div className="feed-posts-container">
+            <div className="feed-posts-container feed-posts-slides">
                 {loading ? (
                     <div
                         style={{
@@ -607,14 +675,33 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
                     >
                         {error
                             ? `Error: ${error}`
+                            : posts.length > 0
+                                ? "No unseen posts left. Reset recommendations to replay this feed."
                             : mode === "NEWS"
                                 ? "No news articles yet for this source."
                                 : "No posts yet."}
+                        {!error && posts.length > 0 && (
+                            <div style={{ marginTop: 12 }}>
+                                <button
+                                    type="button"
+                                    className="feed-reset-recommendations"
+                                    onClick={resetRecommendations}
+                                >
+                                    Reset recommendations
+                                </button>
+                            </div>
+                        )}
                     </div>
                 ) : (
                     visiblePosts.map((post) => (
-                        <div key={post.id}>
-                            <PostCard post={post} />
+                        <div key={post.id} className="feed-slide-shell">
+                            <PostCard
+                                post={post}
+                                variant="slide"
+                                onInteraction={() => {
+                                    trackPostInteraction(post.id, post.topic);
+                                }}
+                            />
                         </div>
                     ))
                 )}
@@ -623,7 +710,7 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
                     mode !== "NEWS" &&
                     mode !== "BLOGS" &&
                     hasMore &&
-                    visiblePosts.length > 0 && (
+                    posts.length > 0 && (
                         <div
                             ref={loadMoreRef}
                             className="sports-load-more-trigger"

@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -24,7 +24,13 @@ type Props = {
 export const SignupConnectScreen: React.FC<Props> = ({ navigation, route }) => {
     const insets = useSafeAreaInsets();
     const { email, onCancel } = route.params;
-    const { signInWithGoogle, isLoading: googleLoading } = useGoogleAuth();
+    const { signInWithGoogle, isLoading: googleLoading, error: googleError } = useGoogleAuth();
+
+    useEffect(() => {
+        if (googleError) {
+            Alert.alert('Google sign in', googleError);
+        }
+    }, [googleError]);
 
     const handleBack = () => {
         navigation.goBack();
@@ -38,8 +44,12 @@ export const SignupConnectScreen: React.FC<Props> = ({ navigation, route }) => {
     };
 
     const handleGoogleConnect = async () => {
-        await signInWithGoogle();
-        // On success, navigate to next screen
+        const signedIn = await signInWithGoogle();
+
+        if (!signedIn) {
+            return;
+        }
+
         navigation.navigate('SignupName', {
             email,
             authMethod: 'google',

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -34,9 +34,15 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
     const insets = useSafeAreaInsets();
 
     const { signIn, signUp, resetPassword, isLoading, error, clearError } = useAuth();
-    const { signInWithGoogle, isLoading: googleLoading } = useGoogleAuth();
+    const { signInWithGoogle, isLoading: googleLoading, error: googleError } = useGoogleAuth();
 
     const isLogin = mode === 'login';
+
+    useEffect(() => {
+        if (googleError) {
+            Alert.alert('Google sign in', googleError);
+        }
+    }, [googleError]);
 
     const handleAuth = async () => {
         clearError();

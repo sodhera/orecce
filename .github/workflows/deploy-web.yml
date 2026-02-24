@@ -49,6 +49,9 @@ jobs:
       - name: Install web dependencies
         run: npm --prefix apps/web ci
 
+      - name: Install API function dependencies required by shared imports
+        run: npm --prefix services/api/functions ci
+
       - name: Build web app
         run: npm --prefix apps/web run build
 

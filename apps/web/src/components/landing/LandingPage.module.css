@@ -128,6 +128,30 @@
   font-size: 1rem;
 }
 
+.authModeTabs {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.authModeTab {
+  border: 1px solid var(--landing-border);
+  background: var(--landing-panel);
+  color: var(--landing-text-secondary);
+  border-radius: 999px;
+  padding: 0.5rem 0.8rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.authModeTabActive {
+  border-color: var(--landing-text);
+  color: var(--landing-text);
+}
+
 .error {
   width: 100%;
   margin-bottom: 1rem;
@@ -145,6 +169,25 @@
   border-color: #7f1d1d;
   background: #2f1418;
   color: #fecaca;
+}
+
+.success {
+  width: 100%;
+  margin-bottom: 1rem;
+  border-radius: 12px;
+  border: 1px solid #86efac;
+  background: #f0fdf4;
+  color: #166534;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  text-align: left;
+}
+
+.dark .success {
+  border-color: #14532d;
+  background: #052e16;
+  color: #bbf7d0;
 }
 
 .inputGroup {

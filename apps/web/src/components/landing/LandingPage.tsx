@@ -8,27 +8,49 @@ import Carousel from "./Carousel";
 import ThemeToggle from "./ThemeToggle";
 import styles from "./LandingPage.module.css";
 
+type AuthMode = "login" | "signup" | "forgot";
+
 export default function LandingPage() {
-  const { isAuthenticated, login, loginWithGoogle, setShowAuthModal } = useAuth();
+  const { isAuthenticated, login, signup, loginWithGoogle, resetPassword } = useAuth();
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [authMode, setAuthMode] = useState<AuthMode>("login");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const handleLogin = async (event: FormEvent) => {
+  const handleAuthSubmit = async (event: FormEvent) => {
     event.preventDefault();
 
-    if (!email || !password) {
+    if (!email) {
+      setError("Please fill in all fields");
+      return;
+    }
+    if (authMode !== "forgot" && !password) {
+      setError("Please fill in all fields");
+      return;
+    }
+    if (authMode === "signup" && !name) {
       setError("Please fill in all fields");
       return;
     }
 
     setSubmitting(true);
     setError(null);
+    setNotice(null);
 
     try {
-      await login(email, password);
+      if (authMode === "login") {
+        await login(email, password);
+      } else if (authMode === "signup") {
+        await signup(name, email, password);
+      } else {
+        await resetPassword(email);
+        setNotice("Password reset email sent. Check your inbox.");
+      }
+      setName("");
       setEmail("");
       setPassword("");
     } catch (err) {
@@ -71,7 +93,9 @@ export default function LandingPage() {
               <p className={styles.authSubtitle}>
                 {isAuthenticated
                   ? "Your account is ready. Open your personalized feed."
-                  : "Build a healthier content diet in minutes."}
+                  : authMode === "forgot"
+                    ? "Reset your password to get back in."
+                    : "Build a healthier content diet in minutes."}
               </p>
 
               {isAuthenticated ? (
@@ -82,9 +106,53 @@ export default function LandingPage() {
                 </div>
               ) : (
                 <>
-                  {error && <div className={styles.error}>{error}</div>}
+                  <div className={styles.authModeTabs}>
+                    <button
+                      type="button"
+                      className={`${styles.authModeTab} ${authMode === "login" ? styles.authModeTabActive : ""}`}
+                      onClick={() => {
+                        setAuthMode("login");
+                        setError(null);
+                        setNotice(null);
+                      }}
+                    >
+                      Log In
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.authModeTab} ${authMode === "signup" ? styles.authModeTabActive : ""}`}
+                      onClick={() => {
+                        setAuthMode("signup");
+                        setError(null);
+                        setNotice(null);
+                      }}
+                    >
+                      Sign Up
+                    </button>
+                  </div>
 
-                  <form onSubmit={handleLogin} style={{ width: "100%" }}>
+                  {error && <div className={styles.error}>{error}</div>}
+                  {notice && <div className={styles.success}>{notice}</div>}
+
+                  <form onSubmit={handleAuthSubmit} style={{ width: "100%" }}>
+                    {authMode === "signup" && (
+                      <div className={styles.inputGroup}>
+                        <label className={styles.inputLabel} htmlFor="landing-name">
+                          Full name
+                        </label>
+                        <input
+                          id="landing-name"
+                          type="text"
+                          placeholder="Your name"
+                          className={styles.inputField}
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          autoComplete="name"
+                          disabled={submitting}
+                        />
+                      </div>
+                    )}
+
                     <div className={styles.inputGroup}>
                       <label className={styles.inputLabel} htmlFor="landing-email">
                         Email
@@ -101,24 +169,34 @@ export default function LandingPage() {
                       />
                     </div>
 
-                    <div className={styles.inputGroup}>
-                      <label className={styles.inputLabel} htmlFor="landing-password">
-                        Password
-                      </label>
-                      <input
-                        id="landing-password"
-                        type="password"
-                        placeholder="••••••••"
-                        className={styles.inputField}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        autoComplete="current-password"
-                        disabled={submitting}
-                      />
-                    </div>
+                    {authMode !== "forgot" && (
+                      <div className={styles.inputGroup}>
+                        <label className={styles.inputLabel} htmlFor="landing-password">
+                          Password
+                        </label>
+                        <input
+                          id="landing-password"
+                          type="password"
+                          placeholder="••••••••"
+                          className={styles.inputField}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          autoComplete={
+                            authMode === "signup" ? "new-password" : "current-password"
+                          }
+                          disabled={submitting}
+                        />
+                      </div>
+                    )}
 
                     <button type="submit" className={styles.primaryBtn} disabled={submitting}>
-                      {submitting ? "Logging in..." : "Log In"}
+                      {submitting
+                        ? "Please wait..."
+                        : authMode === "login"
+                          ? "Log In"
+                          : authMode === "signup"
+                            ? "Create Account"
+                            : "Send Reset Link"}
                     </button>
                   </form>
 
@@ -126,16 +204,24 @@ export default function LandingPage() {
                     <button
                       type="button"
                       className={styles.authLink}
-                      onClick={() => setShowAuthModal(true)}
+                      onClick={() => {
+                        setAuthMode("forgot");
+                        setError(null);
+                        setNotice(null);
+                      }}
                     >
                       Forgot password?
                     </button>
                     <button
                       type="button"
                       className={styles.authLink}
-                      onClick={() => setShowAuthModal(true)}
+                      onClick={() => {
+                        setAuthMode(authMode === "signup" ? "login" : "signup");
+                        setError(null);
+                        setNotice(null);
+                      }}
                     >
-                      Sign up
+                      {authMode === "signup" ? "Log in" : "Sign up"}
                     </button>
                   </div>
 

@@ -30,6 +30,7 @@ interface AuthContextValue {
     login: (email: string, password: string) => Promise<void>;
     signup: (name: string, email: string, password: string) => Promise<void>;
     loginWithGoogle: () => Promise<void>;
+    resetPassword: (email: string) => Promise<void>;
     logout: () => Promise<void>;
     getIdToken: () => Promise<string | null>;
 }
@@ -143,6 +144,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setShowAuthModal(false);
     }, []);
 
+    const resetPassword = useCallback(async (email: string) => {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo:
+                typeof window !== "undefined" ? window.location.origin : undefined,
+        });
+        if (error) throw error;
+    }, []);
+
     const logout = useCallback(async () => {
         await supabase.auth.signOut();
     }, []);
@@ -163,6 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 login,
                 signup,
                 loginWithGoogle,
+                resetPassword,
                 logout,
                 getIdToken,
             }}

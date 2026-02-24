@@ -2294,6 +2294,15 @@ img {
   padding: 0 2px;
 }
 
+.auth-notice {
+  color: #0f5132;
+  background: #d1fae5;
+  border: 1px solid #6ee7b7;
+  border-radius: 8px;
+  font-size: 13px;
+  padding: 10px 12px;
+}
+
 .auth-google-btn {
   width: 100%;
   display: flex;

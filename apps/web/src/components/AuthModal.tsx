@@ -13,6 +13,7 @@ export default function AuthModal() {
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [notice, setNotice] = useState<string | null>(null);
 
     if (!showAuthModal) return null;
 
@@ -21,6 +22,7 @@ export default function AuthModal() {
         setEmail("");
         setPassword("");
         setError(null);
+        setNotice(null);
     };
 
     const switchTab = (tab: Tab) => {
@@ -31,6 +33,7 @@ export default function AuthModal() {
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         setError(null);
+        setNotice(null);
         setLoading(true);
 
         try {
@@ -39,15 +42,19 @@ export default function AuthModal() {
                     setError("Please fill in all fields");
                     return;
                 }
-                // TODO: connect to backend
                 await login(email, password);
             } else {
                 if (!name || !email || !password) {
                     setError("Please fill in all fields");
                     return;
                 }
-                // TODO: connect to backend
-                await signup(name, email, password);
+                const result = await signup(name, email, password);
+                if (result === "verification_required") {
+                    setPassword("");
+                    setActiveTab("login");
+                    setNotice("Check your email and verify your account before logging in.");
+                    return;
+                }
             }
             resetForm();
         } catch (err) {
@@ -157,6 +164,7 @@ export default function AuthModal() {
                         }
                     />
 
+                    {notice && <div className="auth-notice">{notice}</div>}
                     {error && <div className="auth-error">{error}</div>}
 
                     <button

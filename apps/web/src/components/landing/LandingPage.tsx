@@ -45,7 +45,13 @@ export default function LandingPage() {
       if (authMode === "login") {
         await login(email, password);
       } else if (authMode === "signup") {
-        await signup(name, email, password);
+        const result = await signup(name, email, password);
+        if (result === "verification_required") {
+          setAuthMode("login");
+          setPassword("");
+          setNotice("Check your email and verify your account before logging in.");
+          return;
+        }
       } else {
         await resetPassword(email);
         setNotice("Password reset email sent. Check your inbox.");

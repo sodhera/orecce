@@ -12,6 +12,7 @@ import { Session, User as SupabaseUser } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
 
 const API_BASE = "/api/v1";
+const PUBLIC_APP_URL = process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/+$/, "");
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -21,6 +22,8 @@ interface User {
     email: string;
 }
 
+export type SignupResult = "signed_in" | "verification_required";
+
 interface AuthContextValue {
     user: User | null;
     isAuthenticated: boolean;
@@ -28,7 +31,7 @@ interface AuthContextValue {
     showAuthModal: boolean;
     setShowAuthModal: (v: boolean) => void;
     login: (email: string, password: string) => Promise<void>;
-    signup: (name: string, email: string, password: string) => Promise<void>;
+    signup: (name: string, email: string, password: string) => Promise<SignupResult>;
     loginWithGoogle: () => Promise<void>;
     resetPassword: (email: string) => Promise<void>;
     logout: () => Promise<void>;
@@ -52,6 +55,33 @@ function mapSupabaseUser(su: SupabaseUser): User {
     };
 }
 
+function hasEmailProvider(su: SupabaseUser): boolean {
+    const appMeta = su.app_metadata as
+        | { provider?: string; providers?: string[] }
+        | undefined;
+    if (appMeta?.provider === "email") {
+        return true;
+    }
+    return Array.isArray(appMeta?.providers) && appMeta.providers.includes("email");
+}
+
+function canTreatAsAuthenticated(su: SupabaseUser): boolean {
+    if (!hasEmailProvider(su)) {
+        return true;
+    }
+    return Boolean(su.email_confirmed_at);
+}
+
+function getAuthRedirectUrl(): string | undefined {
+    if (PUBLIC_APP_URL) {
+        return PUBLIC_APP_URL;
+    }
+    if (typeof window !== "undefined") {
+        return window.location.origin;
+    }
+    return undefined;
+}
+
 // ── Provider ───────────────────────────────────────────────────
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -62,8 +92,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Listen for Supabase auth state changes
     useEffect(() => {
-        // Get initial session
-        supabase.auth.getSession().then(({ data: { session: s } }) => {
+        const applySession = (s: Session | null) => {
             setSession(s);
             if (s?.user) {
                 setUser(mapSupabaseUser(s.user));
@@ -71,19 +100,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setUser(null);
             }
             setLoading(false);
+        };
+
+        // Get initial session
+        supabase.auth.getSession().then(({ data: { session: s } }) => {
+            if (s?.user && !canTreatAsAuthenticated(s.user)) {
+                void supabase.auth.signOut();
+                applySession(null);
+                return;
+            }
+            applySession(s);
         });
 
         // Subscribe to changes
         const {
             data: { subscription },
         } = supabase.auth.onAuthStateChange((_event, s) => {
-            setSession(s);
-            if (s?.user) {
-                setUser(mapSupabaseUser(s.user));
-            } else {
-                setUser(null);
+            if (s?.user && !canTreatAsAuthenticated(s.user)) {
+                void supabase.auth.signOut();
+                applySession(null);
+                return;
             }
-            setLoading(false);
+            applySession(s);
         });
 
         return () => subscription.unsubscribe();
@@ -106,28 +144,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, [session]);
 
     const login = useCallback(async (email: string, password: string) => {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,
         });
         if (error) throw error;
+        if (data.user && !canTreatAsAuthenticated(data.user)) {
+            await supabase.auth.signOut();
+            throw new Error("Please verify your email before signing in.");
+        }
         setShowAuthModal(false);
     }, []);
 
     const signup = useCallback(
-        async (name: string, email: string, password: string) => {
+        async (
+            name: string,
+            email: string,
+            password: string,
+        ): Promise<SignupResult> => {
             const { data, error } = await supabase.auth.signUp({
                 email,
                 password,
                 options: {
                     data: { full_name: name },
+                    emailRedirectTo: getAuthRedirectUrl(),
                 },
             });
             if (error) throw error;
-            if (data.user) {
-                setUser(mapSupabaseUser(data.user));
+
+            const signedInUser = data.session?.user;
+            if (signedInUser && canTreatAsAuthenticated(signedInUser)) {
+                setShowAuthModal(false);
+                return "signed_in";
             }
-            setShowAuthModal(false);
+
+            await supabase.auth.signOut();
+            setSession(null);
+            setUser(null);
+            return "verification_required";
         },
         [],
     );
@@ -137,7 +191,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             provider: "google",
             options: {
                 queryParams: { prompt: "select_account" },
-                redirectTo: typeof window !== "undefined" ? window.location.origin : undefined,
+                redirectTo: getAuthRedirectUrl(),
             },
         });
         if (error) throw error;
@@ -146,8 +200,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const resetPassword = useCallback(async (email: string) => {
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo:
-                typeof window !== "undefined" ? window.location.origin : undefined,
+            redirectTo: getAuthRedirectUrl(),
         });
         if (error) throw error;
     }, []);

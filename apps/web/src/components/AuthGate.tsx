@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 
 interface AuthGateProps {
@@ -9,14 +10,16 @@ interface AuthGateProps {
 
 export default function AuthGate({ children }: AuthGateProps) {
     const { isAuthenticated, loading, setShowAuthModal } = useAuth();
+    const pathname = usePathname();
+    const isPublicRoute = pathname === "/";
 
     useEffect(() => {
-        if (!loading && !isAuthenticated) {
+        if (!loading && !isAuthenticated && !isPublicRoute) {
             setShowAuthModal(true);
         }
-    }, [loading, isAuthenticated, setShowAuthModal]);
+    }, [loading, isAuthenticated, isPublicRoute, setShowAuthModal]);
 
-    if (loading) {
+    if (!isPublicRoute && loading) {
         return (
             <div className="app-layout">
                 <main className="feed">
@@ -26,7 +29,7 @@ export default function AuthGate({ children }: AuthGateProps) {
         );
     }
 
-    if (!isAuthenticated) {
+    if (!isPublicRoute && !isAuthenticated) {
         return (
             <div className="app-layout">
                 <main className="feed">

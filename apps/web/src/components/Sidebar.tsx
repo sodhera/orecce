@@ -27,7 +27,7 @@ const navItems: Array<{
 }> = [
         {
             label: "Home",
-            href: "/",
+            href: "/feed",
             iconOutline: <AiOutlineHome aria-hidden="true" />,
             iconFilled: <AiFillHome aria-hidden="true" />,
         },
@@ -142,9 +142,7 @@ export default function Sidebar() {
             <nav className="sidebar-nav">
                 {navItems.map((item) => {
                     const isActive = item.href
-                        ? item.href === "/"
-                            ? pathname === "/"
-                            : pathname.startsWith(item.href)
+                        ? pathname === item.href || pathname.startsWith(`${item.href}/`)
                         : false;
                     const className = `nav-item ${isActive ? "active" : ""}`;
                     const icon =

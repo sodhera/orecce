@@ -373,11 +373,12 @@ img {
 
 /* ── Center Feed ── */
 .feed {
-  width: var(--feed-width);
+  width: calc(var(--feed-width) + 6px);
+  /* account for scrollbar width so content remains centered at 600px */
   border-left: 1px solid var(--bg-border);
   border-right: 1px solid var(--bg-border);
   height: 100vh;
-  overflow-y: auto;
+  overflow-y: overlay;
   overflow-x: hidden;
   flex-shrink: 0;
 }

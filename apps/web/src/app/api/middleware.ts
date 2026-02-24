@@ -62,10 +62,3 @@ export function ok(data: unknown, headers?: Record<string, string>) {
     return NextResponse.json({ ok: true, data }, { status: 200, headers });
 }
 
-/** Ensure user exists and has prefill posts. */
-export async function ensureUserHasPrefills(userId: string, email?: string | null) {
-    const { repository, prefillService, defaultPrefillPostsPerMode } = getDeps();
-    const user = await repository.getOrCreateUser({ userId, email: email ?? null });
-    if (user.prefillPostCount > 0 && user.prefillStatus === "ready") return;
-    await prefillService.ensureUserPrefillsFromCommonDataset({ userId, postsPerMode: defaultPrefillPostsPerMode });
-}

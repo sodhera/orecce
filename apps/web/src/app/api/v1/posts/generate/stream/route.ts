@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { authenticate, ensureUserHasPrefills } from "@/app/api/middleware";
+import { authenticate } from "@/app/api/middleware";
 import { getDeps } from "@/app/api/init";
 import { generatePostRequestSchema } from "@api/validation/requestValidation";
 import { normalizeProfileKey } from "@api/utils/text";
@@ -13,7 +13,6 @@ export async function POST(req: NextRequest) {
         if (!parsed.success) {
             throw new ApiError(400, "bad_request", "Invalid generate request.", parsed.error.flatten());
         }
-        await ensureUserHasPrefills(identity.uid, identity.email);
         const { repository } = getDeps();
         const post = await repository.getNextPrefillPost({
             userId: identity.uid,

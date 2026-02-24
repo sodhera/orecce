@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.97.0",
-    "firebase": "^12.9.0",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3",
@@ -23,7 +22,6 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
-    "firebase-admin": "^13.6.1",
     "tsx": "^4.21.0",
     "typescript": "^5"
   }

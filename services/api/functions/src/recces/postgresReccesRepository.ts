@@ -6,7 +6,7 @@ import {
     ReccesRepository,
     ReccesResolvedPost,
     ReccesSlide
-} from "./firestoreReccesRepository";
+} from "./types";
 
 function readSlide(raw: unknown): ReccesSlide | null {
     if (!raw || typeof raw !== "object") return null;

@@ -11,9 +11,7 @@ import {
 import { Session, User as SupabaseUser } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
 
-const API_BASE =
-    process.env.NEXT_PUBLIC_API_BASE_URL ??
-    "https://api-2ljiuwaa3a-uc.a.run.app/v1";
+const API_BASE = "/api/v1";
 
 // ── Types ──────────────────────────────────────────────────────
 

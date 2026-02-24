@@ -1,4 +1,4 @@
-import { ReccesEssayDocument, ReccesRepository } from "../src/recces/firestoreReccesRepository";
+import { ReccesEssayDocument, ReccesRepository } from "../src/recces/types";
 import { buildReccesPostId, parseReccesPostId } from "../src/recces/postId";
 
 const STATIC_DATASET: Record<string, ReccesEssayDocument[]> = {

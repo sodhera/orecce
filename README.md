@@ -3,85 +3,75 @@
 This repo is split into clean monorepo domains:
 
 - `apps/mobile/` - Expo React Native app
-- `apps/web/` - Web app (runs locally, points to cloud backend by default)
-- `services/api/` - Firebase Functions + Firestore backend API
+- `apps/web/` - Next.js web app (deployed on Vercel)
+- `services/api/` - Express API (deployed on Vercel serverless)
 
-## For collaborators
-### First-time setup
+## Backend/Auth/DB stack
+
+- Backend runtime: **Vercel**
+- Database: **Supabase Postgres**
+- Auth: **Supabase Auth (JWT bearer tokens)**
+- Firebase is not used in production deploy paths.
+
+## Local setup
+
 1. Clone and enter the repo:
    - `git clone https://github.com/sodhera/orecce.git`
    - `cd orecce`
-2. Install Firebase CLI (if missing):
-   - `npm install -g firebase-tools`
-3. Login once:
-   - `firebase login`
-4. Create API env file:
+2. Install dependencies for the area you are working in.
+3. Create API env file:
    - `cp services/api/functions/.env.example services/api/functions/.env`
-5. Add your key in `services/api/functions/.env`:
+4. Set at least these API env vars in `services/api/functions/.env`:
+   - `SUPABASE_URL=...`
+   - `SUPABASE_SERVICE_ROLE_KEY=...`
    - `OPENAI_API_KEY=...`
-   - `OPENAI_MODEL=gpt-5-mini`
+   - `AI_NEWS_ENABLED=false`
 
-### Pull latest changes
-- `git checkout main`
-- `git pull origin main`
+## Run locally
 
-## Cloud backend workflow
-- Re-auth Firebase CLI (only needed for direct `firebase ...` commands):
-  - `firebase login --reauth`
-- Place the service-account JSON at:
-  - `/Users/sirishjoshi/Desktop/AI-Post/audit-3a7ec-4313afabeaac.json`
-  - or set `GOOGLE_APPLICATION_CREDENTIALS` to your JSON path
-- Deploy Functions + Firestore rules/indexes:
-  - `npm run api:deploy:cloud`
-- Migrate Auth users from emulator export to cloud:
-  - `npm run api:migrate:auth:cloud`
-- Migrate Firestore docs from emulator to cloud:
-  - Start Firestore emulator with existing export data
-  - `npm run api:migrate:firestore:cloud`
-- Populate the shared cloud prefill dataset (biography/trivia/niche):
-  - `npm run api:populate:common:cloud`
-
-Default cloud API base:
-- `https://us-central1-audit-3a7ec.cloudfunctions.net/api`
-
-## Automatic deploy/publish on push
-- API workflow: `.github/workflows/deploy-functions.yml`
-  - Trigger: push to `main`
-  - Deploys: Firebase Functions (`api`, `onAuthUserCreate`, `syncNewsEvery3Hours`) + Firestore rules/indexes
-  - Required GitHub settings:
-    - Repository secret: `GCP_SA_KEY` (JSON for a service account with Firebase deploy permissions)
-    - Repository variable (optional): `FIREBASE_PROJECT_ID` (defaults to `audit-3a7ec`)
-
-- Web workflow: `.github/workflows/deploy-web.yml`
-  - Trigger: push to `main` when `apps/web/**` changes
-  - Deploys: production web app to Vercel
-  - Required GitHub secrets:
-    - `VERCEL_TOKEN`
-    - `VERCEL_ORG_ID`
-    - `VERCEL_PROJECT_ID`
-
-- Mobile workflow: `.github/workflows/publish-mobile-update.yml`
-  - Trigger: push to `main` when `apps/mobile/**` changes
-  - Publishes: Expo EAS OTA update to branch `production`
-  - Required GitHub secret:
-    - `EXPO_TOKEN`
-  - One-time setup in `apps/mobile` before this workflow can succeed:
-    - `npx --yes eas-cli@latest update:configure`
-    - Commit the resulting `app.json` changes (`expo.updates.url` and `expo.extra.eas.projectId`)
-
-## Run app clients separately
-### Mobile app
-- `npm --prefix apps/mobile install`
-- `npm --prefix apps/mobile run start`
-
-### Web app only
+### Web app
 - `npm --prefix apps/web install`
 - `npm --prefix apps/web run dev`
 
-### API checks
-- `./services/api/scripts/prepush-check.sh`
+### API (Supabase)
+- `npm --prefix services/api/functions install`
+- `npm --prefix services/api/functions run dev:supabase`
+
+### Checks
+- Web build: `npm --prefix apps/web run build`
+- API checks: `./services/api/scripts/prepush-check.sh`
+
+## Production deploy on push
+
+### API workflow
+- File: `.github/workflows/deploy-api-vercel.yml`
+- Trigger: push to `main` when `services/api/functions/**` changes
+- Required GitHub secrets:
+  - `VERCEL_TOKEN`
+  - `VERCEL_ORG_ID`
+  - `VERCEL_API_PROJECT_ID`
+- API env vars must be configured in the Vercel API project:
+  - `SUPABASE_URL`
+  - `SUPABASE_SERVICE_ROLE_KEY`
+  - `OPENAI_API_KEY`
+  - `OPENAI_MODEL` (optional)
+  - `AI_NEWS_ENABLED=false`
+
+### Web workflow
+- File: `.github/workflows/deploy-web.yml`
+- Trigger: push to `main` when `apps/web/**` changes
+- Required GitHub secrets:
+  - `VERCEL_TOKEN`
+  - `VERCEL_ORG_ID`
+  - `VERCEL_PROJECT_ID`
+- Required GitHub variable:
+  - `API_BACKEND_BASE_URL` (API origin, without `/v1`)
+- Web env vars must be configured in the Vercel web project:
+  - `NEXT_PUBLIC_SUPABASE_URL`
+  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
 ## Integration docs
+
 - API contract: `services/api/docs/API.md`
 - OpenAPI spec: `services/api/docs/openapi.yaml`
-- LLM handoff doc for app integration: `services/api/docs/LLM_APP_INTEGRATION_README.md`
+- LLM handoff doc: `services/api/docs/LLM_APP_INTEGRATION_README.md`

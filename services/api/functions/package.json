@@ -12,12 +12,6 @@
     "dev:generate": "tsx scripts/dev-generate.ts",
     "dev:server": "tsx scripts/dev-server.ts",
     "dev:supabase": "tsx src/server.ts",
-    "seed:emulator": "tsx scripts/seed-emulator.ts",
-    "sync:news:emulator": "tsx scripts/sync-news-emulator.ts",
-    "backfill:news:fulltext:emulator": "tsx scripts/backfill-news-fulltext-emulator.ts",
-    "migrate:auth:cloud": "tsx scripts/migrate-auth-export-to-cloud.ts",
-    "migrate:firestore:cloud": "tsx scripts/migrate-firestore-emulator-to-cloud.ts",
-    "populate:common:cloud": "tsx scripts/populate-common-prefills-cloud.ts",
     "lint:types": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest"

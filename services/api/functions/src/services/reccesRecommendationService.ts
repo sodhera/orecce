@@ -1,6 +1,6 @@
 import { ListFeedbackResult, Repository } from "../types/contracts";
 import { FeedbackType, StoredFeedback } from "../types/domain";
-import { ReccesEssayDocument, ReccesRepository } from "../recces/firestoreReccesRepository";
+import { ReccesEssayDocument, ReccesRepository } from "../recces/types";
 import { buildReccesPostId } from "../recces/postId";
 import { normalizeThemeKey, ReccesUserProfileRepository } from "../recces/reccesUserProfileRepository";
 

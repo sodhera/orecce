@@ -1,7 +1,8 @@
 import cors from "cors";
 import { randomUUID } from "crypto";
 import express, { NextFunction, Request, Response } from "express";
-import { AuthIdentity, AuthVerifier } from "../auth/firebaseAuthVerifier";
+import { AuthIdentity, AuthVerifier } from "../auth/types";
+import { getNewsArticleTimeoutMs, getNewsCrawlerUserAgent, getNewsFeedTimeoutMs } from "../config/runtimeConfig";
 import { NewsReadService } from "../news/newsReadService";
 import { SportsNewsService } from "../news/sportsNewsService";
 import { UserSportsNewsService } from "../news/userSportsNewsService";
@@ -231,9 +232,36 @@ async function ensureUserHasPrefills(
   if (!deps.prefillService) {
     return;
   }
-  await deps.prefillService.ensureUserPrefillsFromCommonDataset({
-    userId,
-    postsPerMode: deps.defaultPrefillPostsPerMode
+  void deps.prefillService
+    .ensureUserPrefillsFromCommonDataset({
+      userId,
+      postsPerMode: deps.defaultPrefillPostsPerMode
+    })
+    .catch((error) => {
+      logError("prefill.ensure.failed", {
+        user_id: userId,
+        message: error instanceof Error ? error.message : String(error)
+      });
+    });
+}
+
+async function refreshSportsForUser(
+  deps: CreateAppDeps,
+  input: { userId: string; sport: string; limit: number }
+): Promise<void> {
+  if (!deps.userSportsNewsService) {
+    throw new ApiError(500, "server_misconfigured", "User sports news service is not configured.");
+  }
+
+  const limit = Math.max(1, Math.min(20, Math.floor(input.limit)));
+  await deps.userSportsNewsService.refreshUserStories({
+    userId: input.userId,
+    sport: input.sport,
+    limit,
+    userAgent: getNewsCrawlerUserAgent(),
+    feedTimeoutMs: getNewsFeedTimeoutMs(),
+    articleTimeoutMs: getNewsArticleTimeoutMs(),
+    deadlineMs: Date.now() + 45_000
   });
 }
 
@@ -313,7 +341,7 @@ export function createApp(deps: CreateAppDeps): express.Express {
         throw new ApiError(
           401,
           "invalid_auth",
-          "Unable to verify Firebase ID token.",
+          "Unable to verify bearer token.",
           error instanceof Error ? error.message : String(error)
         );
       }
@@ -790,12 +818,20 @@ export function createApp(deps: CreateAppDeps): express.Express {
       const identity = getAuthIdentity(res);
 
       if (refresh) {
-        await deps.userSportsNewsService.requestRefresh(identity.uid, sport);
+        await refreshSportsForUser(deps, {
+          userId: identity.uid,
+          sport,
+          limit
+        });
       }
 
       let data = await deps.userSportsNewsService.listUserStories(identity.uid, sport, limit);
       if (!data.stories.length) {
-        await deps.userSportsNewsService.requestRefresh(identity.uid, sport);
+        await refreshSportsForUser(deps, {
+          userId: identity.uid,
+          sport,
+          limit
+        });
         data = await deps.userSportsNewsService.listUserStories(identity.uid, sport, limit);
       }
 
@@ -816,13 +852,19 @@ export function createApp(deps: CreateAppDeps): express.Express {
       if (!sport) {
         throw new ApiError(400, "bad_request", "Missing sport.");
       }
+      const limitRaw = Number(req.body?.limit ?? req.query.limit ?? "8");
+      const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(20, Math.floor(limitRaw))) : 8;
       const identity = getAuthIdentity(res);
-      await deps.userSportsNewsService.requestRefresh(identity.uid, sport);
+      await refreshSportsForUser(deps, {
+        userId: identity.uid,
+        sport,
+        limit
+      });
       res.json({
         ok: true,
         data: {
           sport,
-          queued: true
+          queued: false
         }
       });
     })

@@ -1,15 +1,5 @@
 import { Auth, getAuth } from "firebase-admin/auth";
-
-export interface AuthIdentity {
-  uid: string;
-  email: string | null;
-  displayName: string | null;
-  photoURL: string | null;
-}
-
-export interface AuthVerifier {
-  verifyBearerToken(token: string): Promise<AuthIdentity>;
-}
+import { AuthIdentity, AuthVerifier } from "./types";
 
 export class FirebaseAuthVerifier implements AuthVerifier {
   constructor(

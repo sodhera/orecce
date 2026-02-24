@@ -120,7 +120,7 @@ export class OpenAiGateway implements LlmGateway {
   private async postResponses(body: Record<string, unknown>, context: UpstreamContext): Promise<Response> {
     const apiKey = getOpenAiApiKey();
     if (!apiKey) {
-      throw new ApiError(500, "missing_openai_key", "OpenAI key is missing. Set OPENAI_API_KEY or firebase functions config openai.key.");
+      throw new ApiError(500, "missing_openai_key", "OpenAI key is missing. Set OPENAI_API_KEY.");
     }
 
     const upstreamStartedAtMs = Date.now();

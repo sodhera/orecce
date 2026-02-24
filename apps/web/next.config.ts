@@ -1,14 +1,20 @@
 import type { NextConfig } from "next";
 
-const defaultApiBaseUrl = "https://api-2ljiuwaa3a-uc.a.run.app";
+const localApiBaseUrl = "http://localhost:8080";
 
 function normalizeBaseUrl(url: string): string {
-  return url.trim().replace(/\/+$/, "");
+  return url.trim().replace(/\/+$/, "").replace(/\/v1$/, "");
 }
 
 const nextConfig: NextConfig = {
   async rewrites() {
-    const apiBaseUrl = normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL ?? defaultApiBaseUrl);
+    const configuredApiBaseUrl =
+      process.env.API_BACKEND_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (process.env.NODE_ENV === "production" && !configuredApiBaseUrl?.trim()) {
+      throw new Error("Missing API_BACKEND_BASE_URL (or NEXT_PUBLIC_API_BASE_URL) for production web build.");
+    }
+    const apiBaseUrl =
+      normalizeBaseUrl(configuredApiBaseUrl ?? localApiBaseUrl);
     return [
       {
         source: "/api/v1/:path*",

@@ -1,6 +1,5 @@
 /**
- * Standalone Express server entrypoint for non-Firebase deployment (e.g. Cloud Run).
- * Uses Supabase Postgres repositories and Supabase JWT auth verification.
+ * Standalone Express server entrypoint for local Supabase-backed API runs.
  *
  * Usage:
  *   cp .env.example .env  # fill in your keys

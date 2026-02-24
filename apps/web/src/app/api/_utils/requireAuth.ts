@@ -1,17 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const DEFAULT_API_BASE_URL = "https://api-2ljiuwaa3a-uc.a.run.app";
-
-function normalizeBaseUrl(url: string): string {
-    return url.trim().replace(/\/+$/, "");
-}
-
-function getApiBaseUrl(): string {
-    return normalizeBaseUrl(
-        process.env.NEXT_PUBLIC_API_BASE_URL ?? DEFAULT_API_BASE_URL,
-    );
-}
-
 function readBearerToken(request: NextRequest): string | null {
     const raw = String(request.headers.get("authorization") ?? "").trim();
     if (!raw.toLowerCase().startsWith("bearer ")) {
@@ -33,7 +21,8 @@ export async function requireAuth(
     }
 
     try {
-        const verifyResponse = await fetch(`${getApiBaseUrl()}/v1/users/me`, {
+        const verifyUrl = new URL("/api/v1/users/me", request.url);
+        const verifyResponse = await fetch(verifyUrl, {
             method: "GET",
             headers: {
                 Authorization: `Bearer ${token}`,

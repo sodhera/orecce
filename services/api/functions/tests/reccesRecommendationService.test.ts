@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ReccesEssayDocument, ReccesRepository } from "../src/recces/firestoreReccesRepository";
+import { ReccesEssayDocument, ReccesRepository } from "../src/recces/types";
 import { InMemoryReccesUserProfileRepository } from "../src/recces/reccesUserProfileRepository";
 import {
   ReccesRecommendationService,

@@ -1,40 +1,6 @@
 import { Firestore, Timestamp } from "firebase-admin/firestore";
 import { buildReccesPostId, parseReccesPostId } from "./postId";
-
-export interface ReccesSlide {
-  slideNumber: number;
-  type: string;
-  text: string;
-}
-
-export interface ReccesPost {
-  theme: string;
-  postType: string;
-  slides: ReccesSlide[];
-}
-
-export interface ReccesEssayDocument {
-  essayId: string;
-  sourceTitle: string;
-  posts: ReccesPost[];
-  updatedAtMs?: number;
-}
-
-export interface ReccesResolvedPost {
-  id: string;
-  authorId: string;
-  essayId: string;
-  postIndex: number;
-  theme: string;
-  postType: string;
-  slides: ReccesSlide[];
-  fullText: string;
-}
-
-export interface ReccesRepository {
-  listEssayDocuments(authorId: string): Promise<ReccesEssayDocument[]>;
-  getPostById(postId: string): Promise<ReccesResolvedPost | null>;
-}
+import { ReccesEssayDocument, ReccesPost, ReccesRepository, ReccesResolvedPost, ReccesSlide } from "./types";
 
 function toMillis(value: unknown): number | undefined {
   if (value instanceof Timestamp) {

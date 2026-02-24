@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import {
     getSportsFeed,
+    getSportsLatest,
     getSportsStory,
     SPORT_DISPLAY_NAMES,
     SPORT_IDS,
@@ -281,9 +282,24 @@ export default function SportsPage() {
                     return;
                 }
 
-                setStories(page.items);
-                setNextCursor(page.nextCursor);
-                writeCachedSportsFeed(feedCacheKey, page.items, page.nextCursor);
+                let resolvedPage = page;
+                if (!resolvedPage.items.length) {
+                    const warmupSport = effectiveSports?.[0] ?? SPORT_IDS[0];
+                    await getSportsLatest(warmupSport, STORIES_BATCH_SIZE, true);
+                    resolvedPage = await getSportsFeed(
+                        STORIES_BATCH_SIZE,
+                        undefined,
+                        effectiveSports,
+                        { signal: controller.signal },
+                    );
+                    if (cancelled || controller.signal.aborted) {
+                        return;
+                    }
+                }
+
+                setStories(resolvedPage.items);
+                setNextCursor(resolvedPage.nextCursor);
+                writeCachedSportsFeed(feedCacheKey, resolvedPage.items, resolvedPage.nextCursor);
             } catch (err) {
                 if (!cancelled && !controller.signal.aborted) {
                     setError(err instanceof Error ? err.message : "Failed to load sports news.");

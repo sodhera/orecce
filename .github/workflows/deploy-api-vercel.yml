@@ -1,26 +1,26 @@
-name: Deploy Web App
+name: Deploy API (Vercel)
 
 on:
   push:
     branches:
       - main
     paths:
-      - "apps/web/**"
+      - "services/api/functions/**"
+      - ".github/workflows/deploy-api-vercel.yml"
 
 concurrency:
-  group: deploy-web-main
+  group: deploy-api-vercel-main
   cancel-in-progress: false
 
 jobs:
-  deploy-web:
+  deploy-api:
     runs-on: ubuntu-latest
     permissions:
       contents: read
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-      API_BACKEND_BASE_URL: ${{ vars.API_BACKEND_BASE_URL }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_API_PROJECT_ID }}
 
     steps:
       - name: Checkout
@@ -42,22 +42,18 @@ jobs:
             exit 1
           fi
           if [ -z "$VERCEL_PROJECT_ID" ]; then
-            echo "Missing required secret: VERCEL_PROJECT_ID"
-            exit 1
-          fi
-          if [ -z "$API_BACKEND_BASE_URL" ]; then
-            echo "Missing required variable: API_BACKEND_BASE_URL"
+            echo "Missing required secret: VERCEL_API_PROJECT_ID"
             exit 1
           fi
 
-      - name: Install web dependencies
-        run: npm --prefix apps/web ci
+      - name: Install API dependencies
+        run: npm --prefix services/api/functions ci
 
-      - name: Build web app
-        run: npm --prefix apps/web run build
+      - name: Validate API checks
+        run: ./services/api/scripts/prepush-check.sh
 
-      - name: Deploy web app to Vercel
-        working-directory: apps/web
+      - name: Deploy API to Vercel
+        working-directory: services/api/functions
         run: |
           npx --yes vercel@latest pull --yes --environment=production --token="$VERCEL_TOKEN"
           npx --yes vercel@latest build --prod --token="$VERCEL_TOKEN"

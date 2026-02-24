@@ -1,5 +1,5 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import { AuthIdentity, AuthVerifier } from "./firebaseAuthVerifier";
+import { AuthIdentity, AuthVerifier } from "./types";
 
 /**
  * Verifies Supabase JWT access tokens.

@@ -60,7 +60,15 @@ export class PrefillService {
 
     try {
       await this.ensureCommonDataset(postsPerMode);
-      const commonPosts = await this.repository.listAllPrefillPosts(COMMON_PREFILL_DATASET_USER_ID);
+      let commonPosts = await this.repository.listAllPrefillPosts(COMMON_PREFILL_DATASET_USER_ID);
+      if (!commonPosts.length) {
+        await this.generateGenericPrefills({
+          userId: COMMON_PREFILL_DATASET_USER_ID,
+          postsPerMode,
+          forceReplace: true
+        });
+        commonPosts = await this.repository.listAllPrefillPosts(COMMON_PREFILL_DATASET_USER_ID);
+      }
       if (!commonPosts.length) {
         throw new ApiError(500, "common_dataset_empty", "Common prefill dataset is empty.");
       }

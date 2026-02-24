@@ -1,6 +1,6 @@
 import { auth } from "./firebaseConfig";
 
-const API_BASE = "/api/v1";
+const API_BASE = "https://api-2ljiuwaa3a-uc.a.run.app/v1";
 
 // ── Types ───────────────────────────────────────────────────────
 
@@ -39,6 +39,7 @@ interface RequestOptions {
 // ── Helpers ─────────────────────────────────────────────────────
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
+    await auth.authStateReady();
     const user = auth.currentUser;
     if (!user) {
         throw new Error("Authentication required.");
@@ -57,19 +58,44 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
     return headers;
 }
 
+async function parseApiResult<T>(res: Response): Promise<ApiResult<T>> {
+    const text = await res.text();
+    if (!text.trim()) {
+        throw new Error("Empty API response.");
+    }
+    return JSON.parse(text) as ApiResult<T>;
+}
+
 async function post<T>(
     path: string,
     body: Record<string, unknown>,
     options?: RequestOptions,
 ): Promise<T> {
     const headers = await getAuthHeaders();
-    const res = await fetch(`${API_BASE}${path}`, {
+    let res = await fetch(`${API_BASE}${path}`, {
         method: "POST",
         headers,
         body: JSON.stringify(body),
         signal: options?.signal,
     });
-    const json = (await res.json()) as ApiResult<T>;
+
+    if (res.status === 401) {
+        const user = auth.currentUser;
+        if (user) {
+            const retryToken = await user.getIdToken(true);
+            res = await fetch(`${API_BASE}${path}`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${retryToken}`,
+                },
+                body: JSON.stringify(body),
+                signal: options?.signal,
+            });
+        }
+    }
+
+    const json = await parseApiResult<T>(res);
     if (!json.ok) {
         throw new Error(json.error?.message ?? "API error");
     }
@@ -95,12 +121,28 @@ async function get<T>(
         ? `${API_BASE}${path}?${queryString}`
         : `${API_BASE}${path}`;
 
-    const res = await fetch(fullPath, {
+    let res = await fetch(fullPath, {
         method: "GET",
         headers,
         signal: options?.signal,
     });
-    const json = (await res.json()) as ApiResult<T>;
+
+    if (res.status === 401) {
+        const user = auth.currentUser;
+        if (user) {
+            const retryToken = await user.getIdToken(true);
+            res = await fetch(fullPath, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${retryToken}`,
+                },
+                signal: options?.signal,
+            });
+        }
+    }
+
+    const json = await parseApiResult<T>(res);
     if (!json.ok) {
         throw new Error(json.error?.message ?? "API error");
     }

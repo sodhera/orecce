@@ -13,12 +13,15 @@ import {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
     signInWithPopup,
+    signInWithRedirect,
     GoogleAuthProvider,
     signOut,
     updateProfile,
     User as FirebaseUser,
 } from "firebase/auth";
 import { auth } from "@/lib/firebaseConfig";
+
+const API_BASE = "https://api-2ljiuwaa3a-uc.a.run.app/v1";
 
 // ── Types ──────────────────────────────────────────────────────
 
@@ -81,8 +84,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!firebaseUser) return;
         (async () => {
             try {
-                const token = await firebaseUser.getIdToken();
-                await fetch("/api/v1/users/me", {
+                const token = await firebaseUser.getIdToken(true);
+                await fetch(`${API_BASE}/users/me`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
             } catch {
@@ -113,8 +116,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const loginWithGoogle = useCallback(async () => {
         const provider = new GoogleAuthProvider();
-        await signInWithPopup(auth, provider);
-        setShowAuthModal(false);
+        provider.setCustomParameters({ prompt: "select_account" });
+
+        try {
+            await signInWithPopup(auth, provider);
+            setShowAuthModal(false);
+            return;
+        } catch (err) {
+            const code = (err as { code?: string }).code ?? "";
+            const shouldFallbackToRedirect =
+                code === "auth/popup-blocked" ||
+                code === "auth/cancelled-popup-request" ||
+                code === "auth/popup-closed-by-user" ||
+                code === "auth/operation-not-supported-in-this-environment";
+
+            if (!shouldFallbackToRedirect) {
+                throw err;
+            }
+        }
+
+        // Fallback for mobile browsers / popup-restricted environments.
+        await signInWithRedirect(auth, provider);
     }, []);
 
     const logout = useCallback(async () => {

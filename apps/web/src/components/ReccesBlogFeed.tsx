@@ -8,6 +8,7 @@ import {
     sendPostFeedback,
     type ReccesRecommendationItem,
 } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
 const RECCES_AUTHOR_ID = "paul_graham";
 const RECOMMEND_PAGE_SIZE = 8;
@@ -43,6 +44,7 @@ function toPost(item: ReccesRecommendationItem): Post {
 }
 
 export default function ReccesBlogFeed() {
+    const { isAuthenticated, loading } = useAuth();
     const [posts, setPosts] = useState<Post[]>([]);
     const [loadingInitial, setLoadingInitial] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
@@ -81,6 +83,9 @@ export default function ReccesBlogFeed() {
     }, []);
 
     const loadMore = useCallback(async () => {
+        if (loading || !isAuthenticated) {
+            return;
+        }
         if (loadingMore || !hasMore) {
             return;
         }
@@ -108,11 +113,12 @@ export default function ReccesBlogFeed() {
             setPosts((current) => [...current, ...freshItems.map(toPost)]);
         } catch (err) {
             setError(err instanceof Error ? err.message : "Failed to load blog recommendations.");
+            setHasMore(false);
         } finally {
             setLoadingMore(false);
             setLoadingInitial(false);
         }
-    }, [hasMore, loadingMore]);
+    }, [hasMore, isAuthenticated, loading, loadingMore]);
 
     useEffect(() => {
         void loadMore();
@@ -186,10 +192,18 @@ export default function ReccesBlogFeed() {
         return "Scroll for more.";
     }, [hasMore, loadingMore]);
 
-    if (loadingInitial && posts.length === 0) {
+    if (loading || (loadingInitial && posts.length === 0)) {
         return (
             <div className="feed-posts-container">
                 <div className="feed-empty-state">Loading blog recommendations...</div>
+            </div>
+        );
+    }
+
+    if (!isAuthenticated) {
+        return (
+            <div className="feed-posts-container">
+                <div className="feed-empty-state">Sign in required for blog recommendations.</div>
             </div>
         );
     }

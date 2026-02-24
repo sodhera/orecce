@@ -394,7 +394,7 @@ img {
 }
 
 .feed-header-top {
-  padding: 12px 16px;
+  padding: 12px 10px 12px 16px;
 }
 
 .feed-header-top h1 {
@@ -956,7 +956,7 @@ img {
 .feed-categories {
   display: flex;
   gap: 8px;
-  padding: 12px 16px;
+  padding: 12px 10px 12px 16px;
   border-bottom: 1px solid var(--bg-border);
   overflow-x: auto;
   scrollbar-width: none;
@@ -2394,7 +2394,7 @@ img {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 10px 10px 16px;
+  padding: 10px 4px 16px 10px;
 }
 
 .feed-slide-shell {
@@ -3025,10 +3025,6 @@ img {
 
   .feed-posts-slides {
     padding: 8px 8px 12px;
-  }
-
-  .feed-slide-shell {
-    /* square on mobile too */
   }
 
   .post-card-slide {

@@ -128,30 +128,6 @@
   font-size: 1rem;
 }
 
-.authModeTabs {
-  width: 100%;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.authModeTab {
-  border: 1px solid var(--landing-border);
-  background: var(--landing-panel);
-  color: var(--landing-text-secondary);
-  border-radius: 999px;
-  padding: 0.5rem 0.8rem;
-  font-size: 0.9rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.authModeTabActive {
-  border-color: var(--landing-text);
-  color: var(--landing-text);
-}
-
 .error {
   width: 100%;
   margin-bottom: 1rem;
@@ -264,19 +240,19 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 1.5rem;
-  font-size: 0.85rem;
+  margin-top: 1.85rem;
+  font-size: 0.98rem;
 }
 
 .authLink {
   color: var(--landing-muted);
   text-decoration: none;
-  font-weight: 600;
+  font-weight: 700;
   transition: color 0.2s;
   background: transparent;
   border: none;
   cursor: pointer;
-  padding: 0;
+  padding: 0.35rem 0.4rem;
 }
 
 .authLink:hover {

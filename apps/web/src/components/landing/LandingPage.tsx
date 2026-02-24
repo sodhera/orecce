@@ -89,14 +89,15 @@ export default function LandingPage() {
 
           <section className={styles.right}>
             <div className={styles.authContainer}>
-              <h2>{isAuthenticated ? "Welcome back" : "Get Started"}</h2>
-              <p className={styles.authSubtitle}>
+              <h2>
                 {isAuthenticated
-                  ? "Your account is ready. Open your personalized feed."
-                  : authMode === "forgot"
-                    ? "Reset your password to get back in."
-                    : "Build a healthier content diet in minutes."}
-              </p>
+                  ? "Welcome back"
+                  : authMode === "signup"
+                    ? "Create Account"
+                    : authMode === "forgot"
+                      ? "Reset Password"
+                      : "Get Started"}
+              </h2>
 
               {isAuthenticated ? (
                 <div className={styles.loggedInPanel}>
@@ -106,31 +107,6 @@ export default function LandingPage() {
                 </div>
               ) : (
                 <>
-                  <div className={styles.authModeTabs}>
-                    <button
-                      type="button"
-                      className={`${styles.authModeTab} ${authMode === "login" ? styles.authModeTabActive : ""}`}
-                      onClick={() => {
-                        setAuthMode("login");
-                        setError(null);
-                        setNotice(null);
-                      }}
-                    >
-                      Log In
-                    </button>
-                    <button
-                      type="button"
-                      className={`${styles.authModeTab} ${authMode === "signup" ? styles.authModeTabActive : ""}`}
-                      onClick={() => {
-                        setAuthMode("signup");
-                        setError(null);
-                        setNotice(null);
-                      }}
-                    >
-                      Sign Up
-                    </button>
-                  </div>
-
                   {error && <div className={styles.error}>{error}</div>}
                   {notice && <div className={styles.success}>{notice}</div>}
 
@@ -205,12 +181,14 @@ export default function LandingPage() {
                       type="button"
                       className={styles.authLink}
                       onClick={() => {
-                        setAuthMode("forgot");
+                        setAuthMode((prev) =>
+                          prev === "forgot" ? "login" : "forgot",
+                        );
                         setError(null);
                         setNotice(null);
                       }}
                     >
-                      Forgot password?
+                      {authMode === "forgot" ? "Back to login" : "Forgot password?"}
                     </button>
                     <button
                       type="button"

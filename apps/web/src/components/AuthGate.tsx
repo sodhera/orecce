@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactNode, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 
 interface AuthGateProps {
@@ -11,13 +11,15 @@ interface AuthGateProps {
 export default function AuthGate({ children }: AuthGateProps) {
     const { isAuthenticated, loading, setShowAuthModal } = useAuth();
     const pathname = usePathname();
+    const router = useRouter();
     const isPublicRoute = pathname === "/";
 
     useEffect(() => {
         if (!loading && !isAuthenticated && !isPublicRoute) {
-            setShowAuthModal(true);
+            setShowAuthModal(false);
+            router.replace("/");
         }
-    }, [loading, isAuthenticated, isPublicRoute, setShowAuthModal]);
+    }, [loading, isAuthenticated, isPublicRoute, router, setShowAuthModal]);
 
     if (!isPublicRoute && loading) {
         return (
@@ -30,22 +32,7 @@ export default function AuthGate({ children }: AuthGateProps) {
     }
 
     if (!isPublicRoute && !isAuthenticated) {
-        return (
-            <div className="app-layout">
-                <main className="feed">
-                    <div className="sports-login-panel">
-                        <p className="sports-login-title">Sign in to access Orecce</p>
-                        <button
-                            type="button"
-                            className="sports-login-btn"
-                            onClick={() => setShowAuthModal(true)}
-                        >
-                            Log in / Sign up
-                        </button>
-                    </div>
-                </main>
-            </div>
-        );
+        return null;
     }
 
     return <>{children}</>;

@@ -16,7 +16,8 @@
 
 html,
 body {
-  height: 100%;
+  height: 100vh;
+  overflow: hidden;
   background: var(--bg-primary);
   color: var(--text-primary);
   font-family: var(--font-sans);
@@ -59,7 +60,7 @@ img {
 .app-layout {
   display: flex;
   justify-content: center;
-  min-height: 100vh;
+  height: 100vh;
   max-width: 1265px;
   margin: 0 auto;
 }
@@ -361,7 +362,9 @@ img {
   width: var(--feed-width);
   border-left: 1px solid var(--bg-border);
   border-right: 1px solid var(--bg-border);
-  min-height: 100vh;
+  height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
   flex-shrink: 0;
 }
 

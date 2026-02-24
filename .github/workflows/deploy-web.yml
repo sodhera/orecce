@@ -45,10 +45,6 @@ jobs:
             echo "Missing required secret: VERCEL_PROJECT_ID"
             exit 1
           fi
-          if [ -z "$API_BACKEND_BASE_URL" ]; then
-            echo "Missing required variable: API_BACKEND_BASE_URL"
-            exit 1
-          fi
 
       - name: Install web dependencies
         run: npm --prefix apps/web ci

@@ -10,9 +10,7 @@ const nextConfig: NextConfig = {
   async rewrites() {
     const configuredApiBaseUrl =
       process.env.API_BACKEND_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL;
-    if (process.env.NODE_ENV === "production" && !configuredApiBaseUrl?.trim()) {
-      throw new Error("Missing API_BACKEND_BASE_URL (or NEXT_PUBLIC_API_BASE_URL) for production web build.");
-    }
+
     const apiBaseUrl =
       normalizeBaseUrl(configuredApiBaseUrl ?? localApiBaseUrl);
     return [

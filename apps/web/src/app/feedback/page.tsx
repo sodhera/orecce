@@ -71,12 +71,6 @@ export default function FeedbackPage() {
                 </div>
 
                 <div className="fb-page">
-                    {/* Hero */}
-                    <div className="fb-hero">
-                        <div className="fb-hero-icon">💡</div>
-                        <h2 className="fb-hero-title">How can we improve?</h2>
-                    </div>
-
                     {/* Success state */}
                     {submitStatus === "success" ? (
                         <div className="fb-success">
@@ -96,9 +90,7 @@ export default function FeedbackPage() {
                         <form className="fb-form" onSubmit={handleSubmit}>
                             {/* Message */}
                             <div className="fb-field">
-                                <label className="fb-label" htmlFor="fb-message">
-                                    Your message
-                                </label>
+                                <h2 className="fb-hero-title" style={{ paddingBottom: '16px', textAlign: 'left', fontSize: '24px' }}>How can we improve?</h2>
                                 <textarea
                                     id="fb-message"
                                     className="fb-textarea"

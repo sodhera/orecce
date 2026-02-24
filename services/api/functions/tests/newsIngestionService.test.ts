@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { NewsIngestionService } from "../src/news/newsIngestionService";
+import { NewsIngestionService } from "@orecce/api-core/src/news/newsIngestionService";
 import {
   NewsSourceConfig,
   NewsSyncRepository,
@@ -7,7 +7,7 @@ import {
   NewsUpsertResult,
   ParsedFeedArticle,
   SourceSyncStateInput
-} from "../src/news/types";
+} from "@orecce/api-core/src/news/types";
 
 class FakeNewsRepository implements NewsSyncRepository {
   public readonly sourceStates: SourceSyncStateInput[] = [];

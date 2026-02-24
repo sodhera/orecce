@@ -17,7 +17,7 @@ import {
   isSportsRefreshSchedulerEnabled,
   shouldFetchNewsFullText,
   shouldFetchSportsNewsFullText
-} from "../src/config/runtimeConfig";
+} from "@orecce/api-core/src/config/runtimeConfig";
 
 const ORIGINAL_ENV = { ...process.env };
 

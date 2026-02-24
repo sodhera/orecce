@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { SportId } from "../src/news/sportsNewsSources";
-import { SportsGameDraft, SportsNewsService, SportsStory } from "../src/news/sportsNewsService";
-import { UserSportsFeedItem, UserSportsNewsRepository, UserSportsSyncState } from "../src/news/userSportsNewsRepository";
-import { UserSportsNewsService } from "../src/news/userSportsNewsService";
+import { SportId } from "@orecce/api-core/src/news/sportsNewsSources";
+import { SportsGameDraft, SportsNewsService, SportsStory } from "@orecce/api-core/src/news/sportsNewsService";
+import { UserSportsFeedItem, UserSportsNewsRepository, UserSportsSyncState } from "@orecce/api-core/src/news/userSportsNewsRepository";
+import { UserSportsNewsService } from "@orecce/api-core/src/news/userSportsNewsService";
 
 class InMemoryUserSportsNewsRepository implements UserSportsNewsRepository {
   private readonly rows = new Map<string, SportsStory[]>();

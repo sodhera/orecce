@@ -26,8 +26,8 @@
       "@/*": [
         "./src/*"
       ],
-      "@api/*": [
-        "../../services/api/functions/src/*"
+      "@orecce/api-core/src/*": [
+        "../../packages/api-core/src/*"
       ]
     }
   },

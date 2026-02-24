@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseFeedXml } from "../src/news/feedParser";
+import { parseFeedXml } from "@orecce/api-core/src/news/feedParser";
 
 describe("feedParser", () => {
   it("parses RSS 2.0 items and normalizes link tracking params", () => {

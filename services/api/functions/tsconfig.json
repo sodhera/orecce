@@ -8,7 +8,20 @@
     "resolveJsonModule": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "types": ["node", "vitest/globals"]
+    "types": [
+      "node",
+      "vitest/globals"
+    ],
+    "paths": {
+      "@orecce/api-core/src/*": [
+        "../../packages/api-core/src/*"
+      ]
+    }
   },
-  "include": ["src/**/*.ts", "api/**/*.ts", "tests/**/*.ts", "scripts/**/*.ts"]
+  "include": [
+    "src/**/*.ts",
+    "api/**/*.ts",
+    "tests/**/*.ts",
+    "scripts/**/*.ts"
+  ]
 }

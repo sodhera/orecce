@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticate } from "@/app/api/middleware";
 import { getDeps } from "@/app/api/init";
-import { generatePostRequestSchema } from "@api/validation/requestValidation";
-import { normalizeProfileKey } from "@api/utils/text";
-import { ApiError } from "@api/types/errors";
+import { generatePostRequestSchema } from "@orecce/api-core/src/validation/requestValidation";
+import { normalizeProfileKey } from "@orecce/api-core/src/utils/text";
+import { ApiError } from "@orecce/api-core/src/types/errors";
 
 export async function POST(req: NextRequest) {
     try {

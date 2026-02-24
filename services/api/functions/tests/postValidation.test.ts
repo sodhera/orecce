@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validatePostContent } from "../src/validation/postValidation";
+import { validatePostContent } from "@orecce/api-core/src/validation/postValidation";
 
 const basePost = {
   title: "Apple turnaround moment",

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { ParsedFeedArticle } from "../src/news/types";
-import { SportsNewsService } from "../src/news/sportsNewsService";
+import { ParsedFeedArticle } from "@orecce/api-core/src/news/types";
+import { SportsNewsService } from "@orecce/api-core/src/news/sportsNewsService";
 
 const ORIGINAL_ENV = { ...process.env };
 

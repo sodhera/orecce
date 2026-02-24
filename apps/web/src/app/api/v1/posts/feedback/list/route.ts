@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
 import { authenticate, ok, withErrorHandler } from "@/app/api/middleware";
 import { getDeps } from "@/app/api/init";
-import { listFeedbackRequestSchema } from "@api/validation/requestValidation";
-import { ApiError } from "@api/types/errors";
+import { listFeedbackRequestSchema } from "@orecce/api-core/src/validation/requestValidation";
+import { ApiError } from "@orecce/api-core/src/types/errors";
 
 export const POST = withErrorHandler(async (req: NextRequest) => {
     const identity = await authenticate(req);

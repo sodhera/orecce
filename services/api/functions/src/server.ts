@@ -6,25 +6,25 @@
  *   npm run dev:supabase
  */
 import "dotenv/config";
-import { createApp } from "./http/createApp";
-import { SupabaseAuthVerifier } from "./auth/supabaseAuthVerifier";
-import { AI_NEWS_ENABLED } from "./config/features";
-import { getDefaultPrefillPostsPerMode } from "./config/runtimeConfig";
-import { getSupabaseClient } from "./db/supabase";
-import { OpenAiGateway } from "./llm/openAiGateway";
-import { PostgresNewsRepository } from "./news/postgresNewsRepository";
-import { DEFAULT_NEWS_SOURCES } from "./news/newsSources";
-import { NewsIngestionService } from "./news/newsIngestionService";
-import { PostgresReccesRepository } from "./recces/postgresReccesRepository";
-import { PostgresReccesUserProfileRepository } from "./recces/postgresReccesUserProfileRepository";
-import { SportsNewsService } from "./news/sportsNewsService";
-import { PostgresUserSportsNewsRepository } from "./news/postgresUserSportsNewsRepository";
-import { UserSportsNewsService } from "./news/userSportsNewsService";
-import { PostgresRepository } from "./repositories/postgresRepository";
-import { PostGenerationService } from "./services/postGenerationService";
-import { PrefillService } from "./services/prefillService";
-import { ReccesRecommendationService } from "./services/reccesRecommendationService";
-import { logInfo } from "./utils/logging";
+import { createApp } from "@orecce/api-core/src/http/createApp";
+import { SupabaseAuthVerifier } from "@orecce/api-core/src/auth/supabaseAuthVerifier";
+import { AI_NEWS_ENABLED } from "@orecce/api-core/src/config/features";
+import { getDefaultPrefillPostsPerMode } from "@orecce/api-core/src/config/runtimeConfig";
+import { getSupabaseClient } from "@orecce/api-core/src/db/supabase";
+import { OpenAiGateway } from "@orecce/api-core/src/llm/openAiGateway";
+import { PostgresNewsRepository } from "@orecce/api-core/src/news/postgresNewsRepository";
+import { DEFAULT_NEWS_SOURCES } from "@orecce/api-core/src/news/newsSources";
+import { NewsIngestionService } from "@orecce/api-core/src/news/newsIngestionService";
+import { PostgresReccesRepository } from "@orecce/api-core/src/recces/postgresReccesRepository";
+import { PostgresReccesUserProfileRepository } from "@orecce/api-core/src/recces/postgresReccesUserProfileRepository";
+import { SportsNewsService } from "@orecce/api-core/src/news/sportsNewsService";
+import { PostgresUserSportsNewsRepository } from "@orecce/api-core/src/news/postgresUserSportsNewsRepository";
+import { UserSportsNewsService } from "@orecce/api-core/src/news/userSportsNewsService";
+import { PostgresRepository } from "@orecce/api-core/src/repositories/postgresRepository";
+import { PostGenerationService } from "@orecce/api-core/src/services/postGenerationService";
+import { PrefillService } from "@orecce/api-core/src/services/prefillService";
+import { ReccesRecommendationService } from "@orecce/api-core/src/services/reccesRecommendationService";
+import { logInfo } from "@orecce/api-core/src/utils/logging";
 
 const supabase = getSupabaseClient();
 

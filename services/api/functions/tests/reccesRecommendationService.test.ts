@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { ReccesEssayDocument, ReccesRepository } from "../src/recces/types";
-import { InMemoryReccesUserProfileRepository } from "../src/recces/reccesUserProfileRepository";
+import { ReccesEssayDocument, ReccesRepository } from "@orecce/api-core/src/recces/types";
+import { InMemoryReccesUserProfileRepository } from "@orecce/api-core/src/recces/reccesUserProfileRepository";
 import {
   ReccesRecommendationService,
   buildReccesPostId
-} from "../src/services/reccesRecommendationService";
+} from "@orecce/api-core/src/services/reccesRecommendationService";
 import { InMemoryRepository } from "./testDoubles";
 
 class FakeReccesRepository implements ReccesRepository {

@@ -4,8 +4,8 @@ import * as functionsV1 from "firebase-functions/v1";
 import { onRequest } from "firebase-functions/v2/https";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import { onSchedule } from "firebase-functions/v2/scheduler";
-import { FirebaseAuthVerifier } from "./auth/firebaseAuthVerifier";
-import { AI_NEWS_ENABLED } from "./config/features";
+import { FirebaseAuthVerifier } from "@orecce/api-core/src/auth/firebaseAuthVerifier";
+import { AI_NEWS_ENABLED } from "@orecce/api-core/src/config/features";
 import {
   getDefaultPrefillPostsPerMode,
   getNewsArticleConcurrency,
@@ -20,24 +20,24 @@ import {
   isNewsSyncEnabled,
   isSportsRefreshSchedulerEnabled,
   shouldFetchNewsFullText
-} from "./config/runtimeConfig";
-import { createApp } from "./http/createApp";
-import { OpenAiGateway } from "./llm/openAiGateway";
-import { FirestoreNewsRepository } from "./news/firestoreNewsRepository";
-import { NewsReadService } from "./news/newsReadService";
-import { DEFAULT_NEWS_SOURCES } from "./news/newsSources";
-import { NewsIngestionService } from "./news/newsIngestionService";
-import { FirestoreReccesRepository } from "./recces/firestoreReccesRepository";
-import { FirestoreReccesUserProfileRepository } from "./recces/firestoreReccesUserProfileRepository";
-import { SportsNewsService } from "./news/sportsNewsService";
-import { parseSportId, SPORT_IDS } from "./news/sportsNewsSources";
-import { FirestoreUserSportsNewsRepository } from "./news/userSportsNewsRepository";
-import { UserSportsNewsService } from "./news/userSportsNewsService";
-import { FirestoreRepository } from "./repositories/firestoreRepository";
-import { logError, logInfo } from "./utils/logging";
-import { PrefillService } from "./services/prefillService";
-import { PostGenerationService } from "./services/postGenerationService";
-import { ReccesRecommendationService } from "./services/reccesRecommendationService";
+} from "@orecce/api-core/src/config/runtimeConfig";
+import { createApp } from "@orecce/api-core/src/http/createApp";
+import { OpenAiGateway } from "@orecce/api-core/src/llm/openAiGateway";
+import { FirestoreNewsRepository } from "@orecce/api-core/src/news/firestoreNewsRepository";
+import { NewsReadService } from "@orecce/api-core/src/news/newsReadService";
+import { DEFAULT_NEWS_SOURCES } from "@orecce/api-core/src/news/newsSources";
+import { NewsIngestionService } from "@orecce/api-core/src/news/newsIngestionService";
+import { FirestoreReccesRepository } from "@orecce/api-core/src/recces/firestoreReccesRepository";
+import { FirestoreReccesUserProfileRepository } from "@orecce/api-core/src/recces/firestoreReccesUserProfileRepository";
+import { SportsNewsService } from "@orecce/api-core/src/news/sportsNewsService";
+import { parseSportId, SPORT_IDS } from "@orecce/api-core/src/news/sportsNewsSources";
+import { FirestoreUserSportsNewsRepository } from "@orecce/api-core/src/news/userSportsNewsRepository";
+import { UserSportsNewsService } from "@orecce/api-core/src/news/userSportsNewsService";
+import { FirestoreRepository } from "@orecce/api-core/src/repositories/firestoreRepository";
+import { logError, logInfo } from "@orecce/api-core/src/utils/logging";
+import { PrefillService } from "@orecce/api-core/src/services/prefillService";
+import { PostGenerationService } from "@orecce/api-core/src/services/postGenerationService";
+import { ReccesRecommendationService } from "@orecce/api-core/src/services/reccesRecommendationService";
 
 initializeApp();
 
@@ -63,9 +63,9 @@ const newsRepository = AI_NEWS_ENABLED ? new FirestoreNewsRepository(getFirestor
 const newsReadService = AI_NEWS_ENABLED ? new NewsReadService(getFirestore()) : undefined;
 const newsIngestionService = AI_NEWS_ENABLED && newsRepository
   ? new NewsIngestionService({
-      repository: newsRepository,
-      sources: DEFAULT_NEWS_SOURCES
-    })
+    repository: newsRepository,
+    sources: DEFAULT_NEWS_SOURCES
+  })
   : null;
 const app = createApp({
   repository,

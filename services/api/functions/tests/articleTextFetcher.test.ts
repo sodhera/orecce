@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractArticleTextVerbatim } from "../src/news/articleTextFetcher";
+import { extractArticleTextVerbatim } from "@orecce/api-core/src/news/articleTextFetcher";
 
 describe("articleTextFetcher", () => {
   it("prefers JSON-LD articleBody when present", () => {

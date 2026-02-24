@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_PROFILE_BY_MODE } from "../src/services/prefillBlueprint";
-import { COMMON_PREFILL_DATASET_USER_ID, PrefillService } from "../src/services/prefillService";
-import { normalizeProfileKey } from "../src/utils/text";
+import { DEFAULT_PROFILE_BY_MODE } from "@orecce/api-core/src/services/prefillBlueprint";
+import { COMMON_PREFILL_DATASET_USER_ID, PrefillService } from "@orecce/api-core/src/services/prefillService";
+import { normalizeProfileKey } from "@orecce/api-core/src/utils/text";
 import { FakeGateway, InMemoryRepository } from "./testDoubles";
 
 describe("PrefillService", () => {

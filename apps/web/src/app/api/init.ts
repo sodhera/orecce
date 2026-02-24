@@ -3,19 +3,19 @@
  * Every Next.js API route imports `deps` from here.
  */
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
-import { SupabaseAuthVerifier } from "@api/auth/supabaseAuthVerifier";
-import { AI_NEWS_ENABLED } from "@api/config/features";
-import { getDefaultPrefillPostsPerMode } from "@api/config/runtimeConfig";
-import { OpenAiGateway } from "@api/llm/openAiGateway";
-import { PostgresReccesRepository } from "@api/recces/postgresReccesRepository";
-import { PostgresReccesUserProfileRepository } from "@api/recces/postgresReccesUserProfileRepository";
-import { SportsNewsService } from "@api/news/sportsNewsService";
-import { PostgresUserSportsNewsRepository } from "@api/news/postgresUserSportsNewsRepository";
-import { UserSportsNewsService } from "@api/news/userSportsNewsService";
-import { PostgresRepository } from "@api/repositories/postgresRepository";
-import { PostGenerationService } from "@api/services/postGenerationService";
-import { PrefillService } from "@api/services/prefillService";
-import { ReccesRecommendationService } from "@api/services/reccesRecommendationService";
+import { SupabaseAuthVerifier } from "@orecce/api-core/src/auth/supabaseAuthVerifier";
+import { AI_NEWS_ENABLED } from "@orecce/api-core/src/config/features";
+import { getDefaultPrefillPostsPerMode } from "@orecce/api-core/src/config/runtimeConfig";
+import { OpenAiGateway } from "@orecce/api-core/src/llm/openAiGateway";
+import { PostgresReccesRepository } from "@orecce/api-core/src/recces/postgresReccesRepository";
+import { PostgresReccesUserProfileRepository } from "@orecce/api-core/src/recces/postgresReccesUserProfileRepository";
+import { SportsNewsService } from "@orecce/api-core/src/news/sportsNewsService";
+import { PostgresUserSportsNewsRepository } from "@orecce/api-core/src/news/postgresUserSportsNewsRepository";
+import { UserSportsNewsService } from "@orecce/api-core/src/news/userSportsNewsService";
+import { PostgresRepository } from "@orecce/api-core/src/repositories/postgresRepository";
+import { PostGenerationService } from "@orecce/api-core/src/services/postGenerationService";
+import { PrefillService } from "@orecce/api-core/src/services/prefillService";
+import { ReccesRecommendationService } from "@orecce/api-core/src/services/reccesRecommendationService";
 
 function getSupabase(): SupabaseClient {
     const url = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";

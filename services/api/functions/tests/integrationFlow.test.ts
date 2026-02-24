@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { normalizeProfileKey } from "../src/utils/text";
-import { PostGenerationService } from "../src/services/postGenerationService";
+import { normalizeProfileKey } from "@orecce/api-core/src/utils/text";
+import { PostGenerationService } from "@orecce/api-core/src/services/postGenerationService";
 import { FakeGateway, InMemoryRepository } from "./testDoubles";
 
 describe("integration flow (no network)", () => {

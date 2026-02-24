@@ -2,8 +2,8 @@
  * Shared auth + error helpers for Next.js API routes.
  */
 import { NextRequest, NextResponse } from "next/server";
-import { AuthIdentity } from "@api/auth/types";
-import { ApiError } from "@api/types/errors";
+import { AuthIdentity } from "@orecce/api-core/src/auth/types";
+import { ApiError } from "@orecce/api-core/src/types/errors";
 import { getDeps } from "./init";
 
 /**

@@ -1,6 +1,11 @@
 {
   "name": "orecce-monorepo",
   "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/web",
+    "services/api/functions"
+  ],
   "scripts": {
     "web:dev": "npm --prefix apps/web run dev",
     "mobile:start": "npm --prefix apps/mobile run start",

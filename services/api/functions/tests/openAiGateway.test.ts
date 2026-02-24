@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { OpenAiGateway } from "../src/llm/openAiGateway";
-import { ApiError } from "../src/types/errors";
+import { OpenAiGateway } from "@orecce/api-core/src/llm/openAiGateway";
+import { ApiError } from "@orecce/api-core/src/types/errors";
 
 const ORIGINAL_ENV = { ...process.env };
 const ORIGINAL_FETCH = global.fetch;

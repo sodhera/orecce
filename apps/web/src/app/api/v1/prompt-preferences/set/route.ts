@@ -1,0 +1,20 @@
+import { NextRequest } from "next/server";
+import { authenticate, ok, withErrorHandler } from "@/app/api/middleware";
+import { getDeps } from "@/app/api/init";
+import { setPromptPreferencesSchema } from "@api/validation/requestValidation";
+import { ApiError } from "@api/types/errors";
+
+export const POST = withErrorHandler(async (req: NextRequest) => {
+    const identity = await authenticate(req);
+    const body = await req.json();
+    const parsed = setPromptPreferencesSchema.safeParse(body);
+    if (!parsed.success) {
+        throw new ApiError(400, "bad_request", "Invalid prompt preference payload.", parsed.error.flatten());
+    }
+    const { repository } = getDeps();
+    const preferences = await repository.setPromptPreferences(identity.uid, {
+        biographyInstructions: parsed.data.biography_instructions,
+        nicheInstructions: parsed.data.niche_instructions
+    });
+    return ok(preferences);
+});

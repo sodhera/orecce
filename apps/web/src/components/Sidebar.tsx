@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { AiFillHome, AiOutlineHome } from "react-icons/ai";
-import { BsBookmark, BsBookmarkFill } from "react-icons/bs";
+import { BsBookmark, BsBookmarkFill, BsHeart, BsHeartFill } from "react-icons/bs";
 import {
     IoChatbubbleEllipsesOutline,
     IoLogOutOutline,
@@ -13,71 +13,54 @@ import {
     IoNotifications,
     IoNotificationsOutline,
     IoSettingsOutline,
-    IoSparklesOutline,
-    IoSparkles,
     IoSunnyOutline,
 } from "react-icons/io5";
 import { MdExplore, MdOutlineExplore } from "react-icons/md";
-import { MdSportsSoccer } from "react-icons/md";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
-import { AI_NEWS_ENABLED } from "@/config/features";
 
-const baseNavItems: Array<{
+const navItems: Array<{
     label: string;
     href?: string;
     iconOutline: ReactNode;
     iconFilled?: ReactNode;
 }> = [
-    {
-        label: "Home",
-        href: "/",
-        iconOutline: <AiOutlineHome aria-hidden="true" />,
-        iconFilled: <AiFillHome aria-hidden="true" />,
-    },
-    {
-        label: "Sports",
-        href: "/sports",
-        iconOutline: <MdSportsSoccer aria-hidden="true" />,
-        iconFilled: <MdSportsSoccer aria-hidden="true" />,
-    },
-    {
-        label: "Discover",
-        href: "/discover",
-        iconOutline: <MdOutlineExplore aria-hidden="true" />,
-        iconFilled: <MdExplore aria-hidden="true" />,
-    },
-    {
-        label: "Saved",
-        href: "/saved",
-        iconOutline: <BsBookmark aria-hidden="true" />,
-        iconFilled: <BsBookmarkFill aria-hidden="true" />,
-    },
-    {
-        label: "Notifications",
-        href: "/notifications",
-        iconOutline: <IoNotificationsOutline aria-hidden="true" />,
-        iconFilled: <IoNotifications aria-hidden="true" />,
-    },
-    {
-        label: "Feedback",
-        href: "mailto:feedback@orecce.app?subject=Orecce%20Web%20Feedback",
-        iconOutline: <IoChatbubbleEllipsesOutline aria-hidden="true" />,
-    },
-];
-
-const navItems = AI_NEWS_ENABLED
-    ? [
-        ...baseNavItems.slice(0, 2),
         {
-            label: "AI News",
-            href: "/ai-news",
-            iconOutline: <IoSparklesOutline aria-hidden="true" />,
-            iconFilled: <IoSparkles aria-hidden="true" />,
+            label: "Home",
+            href: "/",
+            iconOutline: <AiOutlineHome aria-hidden="true" />,
+            iconFilled: <AiFillHome aria-hidden="true" />,
         },
-        ...baseNavItems.slice(2),
-    ]
-    : baseNavItems;
+        {
+            label: "Discover",
+            href: "/discover",
+            iconOutline: <MdOutlineExplore aria-hidden="true" />,
+            iconFilled: <MdExplore aria-hidden="true" />,
+        },
+        {
+            label: "Liked",
+            href: "/liked",
+            iconOutline: <BsHeart aria-hidden="true" />,
+            iconFilled: <BsHeartFill aria-hidden="true" />,
+        },
+        {
+            label: "Saved",
+            href: "/saved",
+            iconOutline: <BsBookmark aria-hidden="true" />,
+            iconFilled: <BsBookmarkFill aria-hidden="true" />,
+        },
+        {
+            label: "Notifications",
+            href: "/notifications",
+            iconOutline: <IoNotificationsOutline aria-hidden="true" />,
+            iconFilled: <IoNotifications aria-hidden="true" />,
+        },
+        {
+            label: "Feedback",
+            href: "/feedback",
+            iconOutline: <IoChatbubbleEllipsesOutline aria-hidden="true" />,
+        },
+    ];
 
 export default function Sidebar() {
     const { isAuthenticated, user, setShowAuthModal, logout } = useAuth();
@@ -87,7 +70,6 @@ export default function Sidebar() {
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
-    const [showSecurityTip, setShowSecurityTip] = useState(true);
     const userMenuRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
@@ -117,7 +99,6 @@ export default function Sidebar() {
             return;
         }
         setShowUserMenu(false);
-        setShowSecurityTip(true);
         setShowProfileModal(true);
     };
 
@@ -349,35 +330,6 @@ export default function Sidebar() {
                         <section className="profile-settings-content">
                             <h2 className="profile-settings-title">General</h2>
 
-                            {showSecurityTip && (
-                                <div className="profile-settings-security-card">
-                                    <button
-                                        className="profile-settings-security-close"
-                                        type="button"
-                                        aria-label="Dismiss card"
-                                        onClick={() => setShowSecurityTip(false)}
-                                    >
-                                        ✕
-                                    </button>
-                                    <div className="profile-settings-security-icon-wrap">
-                                        <svg viewBox="0 0 24 24">
-                                            <path d="M12 1l8 4v6c0 5.2-3.4 9.72-8 11-4.6-1.28-8-5.8-8-11V5l8-4zm0 3.2L6 7v4c0 3.9 2.4 7.35 6 8.56 3.6-1.21 6-4.66 6-8.56V7l-6-2.8zm0 2.8a3 3 0 013 3v1h1v6H8v-6h1v-1a3 3 0 013-3zm-1 4h2v-1a1 1 0 10-2 0v1z" />
-                                        </svg>
-                                    </div>
-                                    <h3>Secure your account</h3>
-                                    <p>
-                                        Add multi-factor authentication (MFA), like a passkey
-                                        or text message, to help protect your account.
-                                    </p>
-                                    <button
-                                        className="profile-settings-ghost-btn"
-                                        type="button"
-                                    >
-                                        Set up MFA
-                                    </button>
-                                </div>
-                            )}
-
                             <div className="profile-settings-row">
                                 <span>Appearance</span>
                                 <span>System ▾</span>
@@ -399,10 +351,9 @@ export default function Sidebar() {
                                 </div>
                                 <span>Manage ▾</span>
                             </div>
-                            <div className="profile-settings-row">
-                                <span>Sign out</span>
+                            <div className="profile-settings-row" style={{ borderBottom: 'none' }}>
                                 <button
-                                    className="profile-settings-signout"
+                                    className="profile-settings-signout profile-settings-signout-danger"
                                     type="button"
                                     onClick={() => openLogoutConfirm(true)}
                                 >

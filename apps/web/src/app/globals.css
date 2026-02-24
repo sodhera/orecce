@@ -1366,31 +1366,30 @@ img {
 .post-card-slide {
   position: relative;
   border: none;
-  border-radius: 26px;
-  min-height: min(78vh, 760px);
-  padding: 16px;
+  border-radius: 18px;
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  padding: 0;
   overflow: hidden;
   background:
     radial-gradient(circle at 86% 16%, var(--slide-tone-glow, #f97316) 0%, transparent 42%),
     linear-gradient(160deg, var(--slide-tone-a, #2563eb) 0%, var(--slide-tone-b, #7c3aed) 100%);
-  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.3);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
 }
 
 .post-card-slide:hover {
-  background:
-    radial-gradient(circle at 86% 16%, var(--slide-tone-glow, #f97316) 0%, transparent 42%),
-    linear-gradient(160deg, var(--slide-tone-a, #2563eb) 0%, var(--slide-tone-b, #7c3aed) 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 24px 72px rgba(0, 0, 0, 0.36);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.32);
 }
 
 .post-slide-sheen {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(15, 23, 42, 0.34) 0%, rgba(15, 23, 42, 0.06) 34%, rgba(2, 6, 23, 0.72) 100%);
+    linear-gradient(180deg, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.02) 40%, rgba(0, 0, 0, 0.5) 100%);
   pointer-events: none;
+  z-index: 1;
 }
 
 .post-slide-header {
@@ -1400,105 +1399,131 @@ img {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+  padding: 16px 16px 0;
 }
 
 .post-topic-badge-slide {
   color: #f8fafc;
-  border-color: rgba(226, 232, 240, 0.48);
-  background: rgba(15, 23, 42, 0.4);
+  border-color: rgba(226, 232, 240, 0.35);
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(6px);
+  font-size: 12px;
+  padding: 4px 10px;
 }
 
 .post-time-slide {
-  color: #e2e8f0;
-  font-size: 13px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
 }
 
 .post-slide-bottom {
-  position: absolute;
-  left: 16px;
-  right: 16px;
-  bottom: 16px;
-  display: flex;
-  align-items: flex-end;
-  gap: 12px;
+  position: relative;
   z-index: 2;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 16px 20px;
+  gap: 0;
 }
 
 .post-slide-copy {
   flex: 1;
   min-width: 0;
-  background: rgba(2, 6, 23, 0.5);
-  border: 1px solid rgba(226, 232, 240, 0.2);
-  border-radius: 18px;
-  padding: 12px 13px;
-  backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  backdrop-filter: none;
 }
 
 .post-title-slide {
-  margin-top: 0;
-  color: #f8fafc;
-  font-size: 19px;
-  line-height: 1.25;
+  margin: 0 0 12px;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .post-slide-content {
-  margin-top: 8px;
-  color: #e2e8f0;
-  max-height: 8.6em;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 16px;
+  line-height: 1.55;
   overflow: hidden;
-  mask-image: linear-gradient(180deg, #000 70%, transparent 100%);
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  mask-image: none;
 }
 
 .post-slide-content p {
-  margin-bottom: 4px;
+  margin-bottom: 8px;
+}
+
+.post-slide-content p:last-child {
+  margin-bottom: 0;
 }
 
 .post-source-link-slide {
-  margin-top: 8px;
-  color: #dbeafe;
+  margin-top: 10px;
+  color: rgba(255, 255, 255, 0.7);
   font-size: 12px;
 }
 
+/* Actions row at the bottom of the square */
 .post-slide-rail {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  z-index: 3;
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
 .post-card-slide .post-action {
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   border-radius: 9999px;
-  border: 1px solid rgba(226, 232, 240, 0.24);
-  background: rgba(15, 23, 42, 0.46);
-  color: #f8fafc;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(8px);
+  color: #fff;
   padding: 0;
+  font-size: 17px;
 }
 
 .post-card-slide .post-like:hover {
-  background: rgba(249, 24, 128, 0.2);
+  background: rgba(249, 24, 128, 0.25);
   color: #fecdd3;
 }
 
 .post-card-slide .post-save:hover {
-  background: rgba(56, 189, 248, 0.2);
+  background: rgba(56, 189, 248, 0.25);
   color: #e0f2fe;
 }
 
 .post-card-slide .post-like.active {
-  background: rgba(249, 24, 128, 0.22);
+  background: rgba(249, 24, 128, 0.3);
   border-color: rgba(249, 24, 128, 0.5);
+  color: #fb7185;
 }
 
 .post-card-slide .post-save.active {
-  background: rgba(56, 189, 248, 0.24);
+  background: rgba(56, 189, 248, 0.3);
   border-color: rgba(56, 189, 248, 0.55);
+  color: #38bdf8;
 }
 
 .post-carousel-controls-slide {
-  margin-top: 8px;
+  margin-top: 12px;
   justify-content: flex-start;
-  gap: 8px;
 }
 
 .post-carousel-button-slide {
@@ -2029,9 +2054,8 @@ img {
   font-size: 20px;
   font-weight: 700;
   color: var(--settings-title-fg);
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--settings-title-border);
-  margin-bottom: 14px;
+  padding-bottom: 8px;
+  margin-bottom: 0px;
   letter-spacing: -0.2px;
 }
 
@@ -2136,6 +2160,19 @@ img {
 
 .profile-settings-signout:hover {
   background: var(--settings-signout-hover-bg);
+}
+
+.profile-settings-signout-danger {
+  color: var(--danger);
+  border-color: rgba(244, 33, 46, 0.4);
+  font-weight: 600;
+  padding: 10px 16px;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+
+.profile-settings-signout-danger:hover {
+  background: var(--danger-soft-bg);
+  border-color: var(--danger);
 }
 
 .auth-close {
@@ -2343,7 +2380,6 @@ img {
 }
 
 .feed-slide-shell {
-  min-height: min(78vh, 760px);
   scroll-margin-top: 130px;
 }
 
@@ -2974,13 +3010,11 @@ img {
   }
 
   .feed-slide-shell {
-    min-height: 72vh;
+    /* square on mobile too */
   }
 
   .post-card-slide {
-    min-height: 72vh;
-    border-radius: 22px;
-    padding: 12px;
+    border-radius: 14px;
   }
 
   .post-slide-bottom {
@@ -3173,4 +3207,678 @@ img {
     font-size: 13px;
     padding: 7px 12px;
   }
+}
+
+/* ── Instagram-style Post Card ── */
+.ig-post {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.ig-post-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 4px;
+}
+
+.ig-post-author {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ig-post-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  object-fit: cover;
+}
+
+.ig-post-avatar-placeholder {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.ig-post-author-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.ig-post-author-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.ig-post-topic {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* ── The Square ── */
+.ig-post-square {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ig-post-sheen {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.08) 0%, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.35) 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.ig-post-counter {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 3;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 14px;
+  letter-spacing: 0.02em;
+}
+
+.ig-post-carousel {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.ig-post-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.ig-post-slide {
+  flex: 0 0 100%;
+  width: 100%;
+  height: 100%;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  scroll-snap-align: center;
+}
+
+.ig-post-content {
+  position: relative;
+  width: 100%;
+  max-height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.ig-post-title {
+  color: #fff;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 14px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.ig-post-text {
+  color: #1a1a1a;
+  font-size: 15px;
+  line-height: 1.6;
+  overflow: hidden;
+}
+
+.ig-post-text strong {
+  color: #000;
+  font-weight: 700;
+}
+
+.ig-post-text p {
+  margin-bottom: 8px;
+}
+
+.ig-post-text p:last-child {
+  margin-bottom: 0;
+}
+
+/* ── Light mode: flip to dark square ── */
+:root[data-theme="light"] .ig-post-square,
+body[data-theme="light"] .ig-post-square {
+  background: #1a1a1a;
+}
+
+:root[data-theme="light"] .ig-post-text,
+body[data-theme="light"] .ig-post-text {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+:root[data-theme="light"] .ig-post-text strong,
+body[data-theme="light"] .ig-post-text strong {
+  color: #fff;
+}
+
+:root[data-theme="light"] .ig-post-counter,
+body[data-theme="light"] .ig-post-counter {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+:root[data-theme="light"] .ig-post-chevron,
+body[data-theme="light"] .ig-post-chevron {
+  background: rgba(255, 255, 255, 0.85);
+  color: #1a1a1a;
+}
+
+:root[data-theme="light"] .ig-post-dot,
+body[data-theme="light"] .ig-post-dot {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+:root[data-theme="light"] .ig-post-dot.active,
+body[data-theme="light"] .ig-post-dot.active {
+  background: #fff;
+}
+
+/* ── Chevrons on left/right edge ── */
+.ig-post-chevron {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 4;
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.1);
+  color: #333;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  transition: opacity 0.15s;
+  opacity: 0.85;
+}
+
+.ig-post-chevron:hover {
+  opacity: 1;
+}
+
+.ig-post-chevron-right {
+  right: 10px;
+}
+
+.ig-post-chevron-left {
+  left: 10px;
+}
+
+/* ── Dot indicators ── */
+.ig-post-dots {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  display: flex;
+  gap: 5px;
+}
+
+.ig-post-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.15);
+  transition: background 0.2s;
+}
+
+.ig-post-dot.active {
+  background: var(--accent);
+}
+
+/* ── Caption below actions ── */
+.ig-post-caption {
+  padding: 2px 4px 12px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--text-primary);
+}
+
+.ig-post-caption-author {
+  font-weight: 700;
+}
+
+/* ── Actions row below the square ── */
+.ig-post-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 4px 6px;
+}
+
+.ig-post-actions-left,
+.ig-post-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ig-post-actions .post-action {
+  width: auto;
+  height: auto;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  padding: 4px;
+  font-size: 22px;
+  border-radius: 0;
+}
+
+.ig-post-actions .post-like:hover {
+  color: #f91880;
+}
+
+.ig-post-actions .post-save:hover {
+  color: var(--text-primary);
+}
+
+.ig-post-actions .post-like.active {
+  color: #f91880;
+  background: transparent;
+  border: none;
+}
+
+.ig-post-actions .post-save.active {
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+}
+
+/* ── Author Discovery ── */
+.authors-loading,
+.authors-error,
+.authors-empty {
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.authors-error {
+  color: #e74c3c;
+}
+
+.authors-grid {
+  display: flex;
+  flex-direction: column;
+}
+
+.author-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px;
+  border-bottom: 1px solid var(--bg-border);
+  transition: background 0.15s;
+}
+
+.author-card:last-child {
+  border-bottom: none;
+}
+
+.author-card:hover {
+  background: var(--bg-hover);
+}
+
+.author-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.author-card-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 2px;
+}
+
+.author-card-bio {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.author-follow-btn {
+  flex-shrink: 0;
+  padding: 8px 20px;
+  border-radius: 9999px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--text-on-accent);
+}
+
+.author-follow-btn:hover {
+  background: var(--accent-hover);
+}
+
+.author-follow-btn.following {
+  background: transparent;
+  color: var(--text-primary);
+  border-color: var(--bg-border);
+}
+
+.author-follow-btn.following:hover {
+  border-color: #e74c3c;
+  color: #e74c3c;
+  background: rgba(231, 76, 60, 0.08);
+}
+
+/* ── Feedback Page ── */
+.fb-page {
+  padding: 24px 16px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.fb-hero {
+  text-align: center;
+  padding: 32px 24px 28px;
+}
+
+.fb-hero-icon {
+  font-size: 40px;
+  line-height: 1;
+  margin-bottom: 16px;
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.fb-hero-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.4px;
+  margin-bottom: 8px;
+}
+
+.fb-hero-sub {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  max-width: 340px;
+  margin: 0 auto;
+}
+
+/* Form */
+.fb-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.fb-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fb-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+/* Category chips */
+.fb-chips {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.fb-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1.5px solid var(--bg-border);
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.18s, box-shadow 0.18s;
+  text-align: left;
+}
+
+.fb-chip:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--text-secondary);
+}
+
+.fb-chip--active {
+  border-color: var(--accent);
+  background: var(--accent-soft-bg);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.fb-chip--active:hover:not(:disabled) {
+  background: var(--accent-soft-bg-strong);
+}
+
+.fb-chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.fb-chip-emoji {
+  font-size: 20px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.fb-chip-label {
+  line-height: 1.3;
+}
+
+/* Textarea */
+.fb-textarea {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1.5px solid var(--bg-border);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.55;
+  resize: vertical;
+  min-height: 130px;
+  outline: none;
+  transition: border-color 0.18s, box-shadow 0.18s;
+}
+
+.fb-textarea::placeholder {
+  color: var(--text-tertiary);
+}
+
+.fb-textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft-bg);
+}
+
+.fb-textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.fb-char-count {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  text-align: right;
+  margin-top: -4px;
+}
+
+/* Error banner */
+.fb-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: rgba(244, 33, 46, 0.08);
+  border: 1px solid rgba(244, 33, 46, 0.2);
+  color: var(--danger);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Submit button */
+.fb-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 15px 24px;
+  border-radius: 9999px;
+  background: var(--accent);
+  color: var(--text-on-accent);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  transition: background 0.18s, transform 0.12s, box-shadow 0.18s, opacity 0.18s;
+  box-shadow: 0 4px 16px rgba(29, 155, 240, 0.3);
+  margin-top: 4px;
+}
+
+.fb-submit:hover:not(:disabled) {
+  background: var(--accent-hover);
+  box-shadow: 0 6px 20px rgba(29, 155, 240, 0.4);
+  transform: translateY(-1px);
+}
+
+.fb-submit:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.fb-submit:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Spinner */
+.fb-submit-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: fb-spin 0.75s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes fb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Success state */
+.fb-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.fb-success-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(0, 186, 124, 0.12);
+  color: var(--success);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.fb-success-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.fb-success-body {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.55;
+  max-width: 300px;
+}
+
+.fb-success-reset {
+  margin-top: 8px;
+  padding: 10px 22px;
+  border-radius: 9999px;
+  border: 1.5px solid var(--bg-border);
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s;
+}
+
+.fb-success-reset:hover {
+  background: var(--bg-hover);
+  border-color: var(--text-secondary);
 }

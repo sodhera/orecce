@@ -1,6 +1,6 @@
 "use client";
 
-import { type CSSProperties, useMemo, useState } from "react";
+import { type CSSProperties, useMemo, useRef, useState, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import {
     BsBookmark,
@@ -30,6 +30,10 @@ export interface Post {
 
 interface PostCardProps {
     post: Post;
+    isLiked?: boolean;
+    isSaved?: boolean;
+    authorName?: string;
+    authorAvatar?: string | null;
     onLikeToggle?: (liked: boolean) => void;
     onSaveToggle?: (saved: boolean) => void;
     onSlideFlip?: (payload: {
@@ -37,6 +41,7 @@ interface PostCardProps {
         currentSlideIndex: number;
         slideCount: number;
     }) => void;
+    onLastSlide?: (postId: string) => void;
     onInteraction?: (payload: {
         postId: string;
         topic: string;
@@ -66,15 +71,22 @@ function buildSlidePalette(seed: string): CSSProperties {
 
 export default function PostCard({
     post,
+    isLiked: isLikedProp,
+    isSaved: isSavedProp,
+    authorName,
+    authorAvatar,
     onLikeToggle,
     onSaveToggle,
     onSlideFlip,
+    onLastSlide,
     onInteraction,
     variant = "default",
 }: PostCardProps) {
-    const [liked, setLiked] = useState(false);
-    const [saved, setSaved] = useState(false);
+    const [liked, setLiked] = useState(isLikedProp ?? false);
+    const [saved, setSaved] = useState(isSavedProp ?? false);
     const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
+    const carouselRef = useRef<HTMLDivElement>(null);
+    const lastSlideNotifiedRef = useRef(false);
     const isSlideVariant = variant === "slide";
 
     const slideCount = Math.max(1, post.slides.length);
@@ -88,15 +100,15 @@ export default function PostCard({
     );
     const canSlide = post.post_type === "carousel" && slideCount > 1;
 
-    const emitInteraction = (type: "like" | "save" | "flip" | "source") => {
+    const emitInteraction = useCallback((type: "like" | "save" | "flip" | "source") => {
         onInteraction?.({
             postId: post.id,
             topic: post.topic,
             type,
         });
-    };
+    }, [onInteraction, post.id, post.topic]);
 
-    const flipSlide = (nextIndex: number) => {
+    const flipSlide = useCallback((nextIndex: number) => {
         if (nextIndex < 0 || nextIndex >= slideCount || nextIndex === currentSlideIndex) {
             return;
         }
@@ -107,20 +119,47 @@ export default function PostCard({
             slideCount,
         });
         emitInteraction("flip");
-    };
+
+        // Fire onLastSlide once when user reaches the final slide
+        if (nextIndex === slideCount - 1 && !lastSlideNotifiedRef.current) {
+            lastSlideNotifiedRef.current = true;
+            onLastSlide?.(post.id);
+        }
+    }, [slideCount, currentSlideIndex, onSlideFlip, emitInteraction, onLastSlide, post.id]);
+
+    const scrollToSlide = useCallback((index: number) => {
+        if (!carouselRef.current) return;
+        const container = carouselRef.current;
+        const width = container.clientWidth;
+        container.scrollTo({
+            left: index * width,
+            behavior: "smooth"
+        });
+    }, [carouselRef]);
+
+    const handleScroll = useCallback(() => {
+        if (!carouselRef.current) return;
+        const container = carouselRef.current;
+        const scrollPosition = container.scrollLeft;
+        const slideWidth = container.clientWidth;
+        // Calculate which slide constitutes the majority of the view
+        const newIndex = Math.round(scrollPosition / slideWidth);
+
+        if (newIndex !== currentSlideIndex && newIndex >= 0 && newIndex < slideCount) {
+            flipSlide(newIndex);
+        }
+    }, [carouselRef, currentSlideIndex, slideCount, flipSlide]);
 
     const likeButton = (
         <button
             type="button"
             className={`post-action post-like ${liked ? "active" : ""}`}
-            onClick={() =>
-                setLiked((current) => {
-                    const next = !current;
-                    onLikeToggle?.(next);
-                    emitInteraction("like");
-                    return next;
-                })
-            }
+            onClick={() => {
+                const next = !liked;
+                setLiked(next);
+                onLikeToggle?.(next);
+                emitInteraction("like");
+            }}
             aria-label={liked ? "Unlike post" : "Like post"}
             title={liked ? "Unlike" : "Like"}
         >
@@ -136,14 +175,12 @@ export default function PostCard({
         <button
             type="button"
             className={`post-action post-save ${saved ? "active" : ""}`}
-            onClick={() =>
-                setSaved((current) => {
-                    const next = !current;
-                    onSaveToggle?.(next);
-                    emitInteraction("save");
-                    return next;
-                })
-            }
+            onClick={() => {
+                const next = !saved;
+                setSaved(next);
+                onSaveToggle?.(next);
+                emitInteraction("save");
+            }}
             aria-label={saved ? "Unsave post" : "Save post"}
             title={saved ? "Unsave" : "Save"}
         >
@@ -157,63 +194,97 @@ export default function PostCard({
 
     if (isSlideVariant) {
         return (
-            <article className="post-card post-card-slide" style={slideStyle}>
-                <div className="post-slide-sheen" aria-hidden="true" />
-                <div className="post-slide-header">
-                    <span className="post-topic-badge post-topic-badge-slide">{post.topic}</span>
-                    <span className="post-time post-time-slide">{post.date}</span>
-                </div>
-                <div className="post-slide-bottom">
-                    <div className="post-slide-copy">
-                        {post.title && <div className="post-title post-title-slide">{post.title}</div>}
-                        <div className="post-content post-markdown post-slide-content">
-                            <ReactMarkdown>{currentSlide?.text ?? ""}</ReactMarkdown>
+            <article className="ig-post">
+                {/* ── Author header (above the square) ── */}
+                <div className="ig-post-header">
+                    <div className="ig-post-author">
+                        <div className="ig-post-author-info">
+                            <span className="ig-post-author-name">{authorName ?? "Unknown"}</span>
+                            <span className="ig-post-topic">{post.topic}</span>
                         </div>
+                    </div>
+                </div>
 
-                        {canSlide && (
-                            <div className="post-carousel-controls post-carousel-controls-slide">
-                                <button
-                                    type="button"
-                                    className="post-carousel-button post-carousel-button-slide"
-                                    onClick={() => flipSlide(currentSlideIndex - 1)}
-                                    disabled={currentSlideIndex <= 0}
-                                    aria-label="Previous slide"
-                                >
-                                    <BsChevronLeft aria-hidden="true" />
-                                </button>
-                                <span className="post-carousel-progress post-carousel-progress-slide">
-                                    {currentSlideIndex + 1} / {slideCount}
-                                </span>
-                                <button
-                                    type="button"
-                                    className="post-carousel-button post-carousel-button-slide"
-                                    onClick={() => flipSlide(currentSlideIndex + 1)}
-                                    disabled={currentSlideIndex >= slideCount - 1}
-                                    aria-label="Next slide"
-                                >
-                                    <BsChevronRight aria-hidden="true" />
-                                </button>
+                {/* ── Square content card ── */}
+                <div className="ig-post-square">
+                    {/* Slide counter badge — top right */}
+                    {canSlide && (
+                        <span className="ig-post-counter">
+                            {currentSlideIndex + 1}/{slideCount}
+                        </span>
+                    )}
+
+                    {/* Scrollable Carousel Container */}
+                    <div
+                        className="ig-post-carousel"
+                        ref={carouselRef}
+                        onScroll={handleScroll}
+                    >
+                        {post.slides.map((slide, i) => (
+                            <div key={`slide-${post.id}-${i}`} className="ig-post-slide">
+                                <div className="ig-post-content">
+                                    <div className="ig-post-text post-markdown">
+                                        <ReactMarkdown>{slide.text}</ReactMarkdown>
+                                    </div>
+                                </div>
                             </div>
-                        )}
-
-                        {post.sourceUrl && (
-                            <a
-                                className="post-source-link post-source-link-slide"
-                                href={post.sourceUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                onClick={() => emitInteraction("source")}
-                            >
-                                Read original source
-                            </a>
-                        )}
+                        ))}
                     </div>
 
-                    <div className="post-slide-rail">
+                    {/* Right-edge chevron */}
+                    {canSlide && currentSlideIndex < slideCount - 1 && (
+                        <button
+                            type="button"
+                            className="ig-post-chevron ig-post-chevron-right"
+                            onClick={() => scrollToSlide(currentSlideIndex + 1)}
+                            aria-label="Next slide"
+                        >
+                            <BsChevronRight aria-hidden="true" />
+                        </button>
+                    )}
+
+                    {/* Left-edge chevron */}
+                    {canSlide && currentSlideIndex > 0 && (
+                        <button
+                            type="button"
+                            className="ig-post-chevron ig-post-chevron-left"
+                            onClick={() => scrollToSlide(currentSlideIndex - 1)}
+                            aria-label="Previous slide"
+                        >
+                            <BsChevronLeft aria-hidden="true" />
+                        </button>
+                    )}
+
+                    {/* Dot indicators at bottom center */}
+                    {canSlide && (
+                        <div className="ig-post-dots">
+                            {post.slides.map((_, i) => (
+                                <span
+                                    key={`dot-${post.id}-${i}`}
+                                    className={`ig-post-dot ${i === currentSlideIndex ? "active" : ""}`}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* ── Actions row (below the square) ── */}
+                <div className="ig-post-actions">
+                    <div className="ig-post-actions-left">
                         {likeButton}
+                    </div>
+                    <div className="ig-post-actions-right">
                         {saveButton}
                     </div>
                 </div>
+
+                {/* ── Caption (theme) below actions ── */}
+                {post.title && (
+                    <div className="ig-post-caption">
+                        <span className="ig-post-caption-author">{authorName ?? "Unknown"}</span>
+                        {" "}{post.title}
+                    </div>
+                )}
             </article>
         );
     }

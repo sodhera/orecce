@@ -1,31 +1,13 @@
-import Link from "next/link";
+"use client";
+
 import Sidebar from "@/components/Sidebar";
-
-const TRENDING_TOPICS = [
-    "AI biographies",
-    "Tech origin stories",
-    "Startup pivots",
-    "Future of health",
-    "Creator economics",
-    "Space innovation",
-];
-
-const FEATURED_COLLECTIONS = [
-    {
-        title: "Underrated Inventors",
-        summary: "12 short profiles of innovators who changed daily life.",
-    },
-    {
-        title: "Product Lessons From Famous Failures",
-        summary: "A look at big bets that missed and what teams learned.",
-    },
-    {
-        title: "Founders Before Their First Win",
-        summary: "Early setbacks and habits from well-known builders.",
-    },
-];
+import { useAuthors } from "@/hooks/useAuthors";
+import { useAuth } from "@/context/AuthContext";
 
 export default function DiscoverPage() {
+    const { isAuthenticated } = useAuth();
+    const { authors, followedIds, loading, error, toggleFollow } = useAuthors();
+
     return (
         <div className="app-layout">
             <Sidebar />
@@ -34,60 +16,76 @@ export default function DiscoverPage() {
                     <div className="feed-header-top">
                         <h1>Discover</h1>
                         <p className="utility-page-intro">
-                            Find new topics, people, and collections personalized
-                            for your interests.
+                            Browse authors and follow them to see their posts in
+                            your feed.
                         </p>
                     </div>
                 </div>
 
                 <div className="utility-page-body">
                     <section className="utility-card">
-                        <h2 className="utility-card-title">Trending now</h2>
-                        <div className="discover-chip-row">
-                            {TRENDING_TOPICS.map((topic) => (
-                                <button
-                                    key={topic}
-                                    type="button"
-                                    className="discover-chip"
-                                >
-                                    {topic}
-                                </button>
-                            ))}
-                        </div>
-                    </section>
+                        <h2 className="utility-card-title">Authors</h2>
 
-                    <section className="utility-card">
-                        <h2 className="utility-card-title">Featured collections</h2>
-                        <div className="discover-list">
-                            {FEATURED_COLLECTIONS.map((collection) => (
-                                <article
-                                    key={collection.title}
-                                    className="discover-list-item"
-                                >
-                                    <div>
-                                        <p className="discover-item-title">
-                                            {collection.title}
-                                        </p>
-                                        <p className="discover-item-summary">
-                                            {collection.summary}
-                                        </p>
-                                    </div>
-                                    <Link href="/" className="utility-link">
-                                        Open feed
-                                    </Link>
-                                </article>
-                            ))}
-                        </div>
+                        {loading ? (
+                            <div className="authors-loading">
+                                Loading authors…
+                            </div>
+                        ) : error ? (
+                            <div className="authors-error">Error: {error}</div>
+                        ) : authors.length === 0 ? (
+                            <div className="authors-empty">
+                                No authors available yet.
+                            </div>
+                        ) : (
+                            <div className="authors-grid">
+                                {authors.map((author) => {
+                                    const isFollowed = followedIds.has(
+                                        author.id,
+                                    );
+                                    return (
+                                        <article
+                                            key={author.id}
+                                            className="author-card"
+                                        >
+                                            <div className="author-card-info">
+                                                <h3 className="author-card-name">
+                                                    {author.name}
+                                                </h3>
+                                                {author.bio && (
+                                                    <p className="author-card-bio">
+                                                        {author.bio}
+                                                    </p>
+                                                )}
+                                            </div>
+                                            {isAuthenticated && (
+                                                <button
+                                                    type="button"
+                                                    className={`author-follow-btn ${isFollowed ? "following" : ""}`}
+                                                    onClick={() =>
+                                                        toggleFollow(author.id)
+                                                    }
+                                                >
+                                                    {isFollowed
+                                                        ? "Following"
+                                                        : "Follow"}
+                                                </button>
+                                            )}
+                                        </article>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </section>
                 </div>
             </main>
 
             <aside className="right-sidebar">
                 <div className="right-card right-new-section page-side-note">
-                    <h2 className="page-side-note-title">Discovery tips</h2>
+                    <h2 className="page-side-note-title">How it works</h2>
                     <p className="page-side-note-text">
-                        Follow 3-5 topics to improve your feed quality and get
-                        better recommendations faster.
+                        Follow authors to see their posts in your "All" feed.
+                        Posts you&apos;ve already read are automatically hidden
+                        so you always see fresh content.
                     </p>
                 </div>
             </aside>

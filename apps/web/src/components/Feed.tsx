@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef } from "react";
+import Link from "next/link";
 import PostCard from "./PostCard";
 import { useFeed } from "@/hooks/useFeed";
 import { useAuthors } from "@/hooks/useAuthors";
@@ -11,10 +12,18 @@ interface FeedProps {
     onModeChange?: (mode: string) => void;
 }
 
+const RECOMMENDED_COUNT = 3;
+
 export default function Feed({ mode, onModeChange }: FeedProps) {
-    const { authors, followedIds } = useAuthors();
+    const { authors, followedIds, toggleFollow } = useAuthors();
     const followedAuthors = useMemo(
         () => authors.filter((a) => followedIds.has(a.id)),
+        [authors, followedIds]
+    );
+
+    // Pick a few unfollowed authors to recommend
+    const recommendedAuthors = useMemo(
+        () => authors.filter((a) => !followedIds.has(a.id)).slice(0, RECOMMENDED_COUNT),
         [authors, followedIds]
     );
 
@@ -84,17 +93,59 @@ export default function Feed({ mode, onModeChange }: FeedProps) {
                         Loading posts…
                     </div>
                 ) : feed.items.length === 0 ? (
-                    <div
-                        style={{
-                            padding: 40,
-                            textAlign: "center",
-                            color: "var(--text-secondary)",
-                        }}
-                    >
-                        {feed.error
-                            ? `Error: ${feed.error}`
-                            : "No posts yet. Follow some authors to see content here."}
-                    </div>
+                    feed.error ? (
+                        <div
+                            style={{
+                                padding: 40,
+                                textAlign: "center",
+                                color: "var(--text-secondary)",
+                            }}
+                        >
+                            {`Error: ${feed.error}`}
+                        </div>
+                    ) : (
+                        <div className="feed-empty-state">
+                            <div className="feed-empty-icon">✦</div>
+                            <h2 className="feed-empty-title">Welcome to your feed</h2>
+                            <p className="feed-empty-subtitle">
+                                Follow authors to see their posts here. Here are a few to get you started:
+                            </p>
+
+                            {recommendedAuthors.length > 0 && (
+                                <div className="feed-recommended-authors">
+                                    {recommendedAuthors.map((author) => (
+                                        <div key={author.id} className="feed-rec-author-card">
+                                            <div className="feed-rec-author-avatar">
+                                                {author.avatar_url ? (
+                                                    // eslint-disable-next-line @next/next/no-img-element
+                                                    <img src={author.avatar_url} alt={author.name} />
+                                                ) : (
+                                                    <span>{author.name.charAt(0).toUpperCase()}</span>
+                                                )}
+                                            </div>
+                                            <div className="feed-rec-author-info">
+                                                <span className="feed-rec-author-name">{author.name}</span>
+                                                {author.bio && (
+                                                    <span className="feed-rec-author-bio">{author.bio}</span>
+                                                )}
+                                            </div>
+                                            <button
+                                                type="button"
+                                                className="feed-rec-follow-btn"
+                                                onClick={() => toggleFollow(author.id)}
+                                            >
+                                                Follow
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            <Link href="/discover" className="feed-empty-discover-link">
+                                Browse all authors →
+                            </Link>
+                        </div>
+                    )
                 ) : (
                     feed.items.map((item) => (
                         <div key={item.post.id} className="feed-slide-shell">

@@ -3905,3 +3905,155 @@ body[data-theme="light"] .ig-post-dot.active {
   background: var(--bg-hover);
   border-color: var(--text-secondary);
 }
+
+/* ── Feed empty state & recommended authors ── */
+.feed-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 24px 40px;
+  gap: 8px;
+}
+
+.feed-empty-icon {
+  font-size: 28px;
+  line-height: 1;
+  color: var(--accent);
+  margin-bottom: 4px;
+  animation: pulse-soft 2.4s ease-in-out infinite;
+}
+
+@keyframes pulse-soft {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.6;
+    transform: scale(0.92);
+  }
+}
+
+.feed-empty-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-primary);
+  text-align: center;
+  margin-bottom: 2px;
+}
+
+.feed-empty-subtitle {
+  font-size: 15px;
+  color: var(--text-secondary);
+  text-align: center;
+  line-height: 1.5;
+  max-width: 360px;
+  margin-bottom: 8px;
+}
+
+.feed-recommended-authors {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid var(--bg-border);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.feed-rec-author-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--bg-border);
+  transition: background 0.18s;
+}
+
+.feed-rec-author-card:last-child {
+  border-bottom: none;
+}
+
+.feed-rec-author-card:hover {
+  background: var(--bg-hover);
+}
+
+.feed-rec-author-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--post-avatar-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.feed-rec-author-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.feed-rec-author-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.feed-rec-author-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.feed-rec-author-bio {
+  font-size: 13px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.feed-rec-follow-btn {
+  flex-shrink: 0;
+  padding: 7px 18px;
+  border-radius: 9999px;
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+  transition: opacity 0.18s;
+}
+
+.feed-rec-follow-btn:hover {
+  opacity: 0.85;
+}
+
+.feed-empty-discover-link {
+  margin-top: 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent);
+  transition: opacity 0.18s;
+}
+
+.feed-empty-discover-link:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}

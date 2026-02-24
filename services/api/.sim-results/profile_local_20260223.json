@@ -1,0 +1,75 @@
+{
+  "config": {
+    "base": "http://127.0.0.1:8787",
+    "author_id": "paul_graham",
+    "users": 3,
+    "rounds_per_user": 10,
+    "recommend_limit": 8,
+    "recent_window": 5,
+    "auth_header_used": false,
+    "run_id": "profile_local_20260223"
+  },
+  "users": [
+    {
+      "userId": "rec-sim-user-1-profile_local_20260223",
+      "preferences": [
+        "user",
+        "users",
+        "support",
+        "startup",
+        "founder",
+        "iterate"
+      ],
+      "summary": {
+        "rounds": 10,
+        "first_half_relevance_ratio": 0.6,
+        "second_half_relevance_ratio": 0,
+        "relevance_lift": -0.6,
+        "upvotes": 2,
+        "downvotes": 0,
+        "no_feedback": 8
+      }
+    },
+    {
+      "userId": "rec-sim-user-2-profile_local_20260223",
+      "preferences": [
+        "investor",
+        "investors",
+        "fundraising",
+        "equity",
+        "term",
+        "round"
+      ],
+      "summary": {
+        "rounds": 10,
+        "first_half_relevance_ratio": 0,
+        "second_half_relevance_ratio": 0.4,
+        "relevance_lift": 0.4,
+        "upvotes": 1,
+        "downvotes": 0,
+        "no_feedback": 9
+      }
+    },
+    {
+      "userId": "rec-sim-user-3-profile_local_20260223",
+      "preferences": [
+        "lisp",
+        "compiler",
+        "language",
+        "programming",
+        "software",
+        "semantics"
+      ],
+      "summary": {
+        "rounds": 10,
+        "first_half_relevance_ratio": 0,
+        "second_half_relevance_ratio": 0.4,
+        "relevance_lift": 0.4,
+        "upvotes": 2,
+        "downvotes": 0,
+        "no_feedback": 8
+      }
+    }
+  ],
+  "total_runtime_ms": 124
+}

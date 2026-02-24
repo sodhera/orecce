@@ -1,0 +1,18 @@
+
+> dev:server
+> tsx scripts/dev-server.ts
+
+Local dev server listening on http://127.0.0.1:8787
+Endpoints: /health, /v1/users/me, /v1/posts/list, /v1/posts/generate, /v1/posts/feedback, /v1/posts/feedback/list, /v1/recommendations/recces
+{"timestamp":"2026-02-23T08:03:21.554Z","level":"INFO","event":"http.request.start","request_id":"1ad9c21d-a866-4a8b-b11c-fa16daa16219","method":"POST","path":"/v1/posts/feedback","query":{},"body":{"post_id":"paul_graham:startup:0","feedback_type":"upvote"}}
+{"timestamp":"2026-02-23T08:03:21.559Z","level":"INFO","event":"http.request.finish","request_id":"1ad9c21d-a866-4a8b-b11c-fa16daa16219","method":"POST","path":"/v1/posts/feedback","status":200,"duration_ms":5}
+{"timestamp":"2026-02-23T08:03:21.570Z","level":"INFO","event":"http.request.start","request_id":"29b85a3d-e577-4dbf-bc30-52f33698a657","method":"POST","path":"/v1/posts/feedback","query":{},"body":{"post_id":"paul_graham:startup2:0","feedback_type":"upvote"}}
+{"timestamp":"2026-02-23T08:03:21.571Z","level":"INFO","event":"http.request.finish","request_id":"29b85a3d-e577-4dbf-bc30-52f33698a657","method":"POST","path":"/v1/posts/feedback","status":200,"duration_ms":1}
+{"timestamp":"2026-02-23T08:03:21.574Z","level":"INFO","event":"http.request.start","request_id":"c4066b15-32be-4f92-979e-d3db1ef68e00","method":"POST","path":"/v1/posts/feedback","query":{},"body":{"post_id":"paul_graham:programming:0","feedback_type":"upvote"}}
+{"timestamp":"2026-02-23T08:03:21.574Z","level":"INFO","event":"http.request.finish","request_id":"c4066b15-32be-4f92-979e-d3db1ef68e00","method":"POST","path":"/v1/posts/feedback","status":200,"duration_ms":0}
+{"timestamp":"2026-02-23T08:03:21.576Z","level":"INFO","event":"http.request.start","request_id":"a9aef4bc-5356-4ea6-b597-d64b87ba01c6","method":"POST","path":"/v1/posts/feedback","query":{},"body":{"post_id":"paul_graham:programming:1","feedback_type":"upvote"}}
+{"timestamp":"2026-02-23T08:03:21.576Z","level":"INFO","event":"http.request.finish","request_id":"a9aef4bc-5356-4ea6-b597-d64b87ba01c6","method":"POST","path":"/v1/posts/feedback","status":200,"duration_ms":0}
+{"timestamp":"2026-02-23T08:03:21.578Z","level":"INFO","event":"http.request.start","request_id":"f2272aaa-e335-4029-af2e-bb1e4847bfe7","method":"POST","path":"/v1/recommendations/recces","query":{},"body":{"author_id":"paul_graham","limit":3,"has_seed_post_id":false,"recent_post_ids_count":0,"exclude_post_ids_count":0}}
+{"timestamp":"2026-02-23T08:03:21.580Z","level":"INFO","event":"http.request.finish","request_id":"f2272aaa-e335-4029-af2e-bb1e4847bfe7","method":"POST","path":"/v1/recommendations/recces","status":200,"duration_ms":2}
+{"timestamp":"2026-02-23T08:03:21.581Z","level":"INFO","event":"http.request.start","request_id":"eeaaaa13-040b-4bb6-90d3-aec61adea828","method":"POST","path":"/v1/recommendations/recces","query":{},"body":{"author_id":"paul_graham","limit":3,"has_seed_post_id":false,"recent_post_ids_count":0,"exclude_post_ids_count":0}}
+{"timestamp":"2026-02-23T08:03:21.582Z","level":"INFO","event":"http.request.finish","request_id":"eeaaaa13-040b-4bb6-90d3-aec61adea828","method":"POST","path":"/v1/recommendations/recces","status":200,"duration_ms":1}

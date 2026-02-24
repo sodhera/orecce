@@ -178,6 +178,7 @@ describe("ReccesRecommendationService", () => {
     expect(result.meta.seedsUsed).toBe(1);
     expect(result.items[0]?.essayId).toBe("programming");
     expect(result.items[0]?.id).not.toBe(seedPostId);
+    expect(result.items[0]?.slides.length).toBeGreaterThan(0);
   });
 
   it("respects explicit excludes", async () => {
@@ -233,5 +234,32 @@ describe("ReccesRecommendationService", () => {
     expect(userA.items[0]?.essayId).not.toBe(userB.items[0]?.essayId);
     expect(userA.meta.profileSignalsUsed).toBe(2);
     expect(userB.meta.profileSignalsUsed).toBe(2);
+  });
+
+  it("boosts profile after slide interaction signals", async () => {
+    const repo = new InMemoryRepository();
+    const docs = buildDocs();
+    const service = new ReccesRecommendationService(
+      new FakeReccesRepository({ paul_graham: docs }),
+      repo,
+      new InMemoryReccesUserProfileRepository()
+    );
+
+    await service.recordSlideInteractionSignal({
+      userId: "interaction-user",
+      postId: buildReccesPostId("paul_graham", "programming", 0),
+      slideFlipCount: 5,
+      maxSlideIndex: 0,
+      slideCount: 1
+    });
+
+    const result = await service.recommend({
+      userId: "interaction-user",
+      authorId: "paul_graham",
+      limit: 1
+    });
+
+    expect(result.meta.profileSignalsUsed).toBe(1);
+    expect(result.meta.profileThemesTracked).toBeGreaterThanOrEqual(1);
   });
 });

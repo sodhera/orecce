@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "../_utils/requireAuth";
 
 const ALLOWED_FEED_URLS = new Set<string>([
     "https://openai.com/news/rss.xml",
@@ -23,6 +24,11 @@ function resolveFetchUrl(url: string): string {
 }
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
+    const auth = await requireAuth(request);
+    if (auth instanceof NextResponse) {
+        return auth;
+    }
+
     const url = String(request.nextUrl.searchParams.get("url") ?? "").trim();
     if (!url || !ALLOWED_FEED_URLS.has(url)) {
         return NextResponse.json(
@@ -59,7 +65,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
             status: 200,
             headers: {
                 "Content-Type": "application/xml; charset=utf-8",
-                "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+                "Cache-Control": "private, max-age=300",
             },
         });
     } catch (error) {

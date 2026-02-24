@@ -1,0 +1,24 @@
+{
+  "first_post_id": "paul_graham:programming:1",
+  "first_post_slide_count": 2,
+  "first_post_slides_returned": 2,
+  "before_meta": {
+    "authorId": "paul_graham",
+    "candidates": 7,
+    "seedsUsed": 0,
+    "feedbackSignalsUsed": 0,
+    "profileSignalsUsed": 0,
+    "profileThemesTracked": 0
+  },
+  "after_meta": {
+    "authorId": "paul_graham",
+    "candidates": 7,
+    "seedsUsed": 1,
+    "feedbackSignalsUsed": 0,
+    "profileSignalsUsed": 1,
+    "profileThemesTracked": 1
+  },
+  "after_top_reasons": [
+    "similar_to_recent_reads"
+  ]
+}

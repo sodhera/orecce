@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import AuthModal from "@/components/AuthModal";
+import AuthGate from "@/components/AuthGate";
 
 export const metadata: Metadata = {
   title: "Orecce",
@@ -20,7 +21,7 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <AuthProvider>
-            {children}
+            <AuthGate>{children}</AuthGate>
             <AuthModal />
           </AuthProvider>
         </ThemeProvider>

@@ -67,6 +67,11 @@ export interface ReccesRecommendationItem {
   postType: string;
   slideCount: number;
   previewText: string;
+  slides: Array<{
+    slideNumber: number;
+    type: string;
+    text: string;
+  }>;
   tags: string[];
   score: number;
   reasons: string[];
@@ -94,6 +99,11 @@ interface FlattenedPost {
   postType: string;
   slideCount: number;
   previewText: string;
+  slides: Array<{
+    slideNumber: number;
+    type: string;
+    text: string;
+  }>;
   fullText: string;
   tokens: Map<string, number>;
   tokenNorm: number;
@@ -173,6 +183,11 @@ function normalizePost(document: ReccesEssayDocument, authorId: string): Flatten
       postType: post.postType,
       slideCount: post.slides.length,
       previewText: slideText.slice(0, 300),
+      slides: post.slides.map((slide) => ({
+        slideNumber: slide.slideNumber,
+        type: slide.type,
+        text: slide.text
+      })),
       fullText,
       tokens,
       tokenNorm: vectorNorm(tokens)
@@ -223,6 +238,44 @@ export class ReccesRecommendationService {
       return;
     }
     await this.userProfileRepository.updateThemeWeight(userId, resolved.theme, feedbackType);
+  }
+
+  async recordSlideInteractionSignal(input: {
+    userId: string;
+    postId: string;
+    slideFlipCount: number;
+    maxSlideIndex?: number;
+    slideCount?: number;
+  }): Promise<void> {
+    const resolved = await this.reccesRepository.getPostById(input.postId);
+    if (!resolved) {
+      return;
+    }
+
+    const safeFlips = Math.max(0, Math.min(40, Math.floor(Number(input.slideFlipCount) || 0)));
+    if (safeFlips === 0) {
+      return;
+    }
+
+    const inferredSlideCount = Math.max(1, resolved.slides.length);
+    const safeSlideCount = Math.max(
+      1,
+      Math.min(80, Math.floor(Number(input.slideCount) || inferredSlideCount))
+    );
+    const safeMaxSlide = Math.max(
+      0,
+      Math.min(safeSlideCount - 1, Math.floor(Number(input.maxSlideIndex) || 0))
+    );
+
+    const depthRatio = Math.min(1, (safeMaxSlide + 1) / safeSlideCount);
+    const flipStrength = Math.min(1.8, safeFlips * 0.09);
+    const depthStrength = depthRatio * 0.7;
+    const delta = Number((flipStrength + depthStrength).toFixed(6));
+    if (delta <= 0) {
+      return;
+    }
+
+    await this.userProfileRepository.applyThemeDelta(input.userId, resolved.theme, delta);
   }
 
   async recommend(input: ReccesRecommendationRequest): Promise<ReccesRecommendationResult> {
@@ -304,6 +357,7 @@ export class ReccesRecommendationService {
         postType: item.post.postType,
         slideCount: item.post.slideCount,
         previewText: item.post.previewText,
+        slides: item.post.slides,
         tags: getTopKeywords(item.post.tokens, 3),
         score: Number(item.score.toFixed(5)),
         reasons: item.reasons

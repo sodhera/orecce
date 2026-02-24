@@ -48,7 +48,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
                     {/* Headline */}
                     <Text style={styles.headline}>
-                        AI analyzed news{'\n'}made just for you
+                        AI curated content{'\n'}made just for you
                     </Text>
 
                     {/* Bottom section */}

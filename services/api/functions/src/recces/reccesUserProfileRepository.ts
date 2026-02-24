@@ -15,6 +15,7 @@ export interface ReccesUserProfile {
 export interface ReccesUserProfileRepository {
   getProfile(userId: string): Promise<ReccesUserProfile>;
   updateThemeWeight(userId: string, theme: string, feedbackType: FeedbackType): Promise<ReccesUserProfile>;
+  applyThemeDelta(userId: string, theme: string, delta: number): Promise<ReccesUserProfile>;
 }
 
 export function createEmptyReccesUserProfile(userId: string): ReccesUserProfile {
@@ -39,7 +40,7 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
-function feedbackDelta(type: FeedbackType): number {
+export function feedbackDelta(type: FeedbackType): number {
   if (type === "upvote") {
     return 1;
   }
@@ -61,10 +62,10 @@ function compactThemeWeights(weights: Record<string, number>): Record<string, nu
   return Object.fromEntries(entries);
 }
 
-export function applyThemeFeedback(
+export function applyThemeDelta(
   currentWeights: Record<string, number>,
   theme: string,
-  feedbackType: FeedbackType
+  delta: number
 ): Record<string, number> {
   const nextWeights: Record<string, number> = {};
   for (const [key, value] of Object.entries(currentWeights)) {
@@ -76,7 +77,7 @@ export function applyThemeFeedback(
   }
 
   const themeKey = normalizeThemeKey(theme);
-  const updated = (nextWeights[themeKey] ?? 0) + feedbackDelta(feedbackType);
+  const updated = (nextWeights[themeKey] ?? 0) + Number(delta);
   nextWeights[themeKey] = clamp(updated, -THEME_WEIGHT_LIMIT, THEME_WEIGHT_LIMIT);
 
   return compactThemeWeights(nextWeights);
@@ -94,15 +95,23 @@ export class InMemoryReccesUserProfileRepository implements ReccesUserProfileRep
   }
 
   async updateThemeWeight(userId: string, theme: string, feedbackType: FeedbackType): Promise<ReccesUserProfile> {
+    return this.applyThemeDelta(userId, theme, feedbackDelta(feedbackType));
+  }
+
+  async applyThemeDelta(userId: string, theme: string, delta: number): Promise<ReccesUserProfile> {
     const key = String(userId ?? "").trim();
     if (!key) {
       return createEmptyReccesUserProfile("");
     }
     const current = await this.getProfile(key);
+    const safeDelta = Number(delta);
+    if (!Number.isFinite(safeDelta) || safeDelta === 0) {
+      return current;
+    }
     const now = Date.now();
     const next: ReccesUserProfile = {
       userId: key,
-      themeWeights: applyThemeFeedback(current.themeWeights, theme, feedbackType),
+      themeWeights: applyThemeDelta(current.themeWeights, theme, safeDelta),
       signalCount: current.signalCount + 1,
       updatedAtMs: now
     };

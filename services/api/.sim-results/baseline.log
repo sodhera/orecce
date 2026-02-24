@@ -1,0 +1,96 @@
+[rec-sim-user-1-baseline] round=1 theme="Investor Communication" affinity=0 feedback=none score=0.37203
+[rec-sim-user-1-baseline] round=2 theme="Fundraising Strategy" affinity=0 feedback=none score=0.1743
+[rec-sim-user-1-baseline] round=3 theme="Understand Users" affinity=4 feedback=upvote score=0.06744
+[rec-sim-user-1-baseline] round=4 theme="Customer Support" affinity=4 feedback=upvote score=0.33163
+[rec-sim-user-1-baseline] round=5 theme="Launch Early" affinity=1 feedback=none score=0.06412
+[rec-sim-user-1-baseline] round=6 theme="Lisp and Programming Languages" affinity=0 feedback=none score=0.05718
+[rec-sim-user-1-baseline] round=7 theme="Compiler Design" affinity=0 feedback=none score=0.14731
+[rec-sim-user-2-baseline] round=1 theme="Fundraising Strategy" affinity=3 feedback=upvote score=0.37993
+[rec-sim-user-2-baseline] round=2 theme="Investor Communication" affinity=1 feedback=none score=0.18219
+[rec-sim-user-2-baseline] round=3 theme="Understand Users" affinity=0 feedback=none score=0.05882
+[rec-sim-user-2-baseline] round=4 theme="Customer Support" affinity=0 feedback=none score=0.32301
+[rec-sim-user-2-baseline] round=5 theme="Launch Early" affinity=0 feedback=none score=0.05582
+[rec-sim-user-2-baseline] round=6 theme="Lisp and Programming Languages" affinity=0 feedback=none score=0.05337
+[rec-sim-user-2-baseline] round=7 theme="Compiler Design" affinity=0 feedback=none score=0.14382
+[rec-sim-user-3-baseline] round=1 theme="Lisp and Programming Languages" affinity=4 feedback=upvote score=0.38887
+[rec-sim-user-3-baseline] round=2 theme="Compiler Design" affinity=3 feedback=upvote score=0.17414
+[rec-sim-user-3-baseline] round=3 theme="Investor Communication" affinity=0 feedback=none score=0.07609
+[rec-sim-user-3-baseline] round=4 theme="Fundraising Strategy" affinity=0 feedback=none score=0.18435
+[rec-sim-user-3-baseline] round=5 theme="Understand Users" affinity=0 feedback=none score=0.06505
+[rec-sim-user-3-baseline] round=6 theme="Customer Support" affinity=0 feedback=none score=0.32861
+[rec-sim-user-3-baseline] round=7 theme="Launch Early" affinity=0 feedback=none score=0.06173
+{
+  "config": {
+    "base": "http://127.0.0.1:8787",
+    "author_id": "paul_graham",
+    "users": 3,
+    "rounds_per_user": 7,
+    "recommend_limit": 8,
+    "recent_window": 5,
+    "auth_header_used": false,
+    "run_id": "baseline"
+  },
+  "users": [
+    {
+      "userId": "rec-sim-user-1-baseline",
+      "preferences": [
+        "user",
+        "users",
+        "support",
+        "startup",
+        "founder",
+        "iterate"
+      ],
+      "summary": {
+        "rounds": 7,
+        "first_half_relevance_ratio": 0.3333,
+        "second_half_relevance_ratio": 0.5,
+        "relevance_lift": 0.1667,
+        "upvotes": 2,
+        "downvotes": 0,
+        "no_feedback": 5
+      }
+    },
+    {
+      "userId": "rec-sim-user-2-baseline",
+      "preferences": [
+        "investor",
+        "investors",
+        "fundraising",
+        "equity",
+        "term",
+        "round"
+      ],
+      "summary": {
+        "rounds": 7,
+        "first_half_relevance_ratio": 0.6667,
+        "second_half_relevance_ratio": 0,
+        "relevance_lift": -0.6667,
+        "upvotes": 1,
+        "downvotes": 0,
+        "no_feedback": 6
+      }
+    },
+    {
+      "userId": "rec-sim-user-3-baseline",
+      "preferences": [
+        "lisp",
+        "compiler",
+        "language",
+        "programming",
+        "software",
+        "semantics"
+      ],
+      "summary": {
+        "rounds": 7,
+        "first_half_relevance_ratio": 0.6667,
+        "second_half_relevance_ratio": 0,
+        "relevance_lift": -0.6667,
+        "upvotes": 2,
+        "downvotes": 0,
+        "no_feedback": 5
+      }
+    }
+  ],
+  "total_runtime_ms": 128
+}

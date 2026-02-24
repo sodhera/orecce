@@ -1,0 +1,75 @@
+{
+  "config": {
+    "base": "https://api-2ljiuwaa3a-uc.a.run.app",
+    "author_id": "paul_graham",
+    "users": 3,
+    "rounds_per_user": 10,
+    "recommend_limit": 20,
+    "recent_window": 5,
+    "auth_header_used": true,
+    "run_id": "cloudfinal"
+  },
+  "users": [
+    {
+      "userId": "rec-sim-user-1-cloudfinal",
+      "preferences": [
+        "user",
+        "users",
+        "support",
+        "startup",
+        "founder",
+        "iterate"
+      ],
+      "summary": {
+        "rounds": 10,
+        "first_half_relevance_ratio": 0.6,
+        "second_half_relevance_ratio": 0.8,
+        "relevance_lift": 0.2,
+        "upvotes": 4,
+        "downvotes": 0,
+        "no_feedback": 6
+      }
+    },
+    {
+      "userId": "rec-sim-user-2-cloudfinal",
+      "preferences": [
+        "investor",
+        "investors",
+        "fundraising",
+        "equity",
+        "term",
+        "round"
+      ],
+      "summary": {
+        "rounds": 10,
+        "first_half_relevance_ratio": 0.6,
+        "second_half_relevance_ratio": 0.8,
+        "relevance_lift": 0.2,
+        "upvotes": 6,
+        "downvotes": 0,
+        "no_feedback": 4
+      }
+    },
+    {
+      "userId": "rec-sim-user-3-cloudfinal",
+      "preferences": [
+        "lisp",
+        "compiler",
+        "language",
+        "programming",
+        "software",
+        "semantics"
+      ],
+      "summary": {
+        "rounds": 10,
+        "first_half_relevance_ratio": 0,
+        "second_half_relevance_ratio": 0,
+        "relevance_lift": 0,
+        "upvotes": 0,
+        "downvotes": 0,
+        "no_feedback": 10
+      }
+    }
+  ],
+  "total_runtime_ms": 39571
+}

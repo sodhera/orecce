@@ -15,7 +15,7 @@ export class FirebaseAuthVerifier implements AuthVerifier {
   constructor(private readonly auth: Auth = getAuth()) {}
 
   async verifyBearerToken(token: string): Promise<AuthIdentity> {
-    const decoded = await this.auth.verifyIdToken(token);
+    const decoded = await this.auth.verifyIdToken(token, true);
     return {
       uid: decoded.uid,
       email: typeof decoded.email === "string" ? decoded.email : null,

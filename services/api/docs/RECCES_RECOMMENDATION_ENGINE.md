@@ -37,11 +37,13 @@
     - small deterministic exploration noise.
   - Applies diversity penalty to reduce repeated themes.
   - Exposes `recordFeedbackSignal(userId, postId, feedbackType)` for post-feedback profile updates.
+  - Exposes `recordSlideInteractionSignal(...)` for slide-flip interaction updates.
 
 - `functions/src/http/createApp.ts`
   - Adds endpoint: `POST /v1/recommendations/recces`.
   - Validates request with Zod and returns recommendations + metadata.
   - On `POST /v1/posts/feedback`, writes feedback and updates Recces profile when the `post_id` belongs to Recces corpus.
+  - Adds `POST /v1/recommendations/recces/interaction` for slide interaction signals.
 
 - `functions/src/index.ts`
   - Wires `FirestoreReccesRepository` + `FirestoreReccesUserProfileRepository` + `ReccesRecommendationService` into app dependencies.
@@ -77,6 +79,9 @@
         "postType": "carousel",
         "slideCount": 5,
         "previewText": "Founders should talk to users...",
+        "slides": [
+          { "slideNumber": 1, "type": "hook", "text": "..." }
+        ],
         "tags": ["users", "founders", "iterate"],
         "score": 0.81234,
         "reasons": ["similar_to_recent_reads", "matches_liked_theme"]
@@ -101,6 +106,7 @@
   - user `upvote` signals from feedback history
 - Persistent profile signals:
   - theme weights learned from each user's own feedback over time (`upvote/downvote/skip`)
+  - theme weights also updated from slide interactions (`slide_flip_count`, depth reached)
 - Exclusions:
   - request `exclude_post_ids`
   - `downvote` and `skip` from feedback history
@@ -119,6 +125,22 @@
 - This is designed for prototype scale and can be upgraded to precomputed embeddings later.
 - Existing `feedback` collection is reused as interaction signal store.
 - User profile state is persisted in `userRecommendationProfiles` and survives tab close / app restart.
+
+## Interaction Endpoint
+`POST /v1/recommendations/recces/interaction`
+
+```json
+{
+  "post_id": "paul_graham:startup:0",
+  "slide_flip_count": 4,
+  "max_slide_index": 3,
+  "slide_count": 5
+}
+```
+
+Effect:
+- Converts flip count + depth into a positive profile delta for that post's theme.
+- Higher flip count and deeper slide traversal increase that user's theme weight.
 
 ## Suggested Next Steps
 1. Add a dedicated interaction event model (`view`, `dwell_ms`, `hide`) for better ranking quality.

@@ -1,8 +1,9 @@
 import { Firestore, Timestamp } from "firebase-admin/firestore";
 import { FeedbackType } from "../types/domain";
 import {
-  applyThemeFeedback,
+  applyThemeDelta,
   createEmptyReccesUserProfile,
+  feedbackDelta,
   ReccesUserProfile,
   ReccesUserProfileRepository
 } from "./reccesUserProfileRepository";
@@ -49,9 +50,17 @@ export class FirestoreReccesUserProfileRepository implements ReccesUserProfileRe
   }
 
   async updateThemeWeight(userId: string, theme: string, feedbackType: FeedbackType): Promise<ReccesUserProfile> {
+    return this.applyThemeDelta(userId, theme, feedbackDelta(feedbackType));
+  }
+
+  async applyThemeDelta(userId: string, theme: string, delta: number): Promise<ReccesUserProfile> {
     const key = String(userId ?? "").trim();
     if (!key) {
       return createEmptyReccesUserProfile("");
+    }
+    const safeDelta = Number(delta);
+    if (!Number.isFinite(safeDelta) || safeDelta === 0) {
+      return this.getProfile(key);
     }
 
     const ref = this.db.collection(this.collection).doc(key);
@@ -64,7 +73,7 @@ export class FirestoreReccesUserProfileRepository implements ReccesUserProfileRe
       const nowMs = Date.now();
       const next: ReccesUserProfile = {
         userId: key,
-        themeWeights: applyThemeFeedback(current.themeWeights, theme, feedbackType),
+        themeWeights: applyThemeDelta(current.themeWeights, theme, safeDelta),
         signalCount: current.signalCount + 1,
         updatedAtMs: nowMs
       };

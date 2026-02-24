@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import { useAuth } from "@/context/AuthContext";
+import { AI_NEWS_ENABLED } from "@/config/features";
 
 interface AiNewsSource {
     id: string;
@@ -337,12 +338,19 @@ function parseFeedXml(xml: string, source: AiNewsSource): AiNewsArticle[] {
     return parseAtomItems(doc, source);
 }
 
-async function fetchFeedXml(feedUrl: string, signal: AbortSignal): Promise<string> {
+async function fetchFeedXml(
+    feedUrl: string,
+    signal: AbortSignal,
+    authToken: string,
+): Promise<string> {
     // Proxy-only path avoids browser CORS failures + duplicate fetch attempts.
     const proxied = await fetch(`/api/rss-proxy?url=${encodeURIComponent(feedUrl)}`, {
         method: "GET",
         cache: "force-cache",
         signal,
+        headers: {
+            Authorization: `Bearer ${authToken}`,
+        },
     });
     if (!proxied.ok) {
         throw new Error(`Feed request failed (${proxied.status}).`);
@@ -365,8 +373,8 @@ function mergeAndSortArticles(items: AiNewsArticle[]): AiNewsArticle[] {
     );
 }
 
-export default function AiNewsPage() {
-    const { isAuthenticated, loading, setShowAuthModal } = useAuth();
+function AiNewsPageEnabled() {
+    const { isAuthenticated, loading, setShowAuthModal, getIdToken } = useAuth();
     const [articles, setArticles] = useState<AiNewsArticle[]>([]);
     const [fetching, setFetching] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -377,7 +385,9 @@ export default function AiNewsPage() {
     const [selectedArticleTextLoading, setSelectedArticleTextLoading] = useState(false);
     const [selectedArticleTextError, setSelectedArticleTextError] = useState<string | null>(null);
     const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+    const [hasUserScrolled, setHasUserScrolled] = useState(false);
     const fullTextCacheRef = useRef<Map<string, string>>(new Map());
+    const loadMoreRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
         if (!selectedArticle) {
@@ -428,12 +438,19 @@ export default function AiNewsPage() {
 
         (async () => {
             try {
+                const authToken = await getIdToken();
+                if (!authToken) {
+                    throw new Error("Authentication required.");
+                }
                 const response = await fetch(
                     `/api/article-text?url=${encodeURIComponent(selectedArticle.link)}`,
                     {
                         method: "GET",
                         cache: "force-cache",
                         signal: controller.signal,
+                        headers: {
+                            Authorization: `Bearer ${authToken}`,
+                        },
                     },
                 );
                 const payload = (await response.json()) as ArticleTextResponse;
@@ -472,7 +489,7 @@ export default function AiNewsPage() {
         return () => {
             controller.abort();
         };
-    }, [selectedArticle]);
+    }, [selectedArticle, getIdToken]);
 
     useEffect(() => {
         if (!isAuthenticated || loading) {
@@ -499,13 +516,21 @@ export default function AiNewsPage() {
                     setFetching(true);
                 }
                 setError(null);
+                const authToken = await getIdToken();
+                if (!authToken) {
+                    throw new Error("Authentication required.");
+                }
                 const settled = await Promise.allSettled(
                     AI_RSS_FEEDS.map(async (source) => {
                         const perFeedSignal = AbortSignal.any([
                             controller.signal,
                             AbortSignal.timeout(FEED_TIMEOUT_MS),
                         ]);
-                        const xml = await fetchFeedXml(source.feedUrl, perFeedSignal);
+                        const xml = await fetchFeedXml(
+                            source.feedUrl,
+                            perFeedSignal,
+                            authToken,
+                        );
                         return parseFeedXml(xml, source);
                     }),
                 );
@@ -549,7 +574,7 @@ export default function AiNewsPage() {
             cancelled = true;
             controller.abort();
         };
-    }, [isAuthenticated, loading]);
+    }, [isAuthenticated, loading, getIdToken]);
 
     const filteredArticles = useMemo(() => {
         if (selectedSourceIds.length === 0) {
@@ -569,8 +594,58 @@ export default function AiNewsPage() {
     );
 
     const hasMore = visibleCount < filteredArticles.length;
+    const loadMoreArticles = useCallback(() => {
+        setVisibleCount((current) =>
+            Math.min(current + PAGE_SIZE, filteredArticles.length),
+        );
+    }, [filteredArticles.length]);
     const fallbackSelectedText =
         selectedArticle?.content || selectedArticle?.summary || "No article text available.";
+
+    useEffect(() => {
+        setHasUserScrolled(false);
+    }, [selectedSourceIds]);
+
+    useEffect(() => {
+        if (!isAuthenticated || loading) {
+            return;
+        }
+        const onScroll = () => {
+            if (window.scrollY > 0) {
+                setHasUserScrolled(true);
+            }
+        };
+        window.addEventListener("scroll", onScroll, { passive: true });
+        return () => {
+            window.removeEventListener("scroll", onScroll);
+        };
+    }, [isAuthenticated, loading]);
+
+    useEffect(() => {
+        if (!isAuthenticated || loading || !hasMore || !hasUserScrolled) {
+            return;
+        }
+        const node = loadMoreRef.current;
+        if (!node) {
+            return;
+        }
+        const observer = new IntersectionObserver(
+            (entries) => {
+                for (const entry of entries) {
+                    if (!entry.isIntersecting) {
+                        continue;
+                    }
+                    loadMoreArticles();
+                    break;
+                }
+            },
+            { threshold: 1 },
+        );
+        observer.observe(node);
+        return () => {
+            observer.disconnect();
+        };
+    }, [isAuthenticated, loading, hasMore, hasUserScrolled, loadMoreArticles]);
 
     return (
         <div className="app-layout">
@@ -659,18 +734,19 @@ export default function AiNewsPage() {
 
                         {hasMore ? (
                             <div
+                                ref={loadMoreRef}
                                 className="sports-load-more-trigger"
                                 role="button"
                                 tabIndex={0}
-                                onClick={() => setVisibleCount((current) => current + PAGE_SIZE)}
+                                onClick={loadMoreArticles}
                                 onKeyDown={(event) => {
                                     if (event.key === "Enter" || event.key === " ") {
                                         event.preventDefault();
-                                        setVisibleCount((current) => current + PAGE_SIZE);
+                                        loadMoreArticles();
                                     }
                                 }}
                             >
-                                Load more articles
+                                Scroll to load more articles...
                             </div>
                         ) : null}
                     </div>
@@ -780,4 +856,27 @@ export default function AiNewsPage() {
             </aside>
         </div>
     );
+}
+
+export default function AiNewsPage() {
+    if (!AI_NEWS_ENABLED) {
+        return (
+            <div className="app-layout">
+                <Sidebar />
+                <main className="feed">
+                    <div className="feed-header">
+                        <div className="feed-header-top">
+                            <h1>AI News</h1>
+                            <p className="utility-page-intro">
+                                AI News is temporarily disabled.
+                            </p>
+                        </div>
+                    </div>
+                </main>
+                <aside className="right-sidebar" aria-hidden="true" />
+            </div>
+        );
+    }
+
+    return <AiNewsPageEnabled />;
 }

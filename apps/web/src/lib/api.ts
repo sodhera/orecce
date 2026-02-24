@@ -39,15 +39,20 @@ interface RequestOptions {
 // ── Helpers ─────────────────────────────────────────────────────
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
+    const user = auth.currentUser;
+    if (!user) {
+        throw new Error("Authentication required.");
+    }
+
+    const token = await user.getIdToken();
+    if (!token) {
+        throw new Error("Authentication required.");
+    }
+
     const headers: Record<string, string> = {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
     };
-
-    const user = auth.currentUser;
-    if (user) {
-        const token = await user.getIdToken();
-        headers["Authorization"] = `Bearer ${token}`;
-    }
 
     return headers;
 }
@@ -133,6 +138,113 @@ export async function listPosts(
         page_size: pageSize,
         ...(cursor ? { cursor } : {}),
     });
+}
+
+export type FeedbackType = "upvote" | "downvote" | "skip";
+
+export interface ReccesSlide {
+    slideNumber: number;
+    type: string;
+    text: string;
+}
+
+export interface ReccesRecommendationItem {
+    id: string;
+    authorId: string;
+    essayId: string;
+    sourceTitle: string;
+    postIndex: number;
+    theme: string;
+    postType: string;
+    slideCount: number;
+    previewText: string;
+    slides: ReccesSlide[];
+    tags: string[];
+    score: number;
+    reasons: string[];
+}
+
+export interface ReccesRecommendationResult {
+    items: ReccesRecommendationItem[];
+    meta: {
+        authorId: string;
+        candidates: number;
+        seedsUsed: number;
+        feedbackSignalsUsed: number;
+        profileSignalsUsed: number;
+        profileThemesTracked: number;
+    };
+}
+
+interface RecommendReccesInput {
+    authorId?: string;
+    limit?: number;
+    seedPostId?: string;
+    recentPostIds?: string[];
+    excludePostIds?: string[];
+}
+
+export async function recommendRecces(
+    input: RecommendReccesInput,
+    options?: RequestOptions,
+): Promise<ReccesRecommendationResult> {
+    return post<ReccesRecommendationResult>(
+        "/recommendations/recces",
+        {
+            author_id: input.authorId ?? "paul_graham",
+            limit: input.limit ?? 12,
+            ...(input.seedPostId ? { seed_post_id: input.seedPostId } : {}),
+            ...(input.recentPostIds?.length
+                ? { recent_post_ids: input.recentPostIds }
+                : {}),
+            ...(input.excludePostIds?.length
+                ? { exclude_post_ids: input.excludePostIds }
+                : {}),
+        },
+        options,
+    );
+}
+
+export async function sendPostFeedback(
+    postId: string,
+    feedbackType: FeedbackType,
+    options?: RequestOptions,
+): Promise<void> {
+    await post(
+        "/posts/feedback",
+        {
+            post_id: postId,
+            feedback_type: feedbackType,
+        },
+        options,
+    );
+}
+
+interface ReccesInteractionInput {
+    postId: string;
+    slideFlipCount: number;
+    maxSlideIndex?: number;
+    slideCount?: number;
+}
+
+export async function recordReccesInteraction(
+    input: ReccesInteractionInput,
+    options?: RequestOptions,
+): Promise<void> {
+    await post(
+        "/recommendations/recces/interaction",
+        {
+            post_id: input.postId,
+            slide_flip_count: input.slideFlipCount,
+            ...(typeof input.maxSlideIndex === "number"
+                ? { max_slide_index: input.maxSlideIndex }
+                : {}),
+            ...(typeof input.slideCount === "number"
+                ? { slide_count: input.slideCount }
+                : {}),
+        },
+        options,
+    );
 }
 
 export interface NewsSource {

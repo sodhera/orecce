@@ -2,7 +2,25 @@
 
 import { useEffect, useState } from "react";
 import PostCard, { type Post } from "./PostCard";
-import { fetchPublicPosts } from "@/lib/firestorePosts";
+import { listPosts, type ApiPost } from "@/lib/api";
+
+const FEED_MODES = ["BIOGRAPHY", "TRIVIA", "NICHE"] as const;
+
+function apiPostToPost(post: ApiPost): Post {
+    return {
+        id: post.id,
+        post_type: "single",
+        topic: post.mode,
+        title: post.title,
+        slides: [{ slide_number: 1, type: "standalone" as const, text: post.body }],
+        createdAtMs: post.createdAtMs,
+        date: new Date(post.createdAtMs).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+        }),
+    };
+}
 
 export default function SavedFeed() {
     const [savedPosts, setSavedPosts] = useState<Post[]>([]);
@@ -10,15 +28,36 @@ export default function SavedFeed() {
 
     useEffect(() => {
         let cancelled = false;
-        fetchPublicPosts(3)
-            .then((posts) => {
+        (async () => {
+            const settled = await Promise.allSettled(
+                FEED_MODES.map((mode) => listPosts(mode, "Steve Jobs", 5)),
+            );
+            const deduped = new Map<string, ApiPost>();
+            settled
+                .filter(
+                    (
+                        result,
+                    ): result is PromiseFulfilledResult<{
+                        items: ApiPost[];
+                        nextCursor: string | null;
+                    }> => result.status === "fulfilled",
+                )
+                .flatMap((result) => result.value.items)
+                .sort((a, b) => b.createdAtMs - a.createdAtMs)
+                .forEach((post) => {
+                    if (!deduped.has(post.id)) {
+                        deduped.set(post.id, post);
+                    }
+                });
+
+            const posts = Array.from(deduped.values()).slice(0, 8).map(apiPostToPost);
+            if (!cancelled) {
+                setSavedPosts(posts);
+            }
+        })()
+            .catch(() => {
                 if (!cancelled) {
-                    setSavedPosts(
-                        posts.map((post, index) => ({
-                            ...post,
-                            id: `saved-${index + 1}`,
-                        })),
-                    );
+                    setSavedPosts([]);
                 }
             })
             .finally(() => {

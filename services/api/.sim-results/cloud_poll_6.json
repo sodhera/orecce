@@ -1,0 +1,31 @@
+{"ok":true,"data":{"items":[{"id":"paul_graham:bronze:0","authorId":"paul_graham","essayId":"bronze","sourceTitle":"Why Smart People Have Bad Ideas (Paul Graham, April 2005)","postIndex":0,"theme":"Promising People, Bad Ideas","postType":"carousel","slideCount":7,"previewText":"Y Combinator saw a weird pattern in 227 startup applications:
+
+**great founders + terrible ideas.** Paul Graham expected 2 buckets:
+**promising** vs **unpromising**.
+
+Instead, he needed a 3rd:
+
+**promising people with unpromising ideas.**
+
+Meaning: talent isn’t the bottleneck.
+**Idea selection is.**","tags":["people","promising","ideas"],"score":0.38997,"reasons":["topic_exploration"]},{"id":"paul_graham:good:3","authorId":"paul_graham","essayId":"good","sourceTitle":"Be Good (Paul Graham, April 2008)","postIndex":3,"theme":"Benevolent ideas win","postType":"carousel","slideCount":6,"previewText":"Some of the best startups start as a thought like:
+
+“I just want to fix this.” Paul Graham describes an idea from his spam-filter days:
+
+A web-based email service with **great spam filtering**.
+
+Not as a company.
+
+Just to stop people from getting spammed. Then the twist:
+
+To actually work, it would ","tags":["spam","would","startups"],"score":0.38997,"reasons":["topic_exploration"]},{"id":"paul_graham:organic:5","authorId":"paul_graham","essayId":"organic","sourceTitle":"Organic Startup Ideas (April 2010)","postIndex":5,"theme":"Become Your User","postType":"carousel","slideCount":4,"previewText":"If you wouldn’t use your own product, you’re flying blind. Paul Graham’s Viaweb regret:
+
+Viaweb built software for online stores, but the founders weren’t direct marketers.
+
+In retrospect, Paul Graham says they should have **become** direct marketers—by opening their own online store.
+
+Because it wo","tags":["become","use","own"],"score":0.38997,"reasons":["topic_exploration"]},{"id":"paul_graham:mean:1","authorId":"paul_graham","essayId":"mean","sourceTitle":"Mean People Fail (Paul Graham, Nov 2014)","postIndex":1,"theme":"Benevolence advantage","postType":"carousel","slideCount":6,"previewText":"The founders who get richest often aren’t driven by money.
+**They’re driven by something harder to fake.** Paul Graham’s claim:
+If money is the main driver, founders tend to take the **big acquisition offer** that most successful startups get along the way. The founders who keep going usually want s","tags":["founders","harder","get"],"score":0.38996,"reasons":["topic_exploration"]},{"id":"paul_graham:think:7","authorId":"paul_graham","essayId":"think","sourceTitle":"How to Think for Yourself (Nov 2020)","postIndex":7,"theme":"Where undiscovered ideas live","postType":"single","slideCount":1,"previewText":"“The best place to find undiscovered ideas is where no one else is looking.”
+
+— Paul Graham","tags":["where","undiscovered","ideas"],"score":0.38993,"reasons":["topic_exploration"]}],"meta":{"authorId":"paul_graham","candidates":1712,"seedsUsed":0,"feedbackSignalsUsed":0}}}

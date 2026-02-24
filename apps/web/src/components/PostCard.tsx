@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import {
     BsBookmark,
@@ -23,196 +23,138 @@ export interface Post {
     topic: string;
     title: string;
     slides: Slide[];
+    createdAtMs?: number;
     date: string;
     sourceUrl?: string;
 }
 
-/* ── slide colour palette (cycles) ── */
-const SLIDE_COLORS = [
-    { bg: "linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)", fg: "#e7e9ea" },
-    { bg: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)", fg: "#e7e9ea" },
-    { bg: "linear-gradient(135deg, #141e30 0%, #243b55 100%)", fg: "#e7e9ea" },
-    { bg: "linear-gradient(135deg, #0d1b2a 0%, #1b263b 50%, #415a77 100%)", fg: "#e7e9ea" },
-    { bg: "linear-gradient(135deg, #1c1c3c 0%, #2d2d5e 50%, #3d3d7e 100%)", fg: "#e7e9ea" },
-];
-
-function slideColor(index: number) {
-    return SLIDE_COLORS[index % SLIDE_COLORS.length];
+interface PostCardProps {
+    post: Post;
+    onLikeToggle?: (liked: boolean) => void;
+    onSlideFlip?: (payload: {
+        flipDelta: number;
+        currentSlideIndex: number;
+        slideCount: number;
+    }) => void;
 }
 
-export default function PostCard({ post }: { post: Post }) {
+export default function PostCard({
+    post,
+    onLikeToggle,
+    onSlideFlip,
+}: PostCardProps) {
     const [liked, setLiked] = useState(false);
     const [saved, setSaved] = useState(false);
-    const [currentSlide, setCurrentSlide] = useState(0);
-    const touchStartX = useRef(0);
-    const touchDelta = useRef(0);
-    const trackRef = useRef<HTMLDivElement>(null);
+    const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
-    const total = post.slides.length;
-    const hasMultiple = total > 1;
-
-    const goto = useCallback(
-        (idx: number) => {
-            setCurrentSlide(Math.max(0, Math.min(total - 1, idx)));
-        },
-        [total],
+    const slideCount = Math.max(1, post.slides.length);
+    const currentSlide = useMemo(
+        () => post.slides[currentSlideIndex] ?? post.slides[0],
+        [currentSlideIndex, post.slides],
     );
+    const canSlide = post.post_type === "carousel" && slideCount > 1;
 
-    /* ── touch / swipe handlers ── */
-    const onTouchStart = (e: React.TouchEvent) => {
-        touchStartX.current = e.touches[0].clientX;
-        touchDelta.current = 0;
-    };
-
-    const onTouchMove = (e: React.TouchEvent) => {
-        touchDelta.current = e.touches[0].clientX - touchStartX.current;
-    };
-
-    const onTouchEnd = () => {
-        const threshold = 50;
-        if (touchDelta.current < -threshold) goto(currentSlide + 1);
-        else if (touchDelta.current > threshold) goto(currentSlide - 1);
-        touchDelta.current = 0;
+    const flipSlide = (nextIndex: number) => {
+        if (nextIndex < 0 || nextIndex >= slideCount || nextIndex === currentSlideIndex) {
+            return;
+        }
+        setCurrentSlideIndex(nextIndex);
+        onSlideFlip?.({
+            flipDelta: 1,
+            currentSlideIndex: nextIndex,
+            slideCount,
+        });
     };
 
     return (
         <article className="post-card">
-            {/* ── Header ── */}
-            <div className="post-card-header">
-                <span className="post-topic-badge">{post.topic}</span>
-                {post.date && (
-                    <>
-                        <span className="post-dot">·</span>
-                        <span className="post-time">{post.date}</span>
-                    </>
-                )}
-            </div>
+            <div className="post-body">
+                <div className="post-header">
+                    <span className="post-topic-badge">{post.topic}</span>
+                    <span className="post-dot">·</span>
+                    <span className="post-time">{post.date}</span>
+                </div>
 
-            {post.title && <div className="post-card-title">{post.title}</div>}
+                {post.title && <div className="post-title">{post.title}</div>}
 
-            {/* ── Carousel viewport ── */}
-            <div
-                className="carousel-viewport"
-                onTouchStart={hasMultiple ? onTouchStart : undefined}
-                onTouchMove={hasMultiple ? onTouchMove : undefined}
-                onTouchEnd={hasMultiple ? onTouchEnd : undefined}
-            >
-                {/* slide counter */}
-                {hasMultiple && (
-                    <div className="carousel-counter">
-                        {currentSlide + 1} / {total}
+                <div className="post-content post-markdown">
+                    <ReactMarkdown>{currentSlide?.text ?? ""}</ReactMarkdown>
+                </div>
+
+                {canSlide && (
+                    <div className="post-carousel-controls">
+                        <button
+                            type="button"
+                            className="post-carousel-button"
+                            onClick={() => flipSlide(currentSlideIndex - 1)}
+                            disabled={currentSlideIndex <= 0}
+                            aria-label="Previous slide"
+                        >
+                            <BsChevronLeft aria-hidden="true" />
+                        </button>
+                        <span className="post-carousel-progress">
+                            Slide {currentSlideIndex + 1} / {slideCount}
+                        </span>
+                        <button
+                            type="button"
+                            className="post-carousel-button"
+                            onClick={() => flipSlide(currentSlideIndex + 1)}
+                            disabled={currentSlideIndex >= slideCount - 1}
+                            aria-label="Next slide"
+                        >
+                            <BsChevronRight aria-hidden="true" />
+                        </button>
                     </div>
                 )}
 
-                {/* prev / next arrows */}
-                {hasMultiple && currentSlide > 0 && (
-                    <button
-                        type="button"
-                        className="carousel-arrow carousel-arrow-left"
-                        onClick={() => goto(currentSlide - 1)}
-                        aria-label="Previous slide"
+                {post.sourceUrl && (
+                    <a
+                        className="post-source-link"
+                        href={post.sourceUrl}
+                        target="_blank"
+                        rel="noreferrer"
                     >
-                        <BsChevronLeft />
-                    </button>
-                )}
-                {hasMultiple && currentSlide < total - 1 && (
-                    <button
-                        type="button"
-                        className="carousel-arrow carousel-arrow-right"
-                        onClick={() => goto(currentSlide + 1)}
-                        aria-label="Next slide"
-                    >
-                        <BsChevronRight />
-                    </button>
+                        Read original source
+                    </a>
                 )}
 
-                {/* track */}
-                <div
-                    ref={trackRef}
-                    className="carousel-track"
-                    style={{
-                        transform: `translateX(-${currentSlide * 100}%)`,
-                    }}
-                >
-                    {post.slides.map((slide, idx) => {
-                        const color = slideColor(idx);
-                        return (
-                            <div
-                                key={slide.slide_number}
-                                className="carousel-slide"
-                                style={{
-                                    background: color.bg,
-                                    color: color.fg,
-                                }}
-                            >
-                                <div className="carousel-slide-inner">
-                                    <div className="carousel-slide-text post-markdown">
-                                        <ReactMarkdown>{slide.text}</ReactMarkdown>
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-
-            {/* ── Dots ── */}
-            {hasMultiple && (
-                <div className="carousel-dots">
-                    {post.slides.map((_, idx) => (
+                <div className="post-actions">
+                    <div className="post-vote-group">
                         <button
-                            key={idx}
                             type="button"
-                            className={`carousel-dot ${idx === currentSlide ? "active" : ""}`}
-                            onClick={() => goto(idx)}
-                            aria-label={`Go to slide ${idx + 1}`}
-                        />
-                    ))}
-                </div>
-            )}
+                            className={`post-action post-like ${liked ? "active" : ""}`}
+                            onClick={() =>
+                                setLiked((current) => {
+                                    const next = !current;
+                                    onLikeToggle?.(next);
+                                    return next;
+                                })
+                            }
+                            aria-label={liked ? "Unlike post" : "Like post"}
+                            title={liked ? "Unlike" : "Like"}
+                        >
+                            {liked ? (
+                                <BsHeartFill aria-hidden="true" />
+                            ) : (
+                                <BsHeart aria-hidden="true" />
+                            )}
+                        </button>
+                    </div>
 
-            {/* ── Source link ── */}
-            {post.sourceUrl && (
-                <a
-                    className="post-source-link"
-                    href={post.sourceUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                >
-                    Read original source
-                </a>
-            )}
-
-            {/* ── Actions ── */}
-            <div className="post-actions">
-                <div className="post-vote-group">
                     <button
                         type="button"
-                        className={`post-action post-like ${liked ? "active" : ""}`}
-                        onClick={() => setLiked((c) => !c)}
-                        aria-label={liked ? "Unlike post" : "Like post"}
-                        title={liked ? "Unlike" : "Like"}
+                        className={`post-action post-save ${saved ? "active" : ""}`}
+                        onClick={() => setSaved((current) => !current)}
+                        aria-label={saved ? "Unsave post" : "Save post"}
+                        title={saved ? "Unsave" : "Save"}
                     >
-                        {liked ? (
-                            <BsHeartFill aria-hidden="true" />
+                        {saved ? (
+                            <BsBookmarkFill aria-hidden="true" />
                         ) : (
-                            <BsHeart aria-hidden="true" />
+                            <BsBookmark aria-hidden="true" />
                         )}
                     </button>
                 </div>
-                <button
-                    type="button"
-                    className={`post-action post-save ${saved ? "active" : ""}`}
-                    onClick={() => setSaved((c) => !c)}
-                    aria-label={saved ? "Unsave post" : "Save post"}
-                    title={saved ? "Unsave" : "Save"}
-                >
-                    {saved ? (
-                        <BsBookmarkFill aria-hidden="true" />
-                    ) : (
-                        <BsBookmark aria-hidden="true" />
-                    )}
-                </button>
             </div>
         </article>
     );

@@ -5,6 +5,7 @@ import { onRequest } from "firebase-functions/v2/https";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { FirebaseAuthVerifier } from "./auth/firebaseAuthVerifier";
+import { AI_NEWS_ENABLED } from "./config/features";
 import {
   getDefaultPrefillPostsPerMode,
   getNewsArticleConcurrency,
@@ -45,8 +46,6 @@ const gateway = new OpenAiGateway();
 const postGenerationService = new PostGenerationService(repository, gateway);
 const prefillService = new PrefillService(repository, gateway);
 const authVerifier = new FirebaseAuthVerifier();
-const newsRepository = new FirestoreNewsRepository(getFirestore());
-const newsReadService = new NewsReadService(getFirestore());
 const reccesRepository = new FirestoreReccesRepository(getFirestore());
 const reccesUserProfileRepository = new FirestoreReccesUserProfileRepository(getFirestore());
 const reccesRecommendationService = new ReccesRecommendationService(
@@ -60,10 +59,14 @@ const userSportsNewsService = new UserSportsNewsService({
   sportsNewsService,
   repository: userSportsNewsRepository
 });
-const newsIngestionService = new NewsIngestionService({
-  repository: newsRepository,
-  sources: DEFAULT_NEWS_SOURCES
-});
+const newsRepository = AI_NEWS_ENABLED ? new FirestoreNewsRepository(getFirestore()) : null;
+const newsReadService = AI_NEWS_ENABLED ? new NewsReadService(getFirestore()) : undefined;
+const newsIngestionService = AI_NEWS_ENABLED && newsRepository
+  ? new NewsIngestionService({
+      repository: newsRepository,
+      sources: DEFAULT_NEWS_SOURCES
+    })
+  : null;
 const app = createApp({
   repository,
   postGenerationService,
@@ -74,7 +77,8 @@ const app = createApp({
   userSportsNewsService,
   authVerifier,
   requireAuth: true,
-  defaultPrefillPostsPerMode: getDefaultPrefillPostsPerMode()
+  defaultPrefillPostsPerMode: getDefaultPrefillPostsPerMode(),
+  isAiNewsEnabled: AI_NEWS_ENABLED
 });
 
 async function listSportsSchedulerUserIds(maxUsers: number): Promise<string[]> {
@@ -176,7 +180,7 @@ export const syncNewsEvery3Hours = onSchedule(
     retryCount: 0
   },
   async () => {
-    if (!isNewsSyncEnabled()) {
+    if (!AI_NEWS_ENABLED || !isNewsSyncEnabled() || !newsIngestionService) {
       logInfo("news.sync.scheduler.disabled", { schedule: "every 12 hours" });
       return;
     }

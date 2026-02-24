@@ -9,6 +9,7 @@ import { SavedScreen } from '../screens/SavedScreen';
 import { InboxScreen } from '../screens/InboxScreen';
 import { colors } from '../styles/colors';
 import { BottomSheetMenu } from '../components/BottomSheetMenu';
+import { AI_NEWS_ENABLED } from '../config/features';
 
 export type BottomTabParamList = {
     Home: undefined;
@@ -148,16 +149,20 @@ export function BottomTabNavigator() {
             <Tab.Screen
                 name="Explore"
                 component={ExploreScreen}
-                options={{
-                    headerRight: () => (
-                        <TouchableOpacity
-                            style={styles.profileButton}
-                            onPress={() => navigation.navigate('Rss')}
-                        >
-                            <Ionicons name="logo-rss" size={24} color={colors.textPrimary} />
-                        </TouchableOpacity>
-                    ),
-                }}
+                options={
+                    AI_NEWS_ENABLED
+                        ? {
+                            headerRight: () => (
+                                <TouchableOpacity
+                                    style={styles.profileButton}
+                                    onPress={() => navigation.navigate('Rss')}
+                                >
+                                    <Ionicons name="logo-rss" size={24} color={colors.textPrimary} />
+                                </TouchableOpacity>
+                            ),
+                        }
+                        : {}
+                }
             />
             <Tab.Screen
                 name="Saved"

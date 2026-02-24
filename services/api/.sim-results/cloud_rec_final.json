@@ -1,0 +1,113 @@
+{
+  "ok": true,
+  "data": {
+    "items": [
+      {
+        "id": "paul_graham:fundraising:9",
+        "authorId": "paul_graham",
+        "essayId": "fundraising",
+        "sourceTitle": "A Fundraising Survival Guide (August 2008)",
+        "postIndex": 9,
+        "theme": "Avoid novice investors",
+        "postType": "carousel",
+        "slideCount": 5,
+        "previewText": "A $20k check can cost more time than a $2M check.\n\nIf it comes from the wrong investor. Paul Graham’s warning:\n**inexperienced investors can be the most dangerous**.\n\nThey’re nervous.\nThey move slowly.\nThey over-lawyer.\n\nAnd the work can be wildly disproportionate to the dollars. Example from YC:\nA ",
+        "tags": [
+          "can",
+          "investors",
+          "lawyer"
+        ],
+        "score": 0.38997,
+        "reasons": [
+          "topic_exploration"
+        ]
+      },
+      {
+        "id": "paul_graham:heroes:4",
+        "authorId": "paul_graham",
+        "essayId": "heroes",
+        "sourceTitle": "Some Heroes (April 2008)",
+        "postIndex": 4,
+        "theme": "Precision thinking",
+        "postType": "carousel",
+        "slideCount": 6,
+        "previewText": "Want to sound smart? Talk more.\nWant to be right? Talk less—and qualify everything. Paul Graham’s hero **Robert Morris** had an unusual trait:\n\n“He’s never wrong.”\n\nIt sounds impossible.\nBut Paul argues it’s not about omniscience.\nIt’s about restraint. The method is simple (and rare):\n\n**Don’t say a",
+        "tags": [
+          "paul",
+          "robert",
+          "morris"
+        ],
+        "score": 0.38997,
+        "reasons": [
+          "topic_exploration"
+        ]
+      },
+      {
+        "id": "paul_graham:bubble:12",
+        "authorId": "paul_graham",
+        "essayId": "bubble",
+        "sourceTitle": "What the Bubble Got Right (September 2004)",
+        "postIndex": 12,
+        "theme": "Good Ideas Win Faster",
+        "postType": "carousel",
+        "slideCount": 6,
+        "previewText": "The real “new economy” isn’t internet stocks.\n\nIt’s this: **good ideas win faster**. Graham’s meta-theme across bubble-era trends:\n\n- good ideas count more\n- young founders with vision gain edge over old connections\n- doing good work matters more than dressing up\n- people get rewarded closer to the ",
+        "tags": [
+          "good",
+          "ideas",
+          "win"
+        ],
+        "score": 0.38995,
+        "reasons": [
+          "topic_exploration"
+        ]
+      },
+      {
+        "id": "paul_graham:discover:3",
+        "authorId": "paul_graham",
+        "essayId": "discover",
+        "sourceTitle": "Persuade xor Discover (September 2009)",
+        "postIndex": 3,
+        "theme": "Founder Writing Rule",
+        "postType": "single",
+        "slideCount": 1,
+        "previewText": "Writing to persuade and writing to discover are **diametrically opposed**.\n\nThe more your conclusion disagrees with what people already believe,\nthe more energy you’ll waste selling it instead of having it.",
+        "tags": [
+          "writing",
+          "more",
+          "founder"
+        ],
+        "score": 0.38994,
+        "reasons": [
+          "topic_exploration"
+        ]
+      },
+      {
+        "id": "paul_graham:want:1",
+        "authorId": "paul_graham",
+        "essayId": "want",
+        "sourceTitle": "What You (Want to)* Want (November 2022)",
+        "postIndex": 1,
+        "theme": "Randomness Doesn’t Save You",
+        "postType": "single",
+        "slideCount": 1,
+        "previewText": "Randomness doesn’t create free will.\n\nIt destroys the “ghost in the machine” just as effectively as determinism.",
+        "tags": [
+          "randomness",
+          "doesn",
+          "save"
+        ],
+        "score": 0.38993,
+        "reasons": [
+          "topic_exploration"
+        ]
+      }
+    ],
+    "meta": {
+      "authorId": "paul_graham",
+      "candidates": 1712,
+      "seedsUsed": 0,
+      "feedbackSignalsUsed": 0
+    }
+  }
+}

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireAuth } from "../_utils/requireAuth";
 
 const REQUEST_TIMEOUT_MS = 10_000;
 const MAX_TEXT_CHARS = 40_000;
@@ -171,6 +172,11 @@ async function fetchHtml(url: string): Promise<{ responseUrl: string; body: stri
 }
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
+    const auth = await requireAuth(request);
+    if (auth instanceof NextResponse) {
+        return auth;
+    }
+
     const rawUrl = String(request.nextUrl.searchParams.get("url") ?? "").trim();
     if (!rawUrl) {
         return NextResponse.json(
@@ -246,7 +252,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
             {
                 status: 200,
                 headers: {
-                    "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600",
+                    "Cache-Control": "private, max-age=300",
                 },
             },
         );

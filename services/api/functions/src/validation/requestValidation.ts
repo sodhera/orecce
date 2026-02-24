@@ -54,3 +54,11 @@ export const recommendReccesRequestSchema = z.object({
   recent_post_ids: z.array(z.string().trim().min(3).max(220)).max(100).optional(),
   exclude_post_ids: z.array(z.string().trim().min(3).max(220)).max(100).optional()
 });
+
+export const reccesInteractionRequestSchema = z.object({
+  user_id: z.string().trim().min(1).max(128).optional(),
+  post_id: z.string().trim().min(3).max(220),
+  slide_flip_count: z.number().int().min(1).max(100),
+  max_slide_index: z.number().int().min(0).max(200).optional(),
+  slide_count: z.number().int().min(1).max(200).optional()
+});

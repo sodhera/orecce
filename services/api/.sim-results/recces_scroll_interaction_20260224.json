@@ -1,0 +1,61 @@
+{
+  "rounds": [
+    {
+      "round": 1,
+      "picked_post_id": "paul_graham:fundraising:1",
+      "slide_count": 2,
+      "profile_signals_used_before_interaction": 0,
+      "top_reasons": [
+        "topic_exploration"
+      ]
+    },
+    {
+      "round": 2,
+      "picked_post_id": "paul_graham:fundraising:0",
+      "slide_count": 2,
+      "profile_signals_used_before_interaction": 1,
+      "top_reasons": [
+        "similar_to_recent_reads"
+      ]
+    },
+    {
+      "round": 3,
+      "picked_post_id": "paul_graham:programming:0",
+      "slide_count": 2,
+      "profile_signals_used_before_interaction": 2,
+      "top_reasons": [
+        "topic_exploration"
+      ]
+    },
+    {
+      "round": 4,
+      "picked_post_id": "paul_graham:programming:1",
+      "slide_count": 2,
+      "profile_signals_used_before_interaction": 3,
+      "top_reasons": [
+        "similar_to_recent_reads"
+      ]
+    },
+    {
+      "round": 5,
+      "picked_post_id": "paul_graham:startup:0",
+      "slide_count": 2,
+      "profile_signals_used_before_interaction": 4,
+      "top_reasons": [
+        "topic_exploration"
+      ]
+    }
+  ],
+  "final_meta": {
+    "authorId": "paul_graham",
+    "candidates": 7,
+    "seedsUsed": 5,
+    "feedbackSignalsUsed": 0,
+    "profileSignalsUsed": 5,
+    "profileThemesTracked": 5
+  },
+  "final_top_post": "paul_graham:startup:2",
+  "final_top_reasons": [
+    "similar_to_recent_reads"
+  ]
+}

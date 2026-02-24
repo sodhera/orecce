@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import PostCard, { type Post, type Slide } from "./PostCard";
+import PostCard, { type Post } from "./PostCard";
+import ReccesBlogFeed from "./ReccesBlogFeed";
 import {
     getNewsArticle,
     listNewsArticles,
@@ -14,21 +15,27 @@ import {
     type NewsSource,
 } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
-import { fetchPublicPosts, fetchReccePosts } from "@/lib/firestorePosts";
 
 // ── Config ──────────────────────────────────────────────────────
-const VISIBLE_GUEST_POSTS = 3; // posts shown before the gate
+const POSTS_PAGE_SIZE = 20;
 
 const CATEGORIES = [
     { value: "SPORTS", label: "Sports" },
     { value: "ALL", label: "All" },
-    { value: "RECCE:paul_graham", label: "Paul Graham" },
+    { value: "BLOGS", label: "Blogs" },
     { value: "BIOGRAPHY", label: "Biographies" },
     { value: "TRIVIA", label: "Trivia" },
     { value: "NICHE", label: "Niche" },
     { value: "NEWS", label: "News" },
 ];
 const FEED_MODES = ["BIOGRAPHY", "TRIVIA", "NICHE"] as const;
+type FeedMode = (typeof FEED_MODES)[number];
+type ModeCursorMap = Record<FeedMode, string | null>;
+const EMPTY_MODE_CURSORS: ModeCursorMap = {
+    BIOGRAPHY: null,
+    TRIVIA: null,
+    NICHE: null,
+};
 
 // ── Helpers ─────────────────────────────────────────────────────
 
@@ -41,6 +48,7 @@ function apiPostToPost(p: ApiPost): Post {
         slides: [
             { slide_number: 1, type: "standalone" as const, text: p.body },
         ],
+        createdAtMs: p.createdAtMs,
         date: new Date(p.createdAtMs).toLocaleDateString("en-US", {
             month: "short",
             day: "numeric",
@@ -78,9 +86,33 @@ function newsArticleToPost(article: NewsArticleWithText): Post {
                     "No article text available.",
             },
         ],
+        createdAtMs: article.publishedAtMs,
         date: formatDateFromMs(article.publishedAtMs),
         sourceUrl: article.canonicalUrl || undefined,
     };
+}
+
+function mergeUniquePosts(
+    current: Post[],
+    incoming: Post[],
+    sortByCreatedAt: boolean = false,
+): Post[] {
+    const deduped = new Map<string, Post>();
+    current.forEach((post) => {
+        deduped.set(post.id, post);
+    });
+    incoming.forEach((post) => {
+        if (!deduped.has(post.id)) {
+            deduped.set(post.id, post);
+        }
+    });
+
+    const merged = Array.from(deduped.values());
+    if (!sortByCreatedAt) {
+        return merged;
+    }
+
+    return merged.sort((a, b) => (b.createdAtMs ?? 0) - (a.createdAtMs ?? 0));
 }
 
 // ── Component ───────────────────────────────────────────────────
@@ -92,7 +124,7 @@ interface FeedProps {
 }
 
 export default function Feed({ mode, profile, onModeChange }: FeedProps) {
-    const { isAuthenticated, setShowAuthModal } = useAuth();
+    const { isAuthenticated } = useAuth();
     const router = useRouter();
 
     const [posts, setPosts] = useState<Post[]>([]);
@@ -100,9 +132,96 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
     const [newsSourceId, setNewsSourceId] = useState("");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [showGate, setShowGate] = useState(false);
+    const [nextCursor, setNextCursor] = useState<string | null>(null);
+    const [allModeCursors, setAllModeCursors] =
+        useState<ModeCursorMap>(EMPTY_MODE_CURSORS);
+    const [hasMore, setHasMore] = useState(false);
+    const [fetchingMore, setFetchingMore] = useState(false);
+    const [hasUserScrolled, setHasUserScrolled] = useState(false);
 
-    const gateRef = useRef<HTMLDivElement | null>(null);
+    const loadMoreRef = useRef<HTMLDivElement | null>(null);
+    const activeContextRef = useRef("");
+
+    const fetchAllModePage = useCallback(
+        async (cursorMap?: ModeCursorMap): Promise<{
+            items: ApiPost[];
+            nextCursors: ModeCursorMap;
+            hasMorePages: boolean;
+        }> => {
+            const requestedModes = FEED_MODES.filter((feedMode) =>
+                cursorMap ? cursorMap[feedMode] !== null : true,
+            );
+
+            if (requestedModes.length === 0) {
+                return {
+                    items: [],
+                    nextCursors: EMPTY_MODE_CURSORS,
+                    hasMorePages: false,
+                };
+            }
+
+            const nextCursors: ModeCursorMap = {
+                BIOGRAPHY: cursorMap?.BIOGRAPHY ?? null,
+                TRIVIA: cursorMap?.TRIVIA ?? null,
+                NICHE: cursorMap?.NICHE ?? null,
+            };
+
+            const settled = await Promise.allSettled(
+                requestedModes.map(async (feedMode) => ({
+                    feedMode,
+                    page: await listPosts(
+                        feedMode,
+                        profile,
+                        POSTS_PAGE_SIZE,
+                        cursorMap?.[feedMode] ?? undefined,
+                    ),
+                })),
+            );
+
+            const successful: Array<{
+                feedMode: FeedMode;
+                page: { items: ApiPost[]; nextCursor: string | null };
+            }> = [];
+            let firstError: unknown;
+
+            settled.forEach((result) => {
+                if (result.status === "fulfilled") {
+                    successful.push(result.value);
+                    return;
+                }
+                if (firstError === undefined) {
+                    firstError = result.reason;
+                }
+            });
+
+            if (successful.length === 0) {
+                throw firstError ?? new Error("Failed to fetch posts.");
+            }
+
+            successful.forEach(({ feedMode, page }) => {
+                nextCursors[feedMode] = page.nextCursor;
+            });
+
+            const deduped = new Map<string, ApiPost>();
+            successful
+                .flatMap(({ page }) => page.items)
+                .sort((a, b) => b.createdAtMs - a.createdAtMs)
+                .forEach((item) => {
+                    if (!deduped.has(item.id)) {
+                        deduped.set(item.id, item);
+                    }
+                });
+
+            return {
+                items: Array.from(deduped.values()),
+                nextCursors,
+                hasMorePages: FEED_MODES.some((feedMode) =>
+                    Boolean(nextCursors[feedMode]),
+                ),
+            };
+        },
+        [profile],
+    );
 
     useEffect(() => {
         if (mode !== "NEWS" || !isAuthenticated) {
@@ -141,77 +260,47 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
         };
     }, [mode, isAuthenticated]);
 
-    // ── Fetch posts (authenticated) or fetch from Firestore ────
+    // ── Fetch posts ──────────────────────────────────────────────
     useEffect(() => {
-        // ── Recce feeds (works for both guest and auth) ────────
-        if (mode.startsWith("RECCE:")) {
-            const recceName = mode.split(":")[1];
-            let cancelled = false;
-            setLoading(true);
-            setError(null);
-            setPosts([]);
-            fetchReccePosts(recceName)
-                .then((reccePosts) => {
-                    if (!cancelled) {
-                        setPosts(reccePosts);
-                        setShowGate(false);
-                    }
-                })
-                .catch((err) => {
-                    if (!cancelled) setError((err as Error).message);
-                })
-                .finally(() => {
-                    if (!cancelled) setLoading(false);
-                });
-            return () => {
-                cancelled = true;
-            };
-        }
+        const contextKey = `${isAuthenticated}:${mode}:${profile}:${newsSourceId}`;
+        activeContextRef.current = contextKey;
+        setError(null);
+        setHasMore(false);
+        setNextCursor(null);
+        setAllModeCursors(EMPTY_MODE_CURSORS);
+        setHasUserScrolled(false);
+        setFetchingMore(false);
 
         if (!isAuthenticated) {
-            if (mode === "NEWS") {
-                setPosts([]);
-                setLoading(false);
-                setShowGate(false);
-                setError(null);
-                return;
-            }
-
-            let cancelled = false;
-            setLoading(true);
-            fetchPublicPosts()
-                .then((firestorePosts) => {
-                    if (!cancelled) {
-                        setPosts(firestorePosts);
-                        setShowGate(false);
-                    }
-                })
-                .catch((err) => {
-                    if (!cancelled) {
-                        setError((err as Error).message);
-                    }
-                })
-                .finally(() => {
-                    if (!cancelled) setLoading(false);
-                });
-            return () => {
-                cancelled = true;
-            };
+            setPosts([]);
+            setLoading(false);
+            setError("Authentication required.");
+            return;
         }
 
         let cancelled = false;
         (async () => {
             try {
                 setLoading(true);
-                setError(null);
                 setPosts([]);
+                if (mode === "BLOGS") {
+                    setHasMore(false);
+                    return;
+                }
                 if (mode === "NEWS") {
                     if (!newsSourceId) {
                         setPosts([]);
+                        setHasMore(false);
                         return;
                     }
-                    const result = await listNewsArticles(newsSourceId, 20);
-                    if (cancelled) {
+                    const result = await listNewsArticles(
+                        newsSourceId,
+                        POSTS_PAGE_SIZE,
+                    );
+                    if (
+                        cancelled ||
+                        activeContextRef.current !== contextKey
+                    ) {
                         return;
                     }
 
@@ -234,97 +323,215 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
                             ),
                         );
 
-                    if (!cancelled) {
+                    if (
+                        !cancelled &&
+                        activeContextRef.current === contextKey
+                    ) {
                         setPosts(articlesWithText.map(newsArticleToPost));
+                        setHasMore(false);
                     }
                     return;
                 }
 
-                const items =
-                    mode === "ALL"
-                        ? await (async () => {
-                            const settled = await Promise.allSettled(
-                                FEED_MODES.map((m) =>
-                                    listPosts(m, profile, 20),
-                                ),
-                            );
-
-                            const successful = settled
-                                .filter(
-                                    (
-                                        result,
-                                    ): result is PromiseFulfilledResult<{
-                                        items: ApiPost[];
-                                        nextCursor: string | null;
-                                    }> => result.status === "fulfilled",
-                                )
-                                .flatMap((result) => result.value.items);
-
-                            if (successful.length === 0) {
-                                const firstError = settled.find(
-                                    (
-                                        result,
-                                    ): result is PromiseRejectedResult =>
-                                        result.status === "rejected",
-                                );
-                                throw (
-                                    firstError?.reason ??
-                                    new Error("Failed to fetch posts.")
-                                );
-                            }
-
-                            const deduped = new Map<string, ApiPost>();
-                            successful
-                                .sort((a, b) => b.createdAtMs - a.createdAtMs)
-                                .forEach((item) => {
-                                    if (!deduped.has(item.id)) {
-                                        deduped.set(item.id, item);
-                                    }
-                                });
-
-                            return Array.from(deduped.values()).slice(0, 20);
-                        })()
-                        : (await listPosts(mode, profile, 20)).items;
-
-                if (!cancelled) {
-                    setPosts(items.map(apiPostToPost));
+                if (mode === "ALL") {
+                    const firstPage = await fetchAllModePage();
+                    if (
+                        cancelled ||
+                        activeContextRef.current !== contextKey
+                    ) {
+                        return;
+                    }
+                    setPosts(firstPage.items.map(apiPostToPost));
+                    setAllModeCursors(firstPage.nextCursors);
+                    setHasMore(firstPage.hasMorePages);
+                    return;
                 }
+
+                const firstPage = await listPosts(
+                    mode,
+                    profile,
+                    POSTS_PAGE_SIZE,
+                );
+                if (
+                    cancelled ||
+                    activeContextRef.current !== contextKey
+                ) {
+                    return;
+                }
+                setPosts(firstPage.items.map(apiPostToPost));
+                setNextCursor(firstPage.nextCursor);
+                setHasMore(Boolean(firstPage.nextCursor));
             } catch (err) {
-                if (!cancelled) setError((err as Error).message);
+                if (
+                    !cancelled &&
+                    activeContextRef.current === contextKey
+                ) {
+                    setError((err as Error).message);
+                }
             } finally {
-                if (!cancelled) setLoading(false);
+                if (
+                    !cancelled &&
+                    activeContextRef.current === contextKey
+                ) {
+                    setLoading(false);
+                }
             }
         })();
         return () => {
             cancelled = true;
         };
-    }, [mode, profile, isAuthenticated, newsSourceId]);
+    }, [
+        mode,
+        profile,
+        isAuthenticated,
+        newsSourceId,
+        fetchAllModePage,
+    ]);
 
-    // ── Scroll gate observer (guest only) ───────────────────────
+    const loadMorePosts = useCallback(async () => {
+        if (
+            !isAuthenticated ||
+            mode === "NEWS" ||
+            mode === "BLOGS" ||
+            loading ||
+            fetchingMore ||
+            !hasMore
+        ) {
+            return;
+        }
+
+        const contextKey = `${isAuthenticated}:${mode}:${profile}:${newsSourceId}`;
+        if (activeContextRef.current !== contextKey) {
+            return;
+        }
+
+        try {
+            setFetchingMore(true);
+            if (mode === "ALL") {
+                const page = await fetchAllModePage(allModeCursors);
+                if (activeContextRef.current !== contextKey) {
+                    return;
+                }
+
+                setPosts((current) =>
+                    mergeUniquePosts(
+                        current,
+                        page.items.map(apiPostToPost),
+                        true,
+                    ),
+                );
+                setAllModeCursors(page.nextCursors);
+                setHasMore(page.hasMorePages);
+                return;
+            }
+
+            if (!nextCursor) {
+                setHasMore(false);
+                return;
+            }
+
+            const page = await listPosts(
+                mode,
+                profile,
+                POSTS_PAGE_SIZE,
+                nextCursor,
+            );
+            if (activeContextRef.current !== contextKey) {
+                return;
+            }
+
+            setPosts((current) =>
+                mergeUniquePosts(current, page.items.map(apiPostToPost)),
+            );
+            setNextCursor(page.nextCursor);
+            setHasMore(Boolean(page.nextCursor));
+        } catch (err) {
+            if (activeContextRef.current === contextKey) {
+                setError((err as Error).message);
+            }
+        } finally {
+            if (activeContextRef.current === contextKey) {
+                setFetchingMore(false);
+            }
+        }
+    }, [
+        allModeCursors,
+        fetchAllModePage,
+        fetchingMore,
+        hasMore,
+        isAuthenticated,
+        loading,
+        mode,
+        newsSourceId,
+        nextCursor,
+        profile,
+    ]);
+
+    // ── Infinite scroll observer (authenticated, non-news) ──────
     useEffect(() => {
-        if (isAuthenticated) return;
+        if (
+            !isAuthenticated ||
+            mode === "NEWS" ||
+            mode === "BLOGS" ||
+            !hasMore ||
+            loading ||
+            fetchingMore ||
+            !hasUserScrolled
+        ) {
+            return;
+        }
+
+        const node = loadMoreRef.current;
+        if (!node) {
+            return;
+        }
 
         const observer = new IntersectionObserver(
-            ([entry]) => {
-                if (entry.isIntersecting) {
-                    setShowGate(true);
+            (entries) => {
+                for (const entry of entries) {
+                    if (!entry.isIntersecting) {
+                        continue;
+                    }
+                    void loadMorePosts();
+                    break;
                 }
             },
-            { threshold: 0.5 },
+            { threshold: 1 },
         );
 
-        const el = gateRef.current;
-        if (el) observer.observe(el);
-
+        observer.observe(node);
         return () => {
-            if (el) observer.unobserve(el);
+            observer.disconnect();
         };
-    }, [isAuthenticated, posts]);
+    }, [
+        isAuthenticated,
+        mode,
+        hasMore,
+        loading,
+        fetchingMore,
+        hasUserScrolled,
+        loadMorePosts,
+    ]);
+
+    useEffect(() => {
+        if (!isAuthenticated || mode === "NEWS" || mode === "BLOGS" || loading) {
+            return;
+        }
+
+        const onScroll = () => {
+            if (window.scrollY > 0) {
+                setHasUserScrolled(true);
+            }
+        };
+
+        window.addEventListener("scroll", onScroll, { passive: true });
+        return () => {
+            window.removeEventListener("scroll", onScroll);
+        };
+    }, [isAuthenticated, mode, loading]);
 
     // ── Determine which posts to render ─────────────────────────
-    const visiblePosts = isAuthenticated
-        ? posts
-        : posts.slice(0, VISIBLE_GUEST_POSTS + 2); // show a few extra (partially hidden)
+    const visiblePosts = posts;
 
     return (
         <main className="feed">
@@ -376,6 +583,9 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
             )}
 
             {/* Posts */}
+            {mode === "BLOGS" ? (
+                <ReccesBlogFeed />
+            ) : (
             <div className="feed-posts-container">
                 {loading ? (
                     <div
@@ -386,24 +596,6 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
                         }}
                     >
                         Loading posts…
-                    </div>
-                ) : mode === "NEWS" && !isAuthenticated ? (
-                    <div
-                        style={{
-                            padding: 40,
-                            textAlign: "center",
-                            color: "var(--text-secondary)",
-                        }}
-                    >
-                        <p style={{ marginBottom: 14 }}>
-                            Sign in to view the live News feed.
-                        </p>
-                        <button
-                            className="right-new-btn"
-                            onClick={() => setShowAuthModal(true)}
-                        >
-                            Sign in
-                        </button>
                     </div>
                 ) : visiblePosts.length === 0 ? (
                     <div
@@ -420,48 +612,44 @@ export default function Feed({ mode, profile, onModeChange }: FeedProps) {
                                 : "No posts yet."}
                     </div>
                 ) : (
-                    visiblePosts.map((post, index) => (
-                        <div
-                            key={post.id}
-                            ref={
-                                !isAuthenticated &&
-                                    index === VISIBLE_GUEST_POSTS - 1
-                                    ? gateRef
-                                    : undefined
-                            }
-                        >
+                    visiblePosts.map((post) => (
+                        <div key={post.id}>
                             <PostCard post={post} />
                         </div>
                     ))
                 )}
 
-                {/* Scroll gate overlay for guests */}
-                {!isAuthenticated && showGate && (
-                    <div className="scroll-gate">
-                        <div className="scroll-gate-content">
-                            <h2 className="scroll-gate-title">
-                                See what&apos;s happening
-                            </h2>
-                            <p className="scroll-gate-subtitle">
-                                Join Orecce today to get personalized posts,
-                                follow topics you love, and more.
-                            </p>
-                            <button
-                                className="scroll-gate-cta"
-                                onClick={() => setShowAuthModal(true)}
-                            >
-                                Create account
-                            </button>
-                            <button
-                                className="scroll-gate-login"
-                                onClick={() => setShowAuthModal(true)}
-                            >
-                                Sign in
-                            </button>
+                {isAuthenticated &&
+                    mode !== "NEWS" &&
+                    mode !== "BLOGS" &&
+                    hasMore &&
+                    visiblePosts.length > 0 && (
+                        <div
+                            ref={loadMoreRef}
+                            className="sports-load-more-trigger"
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => {
+                                void loadMorePosts();
+                            }}
+                            onKeyDown={(event) => {
+                                if (
+                                    event.key === "Enter" ||
+                                    event.key === " "
+                                ) {
+                                    event.preventDefault();
+                                    void loadMorePosts();
+                                }
+                            }}
+                        >
+                            {fetchingMore
+                                ? "Loading more posts..."
+                                : "Scroll to load more posts..."}
                         </div>
-                    </div>
-                )}
+                    )}
+
             </div>
+            )}
         </main>
     );
 }

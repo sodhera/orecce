@@ -21,8 +21,9 @@ import { MdExplore, MdOutlineExplore } from "react-icons/md";
 import { MdSportsSoccer } from "react-icons/md";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
+import { AI_NEWS_ENABLED } from "@/config/features";
 
-const navItems: Array<{
+const baseNavItems: Array<{
     label: string;
     href?: string;
     iconOutline: ReactNode;
@@ -39,12 +40,6 @@ const navItems: Array<{
         href: "/sports",
         iconOutline: <MdSportsSoccer aria-hidden="true" />,
         iconFilled: <MdSportsSoccer aria-hidden="true" />,
-    },
-    {
-        label: "AI News",
-        href: "/ai-news",
-        iconOutline: <IoSparklesOutline aria-hidden="true" />,
-        iconFilled: <IoSparkles aria-hidden="true" />,
     },
     {
         label: "Discover",
@@ -70,6 +65,19 @@ const navItems: Array<{
         iconOutline: <IoChatbubbleEllipsesOutline aria-hidden="true" />,
     },
 ];
+
+const navItems = AI_NEWS_ENABLED
+    ? [
+        ...baseNavItems.slice(0, 2),
+        {
+            label: "AI News",
+            href: "/ai-news",
+            iconOutline: <IoSparklesOutline aria-hidden="true" />,
+            iconFilled: <IoSparkles aria-hidden="true" />,
+        },
+        ...baseNavItems.slice(2),
+    ]
+    : baseNavItems;
 
 export default function Sidebar() {
     const { isAuthenticated, user, setShowAuthModal, logout } = useAuth();

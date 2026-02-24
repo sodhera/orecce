@@ -1,0 +1,105 @@
+[rec-sim-user-1-cloudfinal] round=1 theme="Avoid novice investors" affinity=0 feedback=none score=0.38997
+[rec-sim-user-1-cloudfinal] round=2 theme="Ignore Investor Taste" affinity=1 feedback=none score=0.30106
+[rec-sim-user-1-cloudfinal] round=3 theme="Power When You Don’t Need Money" affinity=2 feedback=upvote score=0.39693
+[rec-sim-user-1-cloudfinal] round=4 theme="Top Funds Behave Differently" affinity=0 feedback=none score=0.41522
+[rec-sim-user-1-cloudfinal] round=5 theme="Ramen profitable leverage" affinity=2 feedback=upvote score=0.39918
+[rec-sim-user-1-cloudfinal] round=6 theme="Ramen Profitability" affinity=2 feedback=upvote score=0.38513
+[rec-sim-user-1-cloudfinal] round=7 theme="Ramen Profitability" affinity=1 feedback=none score=0.53306
+[rec-sim-user-1-cloudfinal] round=8 theme="Ramen Profitability Defined" affinity=2 feedback=upvote score=0.49059
+[rec-sim-user-1-cloudfinal] round=9 theme="Type A vs Type B" affinity=0 feedback=none score=0.38248
+[rec-sim-user-1-cloudfinal] round=10 theme="Manage Investors" affinity=1 feedback=none score=0.37325
+[rec-sim-user-2-cloudfinal] round=1 theme="Ramen Profitability" affinity=0 feedback=none score=0.58195
+[rec-sim-user-2-cloudfinal] round=2 theme="Top Funds Behave Differently" affinity=0 feedback=none score=0.41522
+[rec-sim-user-2-cloudfinal] round=3 theme="Type A vs Type B" affinity=1 feedback=none score=0.38248
+[rec-sim-user-2-cloudfinal] round=4 theme="Manage Investors" affinity=2 feedback=upvote score=0.37325
+[rec-sim-user-2-cloudfinal] round=5 theme="Why investors benefit" affinity=2 feedback=upvote score=0.45593
+[rec-sim-user-2-cloudfinal] round=6 theme="Investor Herd Behavior" affinity=2 feedback=upvote score=0.45067
+[rec-sim-user-2-cloudfinal] round=7 theme="No Investors? Still Win" affinity=2 feedback=upvote score=0.44643
+[rec-sim-user-2-cloudfinal] round=8 theme="Founder leverage rises" affinity=2 feedback=upvote score=0.43606
+[rec-sim-user-2-cloudfinal] round=9 theme="Cheaper To Start" affinity=0 feedback=none score=0.43337
+[rec-sim-user-2-cloudfinal] round=10 theme="Handling rejection smartly" affinity=2 feedback=upvote score=0.43284
+[rec-sim-user-3-cloudfinal] round=1 theme="Ramen Profitability" affinity=0 feedback=none score=0.58195
+[rec-sim-user-3-cloudfinal] round=2 theme="Cheaper To Start" affinity=0 feedback=none score=0.43337
+[rec-sim-user-3-cloudfinal] round=3 theme="Investor psychology" affinity=0 feedback=none score=0.42765
+[rec-sim-user-3-cloudfinal] round=4 theme="More startups, more failures" affinity=0 feedback=none score=0.4274
+[rec-sim-user-3-cloudfinal] round=5 theme="Corporations Copy Startups" affinity=0 feedback=none score=0.46481
+[rec-sim-user-3-cloudfinal] round=6 theme="Investors Aren’t Worth It" affinity=0 feedback=none score=0.42079
+[rec-sim-user-3-cloudfinal] round=7 theme="Investors Create Hubs" affinity=0 feedback=none score=0.41886
+[rec-sim-user-3-cloudfinal] round=8 theme="People, Not Place" affinity=0 feedback=none score=0.44666
+[rec-sim-user-3-cloudfinal] round=9 theme="Valuation Psychology" affinity=0 feedback=none score=0.4167
+[rec-sim-user-3-cloudfinal] round=10 theme="Top Funds Behave Differently" affinity=0 feedback=none score=0.41522
+{
+  "config": {
+    "base": "https://api-2ljiuwaa3a-uc.a.run.app",
+    "author_id": "paul_graham",
+    "users": 3,
+    "rounds_per_user": 10,
+    "recommend_limit": 20,
+    "recent_window": 5,
+    "auth_header_used": true,
+    "run_id": "cloudfinal"
+  },
+  "users": [
+    {
+      "userId": "rec-sim-user-1-cloudfinal",
+      "preferences": [
+        "user",
+        "users",
+        "support",
+        "startup",
+        "founder",
+        "iterate"
+      ],
+      "summary": {
+        "rounds": 10,
+        "first_half_relevance_ratio": 0.6,
+        "second_half_relevance_ratio": 0.8,
+        "relevance_lift": 0.2,
+        "upvotes": 4,
+        "downvotes": 0,
+        "no_feedback": 6
+      }
+    },
+    {
+      "userId": "rec-sim-user-2-cloudfinal",
+      "preferences": [
+        "investor",
+        "investors",
+        "fundraising",
+        "equity",
+        "term",
+        "round"
+      ],
+      "summary": {
+        "rounds": 10,
+        "first_half_relevance_ratio": 0.6,
+        "second_half_relevance_ratio": 0.8,
+        "relevance_lift": 0.2,
+        "upvotes": 6,
+        "downvotes": 0,
+        "no_feedback": 4
+      }
+    },
+    {
+      "userId": "rec-sim-user-3-cloudfinal",
+      "preferences": [
+        "lisp",
+        "compiler",
+        "language",
+        "programming",
+        "software",
+        "semantics"
+      ],
+      "summary": {
+        "rounds": 10,
+        "first_half_relevance_ratio": 0,
+        "second_half_relevance_ratio": 0,
+        "relevance_lift": 0,
+        "upvotes": 0,
+        "downvotes": 0,
+        "no_feedback": 10
+      }
+    }
+  ],
+  "total_runtime_ms": 39571
+}

@@ -10,6 +10,7 @@ import { CollectionDetailScreen } from '../screens/CollectionDetailScreen';
 import { RssFeedDetailScreen } from '../screens/RssFeedDetailScreen';
 import { RssArticleScreen } from '../screens/RssArticleScreen';
 import { FeedPostData } from '../components/FeedPostCard';
+import { AI_NEWS_ENABLED } from '../config/features';
 
 export type RootStackParamList = {
     Main: undefined;
@@ -53,30 +54,34 @@ export function RootNavigator() {
                     headerShown: false,
                 }}
             />
-            <Stack.Screen
-                name="Rss"
-                component={RssScreen}
-                options={{
-                    presentation: 'modal',
-                    headerShown: false,
-                    title: 'RSS Feeds'
-                }}
-            />
-            <Stack.Screen
-                name="RssFeedDetail"
-                component={RssFeedDetailScreen}
-                options={{
-                    headerShown: false,
-                }}
-            />
-            <Stack.Screen
-                name="RssArticle"
-                component={RssArticleScreen}
-                options={{
-                    headerShown: false,
-                    presentation: 'modal',
-                }}
-            />
+            {AI_NEWS_ENABLED ? (
+                <>
+                    <Stack.Screen
+                        name="Rss"
+                        component={RssScreen}
+                        options={{
+                            presentation: 'modal',
+                            headerShown: false,
+                            title: 'RSS Feeds'
+                        }}
+                    />
+                    <Stack.Screen
+                        name="RssFeedDetail"
+                        component={RssFeedDetailScreen}
+                        options={{
+                            headerShown: false,
+                        }}
+                    />
+                    <Stack.Screen
+                        name="RssArticle"
+                        component={RssArticleScreen}
+                        options={{
+                            headerShown: false,
+                            presentation: 'modal',
+                        }}
+                    />
+                </>
+            ) : null}
             <Stack.Screen
                 name="CreateCollection"
                 component={CreateCollectionScreen}

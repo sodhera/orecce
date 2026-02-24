@@ -17,6 +17,7 @@ import {
   generatePostRequestSchema,
   listFeedbackRequestSchema,
   listPostsRequestSchema,
+  reccesInteractionRequestSchema,
   recommendReccesRequestSchema,
   regeneratePrefillsRequestSchema,
   setPromptPreferencesSchema,
@@ -34,6 +35,7 @@ interface CreateAppDeps {
   authVerifier?: AuthVerifier;
   requireAuth: boolean;
   defaultPrefillPostsPerMode: number;
+  isAiNewsEnabled?: boolean;
 }
 
 function writeSse(res: Response, event: string, payload: unknown): void {
@@ -134,6 +136,15 @@ function summarizeBody(path: string, body: unknown): Record<string, unknown> | n
     };
   }
 
+  if (path === "/v1/recommendations/recces/interaction") {
+    return {
+      post_id: payload.post_id ?? null,
+      slide_flip_count: payload.slide_flip_count ?? null,
+      max_slide_index: payload.max_slide_index ?? null,
+      slide_count: payload.slide_count ?? null
+    };
+  }
+
   if (path === "/v1/prompt-preferences/set") {
     const biography = String(payload.biography_instructions ?? "");
     const niche = String(payload.niche_instructions ?? "");
@@ -228,6 +239,7 @@ async function ensureUserHasPrefills(
 
 export function createApp(deps: CreateAppDeps): express.Express {
   const app = express();
+  const isAiNewsEnabled = deps.isAiNewsEnabled !== false;
 
   app.use(cors({ origin: true }));
   app.use(express.json({ limit: "1mb" }));
@@ -264,6 +276,17 @@ export function createApp(deps: CreateAppDeps): express.Express {
   app.get("/health", (_req, res) => {
     res.json({ ok: true });
   });
+
+  app.use(
+    ["/v1/news/sources", "/v1/news/articles", "/v1/news/articles/:articleId"],
+    withAsync(async (_req, _res, next) => {
+      if (isAiNewsEnabled) {
+        next();
+        return;
+      }
+      throw new ApiError(404, "not_found", "Not found.");
+    })
+  );
 
   app.use(
     ["/v1", "/users"],
@@ -586,6 +609,39 @@ export function createApp(deps: CreateAppDeps): express.Express {
       res.json({
         ok: true,
         data: recommendations
+      });
+    })
+  );
+
+  app.post(
+    "/v1/recommendations/recces/interaction",
+    withAsync(async (req, res) => {
+      if (!deps.reccesRecommendationService) {
+        throw new ApiError(500, "server_misconfigured", "Recces recommendation service is not configured.");
+      }
+
+      const parsed = reccesInteractionRequestSchema.safeParse(req.body ?? {});
+      if (!parsed.success) {
+        throw new ApiError(400, "bad_request", "Invalid Recces interaction request.", parsed.error.flatten());
+      }
+
+      const identity = getAuthIdentity(res);
+      const body = parsed.data;
+      assertUserIdCompatible(body.user_id, identity.uid);
+
+      await deps.reccesRecommendationService.recordSlideInteractionSignal({
+        userId: identity.uid,
+        postId: body.post_id,
+        slideFlipCount: body.slide_flip_count,
+        maxSlideIndex: body.max_slide_index,
+        slideCount: body.slide_count
+      });
+
+      res.json({
+        ok: true,
+        data: {
+          accepted: true
+        }
       });
     })
   );

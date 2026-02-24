@@ -12,10 +12,6 @@ function normalizeBaseUrl(url: string): string {
 }
 
 const nextConfig: NextConfig = {
-  // Tells webpack (production / Vercel CI) where to root file tracing —
-  // same scope as turbopack.root so cross-package imports are included.
-  outputFileTracingRoot: monorepoRoot,
-
   turbopack: {
     root: monorepoRoot,
   },

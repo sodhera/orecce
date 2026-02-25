@@ -55,7 +55,6 @@ export default function ReccesBlogFeed() {
     const loadedIdsRef = useRef(new Set<string>());
     const loadedOrderRef = useRef<string[]>([]);
     const recentIdsRef = useRef<string[]>([]);
-    const likedIdsRef = useRef(new Set<string>());
     const pendingInteractionsRef = useRef(new Map<string, PendingInteraction>());
 
     const pushRecent = useCallback((postId: string) => {
@@ -173,11 +172,9 @@ export default function ReccesBlogFeed() {
     const handleLikeToggle = useCallback(
         (postId: string, liked: boolean) => {
             pushRecent(postId);
-            if (!liked || likedIdsRef.current.has(postId)) {
-                return;
-            }
-            likedIdsRef.current.add(postId);
-            void sendPostFeedback(postId, "upvote");
+            void sendPostFeedback(postId, liked ? "upvote" : "skip").catch(() => {
+                // Non-blocking; keep feed interaction responsive.
+            });
         },
         [pushRecent],
     );

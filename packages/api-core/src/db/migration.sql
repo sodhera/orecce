@@ -66,9 +66,16 @@ create table if not exists feedback (
   id uuid primary key default gen_random_uuid(),
   user_id text not null references app_users(id) on delete cascade,
   post_id text not null,
-  type text not null check (type in ('upvote','downvote','skip')),
+  type text not null,
   created_at timestamptz not null default now()
 );
+
+alter table feedback
+  drop constraint if exists feedback_type_check;
+
+alter table feedback
+  add constraint feedback_type_check
+  check (type in ('upvote','downvote','skip','save','unsave'));
 
 create index if not exists idx_feedback_user_created
   on feedback (user_id, created_at desc);

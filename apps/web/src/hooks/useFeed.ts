@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import type { Post, Slide } from "@/components/PostCard";
+import { sendPostFeedback } from "@/lib/api";
 
 // ── Types ────────────────────────────────────────────────────────
 
@@ -175,12 +176,17 @@ export function useFeed(authorId?: string | null, feedMode: FeedMode = "feed"): 
 
                 // Fire-and-forget mutation
                 (async () => {
-                    const { data: { user } } = await supabase.auth.getUser();
-                    if (!user) return;
-                    if (liked) {
-                        await supabase.from("user_likes").insert({ user_id: user.id, post_id: postId });
-                    } else {
-                        await supabase.from("user_likes").delete().match({ user_id: user.id, post_id: postId });
+                    try {
+                        const { data: { user } } = await supabase.auth.getUser();
+                        if (!user) return;
+                        if (liked) {
+                            await supabase.from("user_likes").insert({ user_id: user.id, post_id: postId });
+                        } else {
+                            await supabase.from("user_likes").delete().match({ user_id: user.id, post_id: postId });
+                        }
+                        await sendPostFeedback(postId, liked ? "upvote" : "skip");
+                    } catch {
+                        // Non-blocking; optimistic UI state remains.
                     }
                 })();
 

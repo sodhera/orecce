@@ -201,6 +201,9 @@ function mergeFeedbackSignals(
 ): { positives: Set<string>; negatives: Set<string>; usedSignals: number } {
   const latestByPost = new Map<string, StoredFeedback>();
   for (const item of feedback) {
+    if (item.type !== "upvote" && item.type !== "downvote" && item.type !== "skip") {
+      continue;
+    }
     if (!validPostIds.has(item.postId)) {
       continue;
     }

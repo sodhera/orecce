@@ -13,3 +13,7 @@
 - Mobile checks: `npm --prefix apps/mobile run typecheck`
 - Web checks: `npm --prefix apps/web run build`
 - API checks: `./services/api/scripts/prepush-check.sh`
+
+## Database migration rule
+- Any schema change must include a forward migration for already-provisioned databases (local/staging/prod), not only edits to base schema files.
+- Keep base schema definitions current (for fresh setup) and also add an idempotent migration file under `packages/api-core/src/db/migrations/`.

@@ -16,6 +16,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/RootNavigator';
 import { useToast } from '../context/ToastContext';
+import { listAllPostFeedback, PostFeedbackType, sendPostFeedback, StoredPostFeedback } from '../services/api';
 
 const FEED_DATA: FeedPostData[] = [
     {
@@ -94,6 +95,58 @@ const FEED_DATA: FeedPostData[] = [
 ];
 
 const DEFAULT_FEED_HEIGHT = 640;
+type VoteValue = -1 | 0 | 1;
+type VoteFeedbackType = 'upvote' | 'downvote' | 'skip';
+type SaveFeedbackType = 'save' | 'unsave';
+
+function toVoteFeedbackType(vote: VoteValue): VoteFeedbackType {
+    if (vote === 1) return 'upvote';
+    if (vote === -1) return 'downvote';
+    return 'skip';
+}
+
+function isVoteFeedbackType(type: PostFeedbackType): type is VoteFeedbackType {
+    return type === 'upvote' || type === 'downvote' || type === 'skip';
+}
+
+function isSaveFeedbackType(type: PostFeedbackType): type is SaveFeedbackType {
+    return type === 'save' || type === 'unsave';
+}
+
+function applyPersistedFeedback(posts: FeedPostData[], feedbackItems: StoredPostFeedback[]): FeedPostData[] {
+    const latestVoteByPost = new Map<string, VoteFeedbackType>();
+    const latestSaveByPost = new Map<string, SaveFeedbackType>();
+
+    for (const item of feedbackItems) {
+        if (!latestVoteByPost.has(item.postId) && isVoteFeedbackType(item.type)) {
+            latestVoteByPost.set(item.postId, item.type);
+        }
+        if (!latestSaveByPost.has(item.postId) && isSaveFeedbackType(item.type)) {
+            latestSaveByPost.set(item.postId, item.type);
+        }
+    }
+
+    return posts.map((post) => {
+        const latestVote = latestVoteByPost.get(post.id);
+        const latestSave = latestSaveByPost.get(post.id);
+
+        const userVote =
+            latestVote === 'upvote'
+                ? 1
+                : latestVote === 'downvote'
+                    ? -1
+                    : latestVote === 'skip'
+                        ? 0
+                        : (post.userVote ?? 0);
+        const isSaved = latestSave === 'save' ? true : latestSave === 'unsave' ? false : Boolean(post.isSaved);
+
+        return {
+            ...post,
+            userVote,
+            isSaved,
+        };
+    });
+}
 
 function rankNovelRecommendations(
     posts: FeedPostData[],
@@ -171,6 +224,28 @@ export function HomeScreen() {
     }, [skeletonPulse]);
 
     React.useEffect(() => {
+        let cancelled = false;
+
+        const hydratePersistedFeedback = async () => {
+            try {
+                const feedbackItems = await listAllPostFeedback({ maxPages: 6, pageSize: 50 });
+                if (cancelled || feedbackItems.length === 0) {
+                    return;
+                }
+                setPosts((currentPosts) => applyPersistedFeedback(currentPosts, feedbackItems));
+            } catch (error) {
+                console.warn('[feedback] Failed to hydrate feedback:', error);
+            }
+        };
+
+        void hydratePersistedFeedback();
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    React.useEffect(() => {
         if (recommendedPosts.length === 0) {
             setActiveIndex(0);
             return;
@@ -229,6 +304,18 @@ export function HomeScreen() {
         }, 800);
     }, [handleResetRecommendations, recommendedPosts.length]);
 
+    const persistPostFeedback = React.useCallback(async (postId: string, feedbackType: PostFeedbackType) => {
+        try {
+            await sendPostFeedback(postId, feedbackType);
+        } catch (error) {
+            console.warn('[feedback] Failed to persist feedback:', { postId, feedbackType, error });
+            showToast({
+                message: 'Could not sync action',
+                type: 'error',
+            });
+        }
+    }, [showToast]);
+
     const handleGoInDepth = (postId: string) => {
         const post = posts.find((candidate) => candidate.id === postId);
         if (!post) {
@@ -240,25 +327,28 @@ export function HomeScreen() {
     };
 
     const handleUpvote = (postId: string) => {
+        const post = posts.find((candidate) => candidate.id === postId);
+        if (!post) return;
+
+        const currentVote = post.userVote ?? 0;
+        let newVote: VoteValue;
+        let voteDelta: number;
+
+        if (currentVote === 1) {
+            newVote = 0;
+            voteDelta = -1;
+        } else if (currentVote === -1) {
+            newVote = 1;
+            voteDelta = 2;
+        } else {
+            newVote = 1;
+            voteDelta = 1;
+        }
+
         trackInteraction(postId);
         setPosts((currentPosts) =>
             currentPosts.map((post) => {
                 if (post.id !== postId) return post;
-
-                const currentVote = post.userVote ?? 0;
-                let newVote: -1 | 0 | 1;
-                let voteDelta: number;
-
-                if (currentVote === 1) {
-                    newVote = 0;
-                    voteDelta = -1;
-                } else if (currentVote === -1) {
-                    newVote = 1;
-                    voteDelta = 2;
-                } else {
-                    newVote = 1;
-                    voteDelta = 1;
-                }
 
                 return {
                     ...post,
@@ -267,28 +357,33 @@ export function HomeScreen() {
                 };
             })
         );
+
+        void persistPostFeedback(postId, toVoteFeedbackType(newVote));
     };
 
     const handleDownvote = (postId: string) => {
+        const post = posts.find((candidate) => candidate.id === postId);
+        if (!post) return;
+
+        const currentVote = post.userVote ?? 0;
+        let newVote: VoteValue;
+        let voteDelta: number;
+
+        if (currentVote === -1) {
+            newVote = 0;
+            voteDelta = 1;
+        } else if (currentVote === 1) {
+            newVote = -1;
+            voteDelta = -2;
+        } else {
+            newVote = -1;
+            voteDelta = -1;
+        }
+
         trackInteraction(postId);
         setPosts((currentPosts) =>
             currentPosts.map((post) => {
                 if (post.id !== postId) return post;
-
-                const currentVote = post.userVote ?? 0;
-                let newVote: -1 | 0 | 1;
-                let voteDelta: number;
-
-                if (currentVote === -1) {
-                    newVote = 0;
-                    voteDelta = 1;
-                } else if (currentVote === 1) {
-                    newVote = -1;
-                    voteDelta = -2;
-                } else {
-                    newVote = -1;
-                    voteDelta = -1;
-                }
 
                 return {
                     ...post,
@@ -297,34 +392,42 @@ export function HomeScreen() {
                 };
             })
         );
+
+        void persistPostFeedback(postId, toVoteFeedbackType(newVote));
     };
 
     const handleSave = (postId: string) => {
+        const post = posts.find((candidate) => candidate.id === postId);
+        if (!post) {
+            return;
+        }
+        const newIsSaved = !post.isSaved;
+
         trackInteraction(postId);
         setPosts((currentPosts) =>
             currentPosts.map((post) => {
                 if (post.id !== postId) {
                     return post;
                 }
-
-                const newIsSaved = !post.isSaved;
-                if (newIsSaved) {
-                    showToast({
-                        message: 'Saved',
-                        type: 'save',
-                        actionLabel: 'View',
-                        onAction: () => navigation.navigate('Main', { screen: 'Saved' } as any),
-                    });
-                } else {
-                    showToast({
-                        message: 'Removed from saved',
-                        type: 'unsave',
-                    });
-                }
-
                 return { ...post, isSaved: newIsSaved };
             })
         );
+
+        if (newIsSaved) {
+            showToast({
+                message: 'Saved',
+                type: 'save',
+                actionLabel: 'View',
+                onAction: () => navigation.navigate('Main', { screen: 'Saved' } as any),
+            });
+        } else {
+            showToast({
+                message: 'Removed from saved',
+                type: 'unsave',
+            });
+        }
+
+        void persistPostFeedback(postId, newIsSaved ? 'save' : 'unsave');
     };
 
     const handleShare = (postId: string) => {

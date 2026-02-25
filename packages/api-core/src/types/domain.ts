@@ -4,7 +4,7 @@ export type FeedMode = (typeof FEED_MODES)[number];
 export const POST_LENGTHS = ["short", "medium"] as const;
 export type PostLength = (typeof POST_LENGTHS)[number];
 
-export const FEEDBACK_TYPES = ["upvote", "downvote", "skip"] as const;
+export const FEEDBACK_TYPES = ["upvote", "downvote", "skip", "save", "unsave"] as const;
 export type FeedbackType = (typeof FEEDBACK_TYPES)[number];
 
 export const CONFIDENCE_VALUES = ["high", "medium", "low"] as const;

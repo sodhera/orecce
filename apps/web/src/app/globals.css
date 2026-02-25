@@ -9,7 +9,7 @@
 
 :root {
   --sidebar-width: 275px;
-  --feed-width: 540px;
+  --feed-width: 620px;
   --right-width: 350px;
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
@@ -380,7 +380,7 @@ img {
 /* ── Center Feed ── */
 .feed {
   width: calc(var(--feed-width) + 6px);
-  /* account for scrollbar width so content remains centered at 600px */
+  /* account for scrollbar width so content remains centered in the feed column */
   border-left: 1px solid var(--bg-border);
   border-right: 1px solid var(--bg-border);
   min-height: 100vh;
@@ -2808,7 +2808,7 @@ img {
   }
 
   .feed {
-    width: min(600px, calc(100vw - 540px));
+    width: min(620px, calc(100vw - 540px));
   }
 
   .right-sidebar {
@@ -2826,7 +2826,7 @@ img {
   }
 
   .feed {
-    width: min(680px, calc(100vw - 250px));
+    width: min(700px, calc(100vw - 250px));
   }
 }
 
@@ -3348,7 +3348,7 @@ img {
   flex: 0 0 100%;
   width: 100%;
   height: 100%;
-  padding: 28px 24px;
+  padding: 28px clamp(44px, 13%, 56px);
   display: flex;
   flex-direction: column;
   justify-content: center;

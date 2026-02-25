@@ -37,6 +37,32 @@ export interface ApiError {
     status: number;
 }
 
+interface ApiEnvelope<T> {
+    ok: boolean;
+    data: T;
+}
+
+export type PostFeedbackType = 'upvote' | 'downvote' | 'skip' | 'save' | 'unsave';
+
+export interface StoredPostFeedback {
+    id: string;
+    userId: string;
+    postId: string;
+    type: PostFeedbackType;
+    createdAtMs: number;
+}
+
+export interface ListPostFeedbackResult {
+    items: StoredPostFeedback[];
+    nextCursor: string | null;
+}
+
+export interface ListPostFeedbackInput {
+    postId?: string;
+    pageSize?: number;
+    cursor?: string;
+}
+
 // =============================================================================
 // API CLIENT
 // =============================================================================
@@ -131,6 +157,60 @@ export async function syncCurrentUser(): Promise<User | null> {
     }
 }
 
+/**
+ * Record post feedback for recommendation personalization.
+ */
+export async function sendPostFeedback(
+    postId: string,
+    feedbackType: PostFeedbackType
+): Promise<StoredPostFeedback> {
+    const response = await apiRequest<ApiEnvelope<StoredPostFeedback>>('POST', '/v1/posts/feedback', {
+        post_id: postId,
+        feedback_type: feedbackType,
+    });
+    return response.data;
+}
+
+/**
+ * List post feedback entries for the current user.
+ */
+export async function listPostFeedback(
+    input: ListPostFeedbackInput = {}
+): Promise<ListPostFeedbackResult> {
+    const response = await apiRequest<ApiEnvelope<ListPostFeedbackResult>>('POST', '/v1/posts/feedback/list', {
+        post_id: input.postId,
+        page_size: input.pageSize ?? 50,
+        cursor: input.cursor,
+    });
+    return response.data;
+}
+
+/**
+ * Fetch a bounded history of post feedback entries for state hydration.
+ */
+export async function listAllPostFeedback(
+    input: Omit<ListPostFeedbackInput, 'cursor'> & { maxPages?: number } = {}
+): Promise<StoredPostFeedback[]> {
+    const maxPages = Math.max(1, Math.min(10, input.maxPages ?? 6));
+    const items: StoredPostFeedback[] = [];
+    let cursor: string | undefined;
+
+    for (let page = 0; page < maxPages; page += 1) {
+        const result = await listPostFeedback({
+            postId: input.postId,
+            pageSize: input.pageSize ?? 50,
+            cursor,
+        });
+        items.push(...result.items);
+        if (!result.nextCursor) {
+            break;
+        }
+        cursor = result.nextCursor;
+    }
+
+    return items;
+}
+
 // =============================================================================
 // EXPOSED API CLIENT
 // =============================================================================
@@ -139,6 +219,9 @@ export const api = {
     getUser,
     updateUserProfile,
     syncCurrentUser,
+    sendPostFeedback,
+    listPostFeedback,
+    listAllPostFeedback,
 };
 
 export default api;

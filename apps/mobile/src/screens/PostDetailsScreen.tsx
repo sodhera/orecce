@@ -8,8 +8,17 @@ import { BottomSheetMenu } from '../components/BottomSheetMenu';
 import { colors } from '../styles/colors';
 import { RootStackParamList } from '../navigation/RootNavigator';
 import { useToast } from '../context/ToastContext';
+import { listAllPostFeedback, PostFeedbackType, sendPostFeedback } from '../services/api';
 
 type PostDetailsScreenRouteProp = RouteProp<RootStackParamList, 'PostDetails'>;
+type VoteValue = -1 | 0 | 1;
+type VoteFeedbackType = 'upvote' | 'downvote' | 'skip';
+
+function toVoteFeedbackType(vote: VoteValue): VoteFeedbackType {
+    if (vote === 1) return 'upvote';
+    if (vote === -1) return 'downvote';
+    return 'skip';
+}
 
 export function PostDetailsScreen() {
     const route = useRoute<PostDetailsScreenRouteProp>();
@@ -41,6 +50,62 @@ export function PostDetailsScreen() {
         };
     }, []);
 
+    useEffect(() => {
+        let cancelled = false;
+
+        const hydratePostFeedback = async () => {
+            try {
+                const feedbackItems = await listAllPostFeedback({ postId: post.id, pageSize: 50, maxPages: 2 });
+                if (cancelled || feedbackItems.length === 0) {
+                    return;
+                }
+
+                const voteFeedback = feedbackItems.find((item) => (
+                    item.type === 'upvote' || item.type === 'downvote' || item.type === 'skip'
+                ));
+                const saveFeedback = feedbackItems.find((item) => item.type === 'save' || item.type === 'unsave');
+
+                setCurrentPost((prev) => ({
+                    ...prev,
+                    userVote:
+                        voteFeedback?.type === 'upvote'
+                            ? 1
+                            : voteFeedback?.type === 'downvote'
+                                ? -1
+                                : voteFeedback?.type === 'skip'
+                                    ? 0
+                                    : (prev.userVote ?? 0),
+                    isSaved:
+                        saveFeedback?.type === 'save'
+                            ? true
+                            : saveFeedback?.type === 'unsave'
+                                ? false
+                                : Boolean(prev.isSaved),
+                }));
+            } catch (error) {
+                console.warn('[feedback] Failed to hydrate post feedback:', error);
+            }
+        };
+
+        void hydratePostFeedback();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [post.id]);
+
+    const persistPostFeedback = async (postId: string, feedbackType: PostFeedbackType) => {
+        try {
+            await sendPostFeedback(postId, feedbackType);
+        } catch (error) {
+            console.warn('[feedback] Failed to persist post feedback:', { postId, feedbackType, error });
+            showToast({
+                message: 'Could not sync action',
+                type: 'error',
+            });
+        }
+    };
+
     const handleBack = () => {
         navigation.goBack();
     };
@@ -71,57 +136,62 @@ export function PostDetailsScreen() {
             });
         }
 
+        void persistPostFeedback(currentPost.id, newIsSaved ? 'save' : 'unsave');
         setMenuVisible(false);
     };
 
     const handleUpvote = () => {
+        const currentVote = currentPost.userVote ?? 0;
+        let newVote: VoteValue;
+        let voteDelta: number;
+
+        if (currentVote === 1) {
+            newVote = 0;
+            voteDelta = -1;
+        } else if (currentVote === -1) {
+            newVote = 1;
+            voteDelta = 2;
+        } else {
+            newVote = 1;
+            voteDelta = 1;
+        }
+
         setCurrentPost((prev) => {
-            const currentVote = prev.userVote ?? 0;
-            let newVote: -1 | 0 | 1;
-            let voteDelta: number;
-
-            if (currentVote === 1) {
-                newVote = 0;
-                voteDelta = -1;
-            } else if (currentVote === -1) {
-                newVote = 1;
-                voteDelta = 2;
-            } else {
-                newVote = 1;
-                voteDelta = 1;
-            }
-
             return {
                 ...prev,
                 userVote: newVote,
                 votes: (prev.votes ?? 0) + voteDelta,
             };
         });
+
+        void persistPostFeedback(currentPost.id, toVoteFeedbackType(newVote));
     };
 
     const handleDownvote = () => {
+        const currentVote = currentPost.userVote ?? 0;
+        let newVote: VoteValue;
+        let voteDelta: number;
+
+        if (currentVote === -1) {
+            newVote = 0;
+            voteDelta = 1;
+        } else if (currentVote === 1) {
+            newVote = -1;
+            voteDelta = -2;
+        } else {
+            newVote = -1;
+            voteDelta = -1;
+        }
+
         setCurrentPost((prev) => {
-            const currentVote = prev.userVote ?? 0;
-            let newVote: -1 | 0 | 1;
-            let voteDelta: number;
-
-            if (currentVote === -1) {
-                newVote = 0;
-                voteDelta = 1;
-            } else if (currentVote === 1) {
-                newVote = -1;
-                voteDelta = -2;
-            } else {
-                newVote = -1;
-                voteDelta = -1;
-            }
-
             return {
                 ...prev,
                 userVote: newVote,
                 votes: (prev.votes ?? 0) + voteDelta,
             };
         });
+
+        void persistPostFeedback(currentPost.id, toVoteFeedbackType(newVote));
     };
 
     const handleSendMessage = () => {

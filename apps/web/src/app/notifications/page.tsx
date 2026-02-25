@@ -6,40 +6,9 @@ import NotificationItem, {
     type NotificationItemData,
 } from "@/components/NotificationItem";
 
-const NOTIFICATIONS: NotificationItemData[] = [
-    {
-        id: "n-1",
-        title: "Your saved collection reached 100 reads",
-        context: "Underrated Inventors",
-        time: "2m ago",
-        unread: true,
-    },
-    {
-        id: "n-2",
-        title: "New biography posts are available in Tech History",
-        context: "Category update",
-        time: "18m ago",
-        unread: true,
-    },
-    {
-        id: "n-3",
-        title: "A profile you follow published a new trivia thread",
-        context: "@ada",
-        time: "1h ago",
-        unread: false,
-    },
-    {
-        id: "n-4",
-        title: "Your draft was auto-saved successfully",
-        context: "Post composer",
-        time: "3h ago",
-        unread: false,
-    },
-];
-
 export default function NotificationsPage() {
     const [notifications, setNotifications] =
-        useState<NotificationItemData[]>(NOTIFICATIONS);
+        useState<NotificationItemData[]>([]);
 
     const handleMarkRead = (notificationId: string) => {
         setNotifications((currentNotifications) =>

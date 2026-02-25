@@ -47,6 +47,9 @@ export function feedbackDelta(type: FeedbackType): number {
   if (type === "downvote") {
     return -1;
   }
+  if (type === "save" || type === "unsave") {
+    return 0;
+  }
   return -0.35;
 }
 

@@ -1,28 +1,24 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useAuthors } from "@/hooks/useAuthors";
 
 const INTEREST_OPTIONS = [
-    "AI & ML",
-    "Frontend",
-    "Design",
     "Startups",
-    "Marketing",
-    "Developer Tools",
-    "Product Strategy",
-    "Mobile",
+    "Gym",
+    "AI",
+    "Health",
+    "Personal Finance",
+    "News",
+    "Science",
+    "Philosophy",
+    "Self Improvement",
+    "Technology",
+    "Business",
+    "Productivity",
 ];
 
-const CONTENT_PREFERENCE_OPTIONS = [
-    "Deep dives",
-    "Quick updates",
-    "Case studies",
-    "How-to guides",
-    "News roundups",
-    "Personal stories",
-];
-
-type SlideId = "welcome" | "interests" | "preferences";
+type SlideId = "welcome" | "interests" | "recces";
 
 const SLIDES: Array<{
     id: SlideId;
@@ -30,32 +26,32 @@ const SLIDES: Array<{
     title: string;
     description: string;
 }> = [
-    {
-        id: "welcome",
-        icon: "✨",
-        title: "Welcome to Orecce",
-        description:
-            "Before we show your feed, let’s tune it around what you want to learn and follow.",
-    },
-    {
-        id: "interests",
-        icon: "🎯",
-        title: "Pick your interests",
-        description:
-            "Choose a few areas you want to see more often in your daily feed.",
-    },
-    {
-        id: "preferences",
-        icon: "🧠",
-        title: "Tell us your preferences",
-        description:
-            "Help us shape your feed with the formats and topics you care about most.",
-    },
-];
+        {
+            id: "welcome",
+            icon: "✨",
+            title: "Welcome to Orecce",
+            description:
+                "Before we show your feed, let's tune it around what you want to learn and follow.",
+        },
+        {
+            id: "interests",
+            icon: "🎯",
+            title: "Pick your interests",
+            description:
+                "Choose a few areas you want to see more often in your daily feed.",
+        },
+        {
+            id: "recces",
+            icon: "👥",
+            title: "Follow some Recces",
+            description:
+                "Based on your interests, here are some Recces we recommend. Follow them to fill your feed.",
+        },
+    ];
 
 export interface HomeOnboardingData {
     interests: string[];
-    contentPreferences: string[];
+    followedRecceIds: string[];
     notes: string;
 }
 
@@ -82,8 +78,8 @@ export default function HomeOnboarding({
 }: HomeOnboardingProps) {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [interests, setInterests] = useState<string[]>([]);
-    const [contentPreferences, setContentPreferences] = useState<string[]>([]);
-    const [notes, setNotes] = useState("");
+    const [selectedRecceIds, setSelectedRecceIds] = useState<string[]>([]);
+    const { authors, followedIds, loading: authorsLoading, toggleFollow } = useAuthors();
 
     const isLastSlide = currentIndex === SLIDES.length - 1;
     const currentSlide = SLIDES[currentIndex];
@@ -91,11 +87,22 @@ export default function HomeOnboarding({
     const payload = useMemo<HomeOnboardingData>(
         () => ({
             interests,
-            contentPreferences,
-            notes: notes.trim(),
+            followedRecceIds: selectedRecceIds,
+            notes: "",
         }),
-        [interests, contentPreferences, notes],
+        [interests, selectedRecceIds],
     );
+
+    const handleFollowRecce = (authorId: string) => {
+        // Toggle in local selection state
+        setSelectedRecceIds((prev) =>
+            prev.includes(authorId)
+                ? prev.filter((id) => id !== authorId)
+                : [...prev, authorId],
+        );
+        // Also toggle in the actual follow system
+        toggleFollow(authorId);
+    };
 
     const goNext = () => {
         if (isLastSlide) {
@@ -170,40 +177,56 @@ export default function HomeOnboarding({
                         </div>
                     )}
 
-                    {currentSlide.id === "preferences" && (
-                        <div className="home-onboarding-form">
-                            <div className="home-onboarding-chip-grid">
-                                {CONTENT_PREFERENCE_OPTIONS.map((option) => (
-                                    <button
-                                        key={option}
-                                        type="button"
-                                        className={`home-onboarding-chip ${contentPreferences.includes(option) ? "active" : ""}`}
-                                        onClick={() =>
-                                            toggleOption(
-                                                contentPreferences,
-                                                option,
-                                                setContentPreferences,
-                                            )
-                                        }
-                                    >
-                                        {option}
-                                    </button>
-                                ))}
-                            </div>
-
-                            <label
-                                className="home-onboarding-label"
-                                htmlFor="onboarding-notes"
-                            >
-                                Anything else you want in your feed?
-                            </label>
-                            <textarea
-                                id="onboarding-notes"
-                                className="home-onboarding-textarea"
-                                placeholder="Example: I want more startup case studies and less breaking news."
-                                value={notes}
-                                onChange={(event) => setNotes(event.target.value)}
-                            />
+                    {currentSlide.id === "recces" && (
+                        <div className="home-onboarding-recces">
+                            {authorsLoading ? (
+                                <div className="home-onboarding-recces-loading">
+                                    Loading recces…
+                                </div>
+                            ) : authors.length === 0 ? (
+                                <div className="home-onboarding-recces-empty">
+                                    No recces available yet. You can discover them later!
+                                </div>
+                            ) : (
+                                <div className="home-onboarding-recces-list">
+                                    {authors.map((author) => {
+                                        const isSelected =
+                                            selectedRecceIds.includes(author.id) ||
+                                            followedIds.has(author.id);
+                                        return (
+                                            <div
+                                                key={author.id}
+                                                className="home-onboarding-recce-item"
+                                            >
+                                                <div className="home-onboarding-recce-avatar">
+                                                    {author.name?.charAt(0).toUpperCase() || "?"}
+                                                </div>
+                                                <div className="home-onboarding-recce-info">
+                                                    <span className="home-onboarding-recce-name">
+                                                        {author.name}
+                                                    </span>
+                                                    {author.bio && (
+                                                        <span className="home-onboarding-recce-bio">
+                                                            {author.bio}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    className={`home-onboarding-recce-follow-btn ${isSelected ? "following" : ""}`}
+                                                    onClick={() =>
+                                                        handleFollowRecce(author.id)
+                                                    }
+                                                >
+                                                    {isSelected
+                                                        ? "Following"
+                                                        : "Follow"}
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

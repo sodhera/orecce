@@ -108,7 +108,7 @@ export default function Feed({ mode, onModeChange }: FeedProps) {
                             <div className="feed-empty-icon">✦</div>
                             <h2 className="feed-empty-title">Welcome to your feed</h2>
                             <p className="feed-empty-subtitle">
-                                Follow authors to see their posts here. Here are a few to get you started:
+                                Follow recces to see their posts here. Here are a few to get you started:
                             </p>
 
                             {recommendedAuthors.length > 0 && (
@@ -116,12 +116,7 @@ export default function Feed({ mode, onModeChange }: FeedProps) {
                                     {recommendedAuthors.map((author) => (
                                         <div key={author.id} className="feed-rec-author-card">
                                             <div className="feed-rec-author-avatar">
-                                                {author.avatar_url ? (
-                                                    // eslint-disable-next-line @next/next/no-img-element
-                                                    <img src={author.avatar_url} alt={author.name} />
-                                                ) : (
-                                                    <span>{author.name.charAt(0).toUpperCase()}</span>
-                                                )}
+                                                {author.name?.charAt(0).toUpperCase() || "?"}
                                             </div>
                                             <div className="feed-rec-author-info">
                                                 <span className="feed-rec-author-name">{author.name}</span>
@@ -142,7 +137,7 @@ export default function Feed({ mode, onModeChange }: FeedProps) {
                             )}
 
                             <Link href="/discover" className="feed-empty-discover-link">
-                                Browse all authors →
+                                Browse all recces →
                             </Link>
                         </div>
                     )

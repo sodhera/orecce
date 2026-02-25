@@ -2763,6 +2763,105 @@ body[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
   color: var(--accent);
 }
 
+/* ── Onboarding Recces List ── */
+.home-onboarding-recces {
+  margin-top: 4px;
+}
+
+.home-onboarding-recces-loading,
+.home-onboarding-recces-empty {
+  color: var(--text-secondary);
+  font-size: 14px;
+  padding: 16px 0;
+}
+
+.home-onboarding-recces-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.home-onboarding-recce-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  transition: background 0.15s;
+}
+
+.home-onboarding-recce-item:hover {
+  background: var(--bg-hover);
+}
+
+.home-onboarding-recce-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 9999px;
+  background: var(--accent-soft-bg);
+  color: var(--accent);
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.home-onboarding-recce-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.home-onboarding-recce-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-onboarding-recce-bio {
+  font-size: 13px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-onboarding-recce-follow-btn {
+  padding: 7px 16px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 700;
+  border: 1px solid var(--text-primary);
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  flex-shrink: 0;
+}
+
+.home-onboarding-recce-follow-btn:hover {
+  opacity: 0.85;
+}
+
+.home-onboarding-recce-follow-btn.following {
+  background: transparent;
+  border-color: var(--bg-border);
+  color: var(--text-primary);
+}
+
+.home-onboarding-recce-follow-btn.following:hover {
+  border-color: #f4212e;
+  color: #f4212e;
+  opacity: 1;
+}
+
 .home-onboarding-form {
   display: flex;
   flex-direction: column;
@@ -3660,13 +3759,13 @@ body[data-theme="light"] .ig-post-dot.active {
   font-family: var(--font-sans);
   cursor: pointer;
   transition: all 0.2s;
-  border: 1px solid var(--accent);
-  background: var(--accent);
-  color: var(--text-on-accent);
+  border: 1px solid var(--text-primary);
+  background: var(--text-primary);
+  color: var(--bg-primary);
 }
 
 .author-follow-btn:hover {
-  background: var(--accent-hover);
+  opacity: 0.85;
 }
 
 .author-follow-btn.following {

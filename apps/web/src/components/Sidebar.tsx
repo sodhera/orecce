@@ -374,9 +374,6 @@ export default function Sidebar() {
                         className="logout-confirm-modal"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="logout-confirm-brand" aria-hidden="true">
-                            O
-                        </div>
                         <h2 className="logout-confirm-title">Log out of Orecce?</h2>
                         <p className="logout-confirm-text">
                             You can log back in at any time. If you only want to

@@ -16,7 +16,7 @@ export default function DiscoverPage() {
                     <div className="feed-header-top">
                         <h1>Discover</h1>
                         <p className="utility-page-intro">
-                            Browse authors and follow them to see their posts in
+                            Browse recces and follow them to see their posts in
                             your feed.
                         </p>
                     </div>
@@ -24,17 +24,17 @@ export default function DiscoverPage() {
 
                 <div className="utility-page-body">
                     <section className="utility-card">
-                        <h2 className="utility-card-title">Authors</h2>
+                        <h2 className="utility-card-title">Recces</h2>
 
                         {loading ? (
                             <div className="authors-loading">
-                                Loading authors…
+                                Loading recces…
                             </div>
                         ) : error ? (
                             <div className="authors-error">Error: {error}</div>
                         ) : authors.length === 0 ? (
                             <div className="authors-empty">
-                                No authors available yet.
+                                No recces available yet.
                             </div>
                         ) : (
                             <div className="authors-grid">
@@ -83,7 +83,7 @@ export default function DiscoverPage() {
                 <div className="right-card right-new-section page-side-note">
                     <h2 className="page-side-note-title">How it works</h2>
                     <p className="page-side-note-text">
-                        Follow authors to see their posts in your "All" feed.
+                        Follow recces to see their posts in your "All" feed.
                         Posts you&apos;ve already read are automatically hidden
                         so you always see fresh content.
                     </p>

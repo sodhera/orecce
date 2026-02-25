@@ -1,10 +1,10 @@
 import { getApps, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
-import { getDefaultPrefillPostsPerMode } from "../src/config/runtimeConfig";
-import { OpenAiGateway } from "../src/llm/openAiGateway";
-import { FirestoreRepository } from "../src/repositories/firestoreRepository";
-import { PrefillService } from "../src/services/prefillService";
+import { getDefaultPrefillPostsPerMode } from "@orecce/api-core/src/config/runtimeConfig";
+import { OpenAiGateway } from "@orecce/api-core/src/llm/openAiGateway";
+import { FirestoreRepository } from "@orecce/api-core/src/repositories/firestoreRepository";
+import { PrefillService } from "@orecce/api-core/src/services/prefillService";
 import { loadDotEnv } from "./loadDotEnv";
 
 type Args = Record<string, string | boolean>;

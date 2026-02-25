@@ -6,6 +6,7 @@ import { colors } from '../styles/colors';
 import { useAuth } from '../hooks/useAuth';
 import { useUser, getDisplayName, getUserInitials } from '../hooks/useUser';
 import { ScreenHeader } from '../components/ScreenHeader';
+import { supabase } from '../config/supabase';
 
 type SettingsItem = {
     id: string;
@@ -44,7 +45,7 @@ export function ProfileScreen() {
     const initials = getUserInitials(backendUser, firebaseUser);
 
     // Update email value dynamically with verification status
-    const isEmailVerified = firebaseUser?.emailVerified ?? false;
+    const isEmailVerified = Boolean(firebaseUser?.email_confirmed_at);
     const sections = SECTIONS.map(section => ({
         ...section,
         data: section.data.map(item => {
@@ -60,17 +61,21 @@ export function ProfileScreen() {
     }));
 
     const handleVerifyEmail = async () => {
-        // Import and use sendEmailVerification
-        const { sendEmailVerification } = require('firebase/auth');
-        const { auth } = require('../config/firebase');
-        if (auth.currentUser) {
-            try {
-                await sendEmailVerification(auth.currentUser);
-                // Show success message (you could use a Toast here)
-                alert('Verification email sent! Please check your inbox.');
-            } catch (error) {
-                alert('Failed to send verification email. Please try again.');
+        if (!firebaseUser?.email) {
+            alert('No email found for this account.');
+            return;
+        }
+        try {
+            const { error } = await supabase.auth.resend({
+                type: 'signup',
+                email: firebaseUser.email,
+            });
+            if (error) {
+                throw error;
             }
+            alert('Verification email sent! Please check your inbox.');
+        } catch (error) {
+            alert('Failed to send verification email. Please try again.');
         }
     };
 

@@ -1,5 +1,5 @@
-import { ReccesEssayDocument, ReccesRepository } from "../src/recces/types";
-import { buildReccesPostId, parseReccesPostId } from "../src/recces/postId";
+import { ReccesEssayDocument, ReccesRepository } from "@orecce/api-core/src/recces/types";
+import { buildReccesPostId, parseReccesPostId } from "@orecce/api-core/src/recces/postId";
 
 const STATIC_DATASET: Record<string, ReccesEssayDocument[]> = {
   paul_graham: [

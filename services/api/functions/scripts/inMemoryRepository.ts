@@ -10,10 +10,10 @@ import {
   SaveFeedbackInput,
   SavePostInput,
   UpdateUserProfileInput
-} from "../src/types/contracts";
-import { AppUser, PromptPreferences, StoredFeedback, StoredPost, UserPrefillSummary } from "../src/types/domain";
-import { DEFAULT_PROFILE_BY_MODE } from "../src/services/prefillBlueprint";
-import { normalizeProfileKey } from "../src/utils/text";
+} from "@orecce/api-core/src/types/contracts";
+import { AppUser, PromptPreferences, StoredFeedback, StoredPost, UserPrefillSummary } from "@orecce/api-core/src/types/domain";
+import { DEFAULT_PROFILE_BY_MODE } from "@orecce/api-core/src/services/prefillBlueprint";
+import { normalizeProfileKey } from "@orecce/api-core/src/utils/text";
 
 export class InMemoryRepository implements Repository {
   public posts: StoredPost[] = [];

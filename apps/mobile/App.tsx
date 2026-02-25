@@ -23,6 +23,7 @@ export default function App() {
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
   const [verificationGateDismissed, setVerificationGateDismissed] = useState(false);
   const { user, isLoading } = useAuth();
+  const isEmailVerified = Boolean(user?.email_confirmed_at);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const splashFadeAnim = useRef(new Animated.Value(1)).current;
@@ -88,11 +89,11 @@ export default function App() {
 
   // If user is unverified and we don't already have a pending email, gate with verify screen (unless dismissed)
   useEffect(() => {
-    if (user && !user.emailVerified && !pendingVerificationEmail && !verificationGateDismissed) {
+    if (user && !isEmailVerified && !pendingVerificationEmail && !verificationGateDismissed) {
       setPendingVerificationEmail(user.email || '');
       setCurrentScreen('verify-email');
     }
-  }, [user, pendingVerificationEmail, verificationGateDismissed]);
+  }, [user, isEmailVerified, pendingVerificationEmail, verificationGateDismissed]);
 
   // Reset gate state on sign-out
   useEffect(() => {
@@ -105,7 +106,7 @@ export default function App() {
   // Determine which content to show
   const renderContent = () => {
     // If user just signed up or is unverified (and gate not dismissed), show verify screen
-    if (user && !verificationGateDismissed && (pendingVerificationEmail || !user.emailVerified)) {
+    if (user && !verificationGateDismissed && (pendingVerificationEmail || !isEmailVerified)) {
       const { SignupVerifyEmailScreen } = require('./src/screens/signup/SignupVerifyEmailScreen');
       return (
         <View style={styles.screenContainer}>

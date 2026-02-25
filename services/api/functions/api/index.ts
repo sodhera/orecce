@@ -1,19 +1,19 @@
 import "dotenv/config";
-import { createApp } from "../src/http/createApp";
-import { SupabaseAuthVerifier } from "../src/auth/supabaseAuthVerifier";
-import { AI_NEWS_ENABLED } from "../src/config/features";
-import { getDefaultPrefillPostsPerMode } from "../src/config/runtimeConfig";
-import { getSupabaseClient } from "../src/db/supabase";
-import { OpenAiGateway } from "../src/llm/openAiGateway";
-import { PostgresReccesRepository } from "../src/recces/postgresReccesRepository";
-import { PostgresReccesUserProfileRepository } from "../src/recces/postgresReccesUserProfileRepository";
-import { SportsNewsService } from "../src/news/sportsNewsService";
-import { PostgresUserSportsNewsRepository } from "../src/news/postgresUserSportsNewsRepository";
-import { UserSportsNewsService } from "../src/news/userSportsNewsService";
-import { PostgresRepository } from "../src/repositories/postgresRepository";
-import { PostGenerationService } from "../src/services/postGenerationService";
-import { PrefillService } from "../src/services/prefillService";
-import { ReccesRecommendationService } from "../src/services/reccesRecommendationService";
+import { createApp } from "@orecce/api-core/src/http/createApp";
+import { SupabaseAuthVerifier } from "@orecce/api-core/src/auth/supabaseAuthVerifier";
+import { AI_NEWS_ENABLED } from "@orecce/api-core/src/config/features";
+import { getDefaultPrefillPostsPerMode } from "@orecce/api-core/src/config/runtimeConfig";
+import { getSupabaseClient } from "@orecce/api-core/src/db/supabase";
+import { OpenAiGateway } from "@orecce/api-core/src/llm/openAiGateway";
+import { PostgresReccesRepository } from "@orecce/api-core/src/recces/postgresReccesRepository";
+import { PostgresReccesUserProfileRepository } from "@orecce/api-core/src/recces/postgresReccesUserProfileRepository";
+import { SportsNewsService } from "@orecce/api-core/src/news/sportsNewsService";
+import { PostgresUserSportsNewsRepository } from "@orecce/api-core/src/news/postgresUserSportsNewsRepository";
+import { UserSportsNewsService } from "@orecce/api-core/src/news/userSportsNewsService";
+import { PostgresRepository } from "@orecce/api-core/src/repositories/postgresRepository";
+import { PostGenerationService } from "@orecce/api-core/src/services/postGenerationService";
+import { PrefillService } from "@orecce/api-core/src/services/prefillService";
+import { ReccesRecommendationService } from "@orecce/api-core/src/services/reccesRecommendationService";
 
 const supabase = getSupabaseClient();
 

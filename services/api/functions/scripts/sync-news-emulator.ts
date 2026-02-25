@@ -8,10 +8,10 @@ import {
   getNewsMaxArticlesPerSource,
   getNewsSourceConcurrency,
   shouldFetchNewsFullText
-} from "../src/config/runtimeConfig";
-import { FirestoreNewsRepository } from "../src/news/firestoreNewsRepository";
-import { DEFAULT_NEWS_SOURCES } from "../src/news/newsSources";
-import { NewsIngestionService } from "../src/news/newsIngestionService";
+} from "@orecce/api-core/src/config/runtimeConfig";
+import { FirestoreNewsRepository } from "@orecce/api-core/src/news/firestoreNewsRepository";
+import { DEFAULT_NEWS_SOURCES } from "@orecce/api-core/src/news/newsSources";
+import { NewsIngestionService } from "@orecce/api-core/src/news/newsIngestionService";
 import { loadDotEnv } from "./loadDotEnv";
 
 type Args = Record<string, string | boolean>;

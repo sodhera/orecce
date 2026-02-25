@@ -1,10 +1,10 @@
-import { getDefaultPrefillPostsPerMode } from "../src/config/runtimeConfig";
-import { createApp } from "../src/http/createApp";
-import { OpenAiGateway } from "../src/llm/openAiGateway";
-import { PrefillService } from "../src/services/prefillService";
-import { PostGenerationService } from "../src/services/postGenerationService";
-import { ReccesRecommendationService } from "../src/services/reccesRecommendationService";
-import { InMemoryReccesUserProfileRepository } from "../src/recces/reccesUserProfileRepository";
+import { getDefaultPrefillPostsPerMode } from "@orecce/api-core/src/config/runtimeConfig";
+import { createApp } from "@orecce/api-core/src/http/createApp";
+import { OpenAiGateway } from "@orecce/api-core/src/llm/openAiGateway";
+import { PrefillService } from "@orecce/api-core/src/services/prefillService";
+import { PostGenerationService } from "@orecce/api-core/src/services/postGenerationService";
+import { ReccesRecommendationService } from "@orecce/api-core/src/services/reccesRecommendationService";
+import { InMemoryReccesUserProfileRepository } from "@orecce/api-core/src/recces/reccesUserProfileRepository";
 import { loadDotEnv } from "./loadDotEnv";
 import { InMemoryRepository } from "./inMemoryRepository";
 import { StaticReccesRepository } from "./staticReccesRepository";

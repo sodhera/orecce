@@ -1,9 +1,9 @@
 import { getApps, initializeApp } from "firebase-admin/app";
 import { Timestamp, getFirestore } from "firebase-admin/firestore";
-import { getNewsArticleTimeoutMs, getNewsCrawlerUserAgent } from "../src/config/runtimeConfig";
-import { fetchArticleFullText } from "../src/news/articleTextFetcher";
-import { FirestoreNewsRepository } from "../src/news/firestoreNewsRepository";
-import { NewsSourceConfig, ParsedFeedArticle } from "../src/news/types";
+import { getNewsArticleTimeoutMs, getNewsCrawlerUserAgent } from "@orecce/api-core/src/config/runtimeConfig";
+import { fetchArticleFullText } from "@orecce/api-core/src/news/articleTextFetcher";
+import { FirestoreNewsRepository } from "@orecce/api-core/src/news/firestoreNewsRepository";
+import { NewsSourceConfig, ParsedFeedArticle } from "@orecce/api-core/src/news/types";
 import { loadDotEnv } from "./loadDotEnv";
 
 type Args = Record<string, string | boolean>;

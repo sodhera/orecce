@@ -1,6 +1,6 @@
-import { OpenAiGateway } from "../src/llm/openAiGateway";
-import { PostGenerationService } from "../src/services/postGenerationService";
-import { FeedMode, PostLength } from "../src/types/domain";
+import { OpenAiGateway } from "@orecce/api-core/src/llm/openAiGateway";
+import { PostGenerationService } from "@orecce/api-core/src/services/postGenerationService";
+import { FeedMode, PostLength } from "@orecce/api-core/src/types/domain";
 import { loadDotEnv } from "./loadDotEnv";
 import { InMemoryRepository } from "./inMemoryRepository";
 

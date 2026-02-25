@@ -200,6 +200,7 @@ export default function PostCard({
                     <div className="ig-post-author">
                         <div className="ig-post-author-info">
                             <span className="ig-post-author-name">{authorName ?? "Unknown"}</span>
+                            <span className="ig-post-author-dot">·</span>
                             <span className="ig-post-topic">{post.topic}</span>
                         </div>
                     </div>

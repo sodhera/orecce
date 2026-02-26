@@ -3,7 +3,6 @@ import { authenticate, ok, withErrorHandler } from "@/app/api/middleware";
 import {
     getOpenAiApiKey,
     getOpenAiBaseUrl,
-    getOpenAiModel,
 } from "@orecce/api-core/src/config/runtimeConfig";
 import { ApiError } from "@orecce/api-core/src/types/errors";
 
@@ -22,7 +21,8 @@ interface UpstreamAttemptFailure {
 
 const MAX_MESSAGES = 14;
 const MAX_MESSAGE_CHARS = 700;
-const FALLBACK_MODELS = ["gpt-5-mini", "gpt-4.1-mini"] as const;
+const CURATE_CHAT_MODEL = "gpt-5-mini";
+const FALLBACK_MODELS = ["gpt-4.1-mini"] as const;
 
 function normalizeMessages(raw: unknown): ChatMessage[] {
     if (!Array.isArray(raw)) return [];
@@ -146,11 +146,11 @@ function buildLocalFallbackReply(messages: ChatMessage[]): string {
     return `I'll let Orecce know you want ${compactMessage}. Anything else you want changed?`;
 }
 
-function getModelCandidates(primaryModel: string): string[] {
+function getModelCandidates(): string[] {
     const seen = new Set<string>();
     const models: string[] = [];
 
-    for (const candidate of [primaryModel, ...FALLBACK_MODELS]) {
+    for (const candidate of [CURATE_CHAT_MODEL, ...FALLBACK_MODELS]) {
         const model = candidate.trim();
         if (!model) continue;
         const key = model.toLowerCase();
@@ -207,7 +207,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     const failures: UpstreamAttemptFailure[] = [];
     const openAiBaseUrl = getOpenAiBaseUrl().replace(/\/+$/, "");
 
-    for (const model of getModelCandidates(getOpenAiModel())) {
+    for (const model of getModelCandidates()) {
         try {
             const upstreamResponse = await fetch(`${openAiBaseUrl}/responses`, {
                 method: "POST",

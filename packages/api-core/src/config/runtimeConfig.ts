@@ -15,38 +15,16 @@ function normalizeSecret(rawValue: string | undefined): string {
   return trimmed;
 }
 
-function readFirebaseConfig(): Record<string, unknown> {
-  // Runtime Config via functions.config() is deprecated. Keep env-only config.
-  return {};
-}
-
-function getNestedConfigString(path: string[]): string | undefined {
-  const config = readFirebaseConfig();
-  let cursor: unknown = config;
-  for (const key of path) {
-    if (!cursor || typeof cursor !== "object" || !(key in cursor)) {
-      return undefined;
-    }
-    cursor = (cursor as Record<string, unknown>)[key];
-  }
-  return typeof cursor === "string" && cursor.trim() ? cursor.trim() : undefined;
-}
-
 export function getOpenAiApiKey(): string {
   return (
     normalizeSecret(process.env.OPENAI_API_KEY) ||
     normalizeSecret(process.env.OPENAI_KEY) ||
-    normalizeSecret(getNestedConfigString(["openai", "key"])) ||
     ""
   );
 }
 
 export function getOpenAiModel(): string {
-  return (
-    process.env.OPENAI_MODEL?.trim() ||
-    getNestedConfigString(["openai", "model"]) ||
-    "gpt-5.2-2025-12-11"
-  );
+  return process.env.OPENAI_MODEL?.trim() || "gpt-5.2-2025-12-11";
 }
 
 export function getOpenAiBaseUrl(): string {

@@ -8,7 +8,7 @@ import {
     UserSportsFeedPage,
     UserSportsFeedItem,
     UserSportsSyncState
-} from "./userSportsNewsRepository";
+} from "./userSportsNewsTypes";
 
 function hashText(value: string): string {
     return createHash("sha256").update(value).digest("hex");

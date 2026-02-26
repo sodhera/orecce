@@ -54,6 +54,18 @@ export interface ListFeedbackResult {
   nextCursor: string | null;
 }
 
+export interface ListSeenRecommendationPostsQuery {
+  userId: string;
+  authorId: string;
+  limit: number;
+}
+
+export interface MarkSeenRecommendationPostsInput {
+  userId: string;
+  authorId: string;
+  postIds: string[];
+}
+
 export interface EnsureUserInput {
   userId: string;
   email?: string | null;
@@ -96,6 +108,8 @@ export interface Repository {
   listPosts(query: ListPostsQuery): Promise<ListPostsResult>;
   saveFeedback(input: SaveFeedbackInput): Promise<StoredFeedback>;
   listFeedback(query: ListFeedbackQuery): Promise<ListFeedbackResult>;
+  listSeenRecommendationPostIds(query: ListSeenRecommendationPostsQuery): Promise<string[]>;
+  markRecommendationPostsSeen(input: MarkSeenRecommendationPostsInput): Promise<void>;
   getPromptPreferences(userId: string): Promise<PromptPreferences>;
   setPromptPreferences(userId: string, input: Partial<PromptPreferences>): Promise<PromptPreferences>;
 }

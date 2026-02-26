@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
 
-const BASE = process.env.BASE ?? "http://127.0.0.1:5001/ai-post-dev/us-central1/api";
+const BASE = process.env.BASE ?? "http://127.0.0.1:8787";
 const MODE = process.env.MODE ?? "BIOGRAPHY";
 const PROFILE = process.env.PROFILE ?? "Bill Gates";
 const LENGTH = process.env.LENGTH ?? "short";

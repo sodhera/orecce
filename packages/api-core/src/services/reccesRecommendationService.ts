@@ -303,9 +303,10 @@ export class ReccesRecommendationService {
 
     const postById = new Map(flattened.map((post) => [post.id, post] as const));
     const validIds = new Set(postById.keys());
-    const [feedback, profile] = await Promise.all([
+    const [feedback, profile, seenPostIds] = await Promise.all([
       this.readRecentFeedback(input.userId),
-      this.userProfileRepository.getProfile(input.userId)
+      this.userProfileRepository.getProfile(input.userId),
+      this.readSeenRecommendationPostIds(input.userId, authorId, flattened.length)
     ]);
     const signals = mergeFeedbackSignals(feedback, validIds);
 
@@ -316,6 +317,9 @@ export class ReccesRecommendationService {
     );
 
     for (const id of signals.negatives) {
+      excluded.add(id);
+    }
+    for (const id of seenPostIds) {
       excluded.add(id);
     }
 
@@ -348,6 +352,14 @@ export class ReccesRecommendationService {
       profile.themeWeights
     );
     const selected = this.selectWithDiversity(scored, limit);
+    const selectedPostIds = selected.map((item) => item.post.id);
+    if (selectedPostIds.length > 0) {
+      await this.repository.markRecommendationPostsSeen({
+        userId: input.userId,
+        authorId,
+        postIds: selectedPostIds
+      });
+    }
 
     return {
       items: selected.map((item) => ({
@@ -394,6 +406,20 @@ export class ReccesRecommendationService {
     }
 
     return items;
+  }
+
+  private async readSeenRecommendationPostIds(
+    userId: string,
+    authorId: string,
+    maxCount: number
+  ): Promise<Set<string>> {
+    const safeLimit = Math.max(1, Math.min(5000, Math.floor(Number(maxCount) || 1)));
+    const rows = await this.repository.listSeenRecommendationPostIds({
+      userId,
+      authorId,
+      limit: safeLimit
+    });
+    return new Set(rows.map((id) => String(id).trim()).filter(Boolean));
   }
 
   private scoreCandidates(

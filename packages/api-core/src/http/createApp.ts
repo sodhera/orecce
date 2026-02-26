@@ -3,7 +3,7 @@ import { randomUUID } from "crypto";
 import express, { NextFunction, Request, Response } from "express";
 import { AuthIdentity, AuthVerifier } from "../auth/types";
 import { getNewsArticleTimeoutMs, getNewsCrawlerUserAgent, getNewsFeedTimeoutMs } from "../config/runtimeConfig";
-import { NewsReadService } from "../news/newsReadService";
+import { NewsReadServiceContract } from "../news/newsReadTypes";
 import { SportsNewsService } from "../news/sportsNewsService";
 import { UserSportsNewsService } from "../news/userSportsNewsService";
 import { PrefillService } from "../services/prefillService";
@@ -29,7 +29,7 @@ interface CreateAppDeps {
   repository: Repository;
   postGenerationService: PostGenerationService;
   prefillService?: PrefillService;
-  newsReadService?: NewsReadService;
+  newsReadService?: NewsReadServiceContract;
   sportsNewsService?: SportsNewsService;
   userSportsNewsService?: UserSportsNewsService;
   reccesRecommendationService?: ReccesRecommendationService;

@@ -1,7 +1,7 @@
 # AI-Post Backend Agent Notes
 
 ## Scope
-This folder hosts the Firebase Cloud Functions + Firestore backend for AI-generated feed posts.
+This folder hosts the Supabase-backed Express API for AI-generated feed posts.
 
 ## Guardrails
 - Keep architecture minimal (prototype scale, <=100 users).
@@ -14,7 +14,7 @@ This folder hosts the Firebase Cloud Functions + Firestore backend for AI-genera
 1. Run `npm --prefix functions test`.
 2. Run `npm --prefix functions run build`.
 3. Run `npm --prefix functions run lint:types`.
-4. Smoke test in emulator: `firebase emulators:start --only functions,firestore` and hit APIs.
+4. Smoke test locally: `npm --prefix functions run dev:supabase` and hit APIs.
 
 ## Local test UI
 A throwaway local UI can be kept under `local-dev-ui/` and should remain untracked.

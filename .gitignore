@@ -9,7 +9,6 @@ node_modules/
 apps/mobile/node_modules/
 apps/mobile/.expo/
 apps/mobile/.turbo/
-apps/mobile/firebase-debug*.log
 
 # Web
 apps/web/node_modules/
@@ -22,7 +21,6 @@ apps/web/.env.*
 services/api/node_modules/
 services/api/functions/node_modules/
 services/api/functions/lib/
-services/api/.firebase/
 
 # Env files
 .env

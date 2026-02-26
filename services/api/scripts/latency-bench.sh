@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BASE="${BASE:-http://127.0.0.1:5001/ai-post-dev/us-central1/api}"
+BASE="${BASE:-http://127.0.0.1:8787}"
 REQUESTS="${REQUESTS:-20}"
 CONCURRENCY="${CONCURRENCY:-10}"
 MODE="${MODE:-TRIVIA}"

@@ -5,24 +5,15 @@
 ./scripts/prepush-check.sh
 ```
 
-## Emulator smoke test
-1. Start emulator:
+## Local API run
+Use the Supabase-backed server:
 ```bash
-firebase emulators:start --only functions,firestore
-```
-2. Open `local-dev-ui/index.html` in a browser.
-3. Save preferences, generate post, list posts, send feedback, list feedback.
-
-## Automated emulator smoke test
-This runs all core endpoints end-to-end with a local mock LLM:
-```bash
-MOCK_LLM=true firebase emulators:exec --only functions,firestore "./scripts/emulator-smoke.sh"
+npm --prefix functions run dev:supabase
 ```
 
-## Real LLM latency check (no emulator)
-Use the lightweight in-memory server to iterate quickly on prompt/gateway behavior:
+## Real LLM latency check
 ```bash
-OPENAI_MODEL=gpt-5-mini npm --prefix functions run dev:server
+OPENAI_MODEL=gpt-5-mini npm --prefix functions run dev:supabase
 ```
 
 In another terminal:

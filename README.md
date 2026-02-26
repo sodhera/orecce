@@ -11,7 +11,7 @@ This repo is split into clean monorepo domains:
 - Backend runtime: **Vercel**
 - Database: **Supabase Postgres**
 - Auth: **Supabase Auth (JWT bearer tokens)**
-- Firebase is not used in production deploy paths.
+- API runtime and data/auth paths are Supabase-only.
 
 ## Local setup
 

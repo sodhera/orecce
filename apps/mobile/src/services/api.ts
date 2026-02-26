@@ -11,9 +11,11 @@ import { supabase } from '../config/supabase';
 // CONFIGURATION
 // =============================================================================
 
-const API_BASE_URL =
-    process.env.EXPO_PUBLIC_API_BASE_URL ??
-    'https://us-central1-audit-3a7ec.cloudfunctions.net/api';
+const API_BASE_URL = String(process.env.EXPO_PUBLIC_API_BASE_URL ?? '').trim().replace(/\/+$/, '');
+
+if (!API_BASE_URL) {
+    throw new Error('Missing EXPO_PUBLIC_API_BASE_URL. Set it to your Supabase-backed API origin.');
+}
 
 // =============================================================================
 // TYPES

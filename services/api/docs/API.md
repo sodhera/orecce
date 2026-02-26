@@ -1,9 +1,9 @@
-# API Contract (Firebase Auth + Prefilled Posts)
+# API Contract (Supabase Auth + Prefilled Posts)
 
 Base path: `/v1`
 
 All `/v1/*` and `/users/*` endpoints require:
-- `Authorization: Bearer <firebase-id-token>`
+- `Authorization: Bearer <supabase-access-token>`
 
 `/health` is public.
 
@@ -19,7 +19,6 @@ Response:
 `GET /v1/users/me`
 - Creates user doc lazily if missing.
 - Ensures shared common prefilled dataset is copied once for this user.
-- Auth-trigger (`onAuthUserCreate`) also attempts this copy at signup time.
 
 `PATCH /v1/users/me`
 ```json
@@ -75,7 +74,7 @@ Lengths:
 }
 ```
 
-- Returns pre-generated posts from Firestore user prefill documents.
+- Returns pre-generated posts from user prefill documents in Supabase Postgres.
 - Those user documents are cloned from a shared common dataset once per user.
 - If exact `profile` is missing, backend falls back to mode default generic profile.
 

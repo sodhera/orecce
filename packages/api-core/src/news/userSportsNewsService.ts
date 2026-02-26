@@ -5,7 +5,7 @@ import {
   UserSportsFeedItem,
   UserSportsNewsRepository,
   UserSportsSyncState
-} from "./userSportsNewsRepository";
+} from "./userSportsNewsTypes";
 import { getSportsNewsMinSourcesPerGame } from "../config/runtimeConfig";
 
 interface UserSportsNewsServiceDeps {

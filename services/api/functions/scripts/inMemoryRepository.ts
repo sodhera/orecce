@@ -2,6 +2,8 @@ import {
   EnsureUserInput,
   ListFeedbackQuery,
   ListFeedbackResult,
+  ListSeenRecommendationPostsQuery,
+  MarkSeenRecommendationPostsInput,
   ListPostsQuery,
   NextPrefillPostQuery,
   ReplaceUserPrefillPostsInput,
@@ -18,6 +20,7 @@ import { normalizeProfileKey } from "@orecce/api-core/src/utils/text";
 export class InMemoryRepository implements Repository {
   public posts: StoredPost[] = [];
   public feedback: StoredFeedback[] = [];
+  private readonly seenRecommendationPostIds = new Map<string, string[]>();
   private readonly users = new Map<string, AppUser>();
   private readonly preferences = new Map<string, PromptPreferences>();
   private readonly prefills = new Map<string, StoredPost[]>();
@@ -224,6 +227,32 @@ export class InMemoryRepository implements Repository {
       items,
       nextCursor: hasMore ? String(items[items.length - 1].createdAtMs) : null
     };
+  }
+
+  async listSeenRecommendationPostIds(query: ListSeenRecommendationPostsQuery): Promise<string[]> {
+    const key = `${query.userId}:${query.authorId}`;
+    const seen = this.seenRecommendationPostIds.get(key) ?? [];
+    const safeLimit = Math.max(1, Math.min(5000, Math.floor(Number(query.limit) || 1)));
+    return [...seen].reverse().slice(0, safeLimit);
+  }
+
+  async markRecommendationPostsSeen(input: MarkSeenRecommendationPostsInput): Promise<void> {
+    const key = `${input.userId}:${input.authorId}`;
+    const current = [...(this.seenRecommendationPostIds.get(key) ?? [])];
+    const next = new Set(current);
+    for (const postId of input.postIds ?? []) {
+      const normalized = String(postId ?? "").trim();
+      if (!normalized) continue;
+      if (next.has(normalized)) {
+        const idx = current.indexOf(normalized);
+        if (idx >= 0) {
+          current.splice(idx, 1);
+        }
+      }
+      current.push(normalized);
+      next.add(normalized);
+    }
+    this.seenRecommendationPostIds.set(key, current);
   }
 
   async getPromptPreferences(userId: string): Promise<PromptPreferences> {

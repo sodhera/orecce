@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { SportId } from "@orecce/api-core/src/news/sportsNewsSources";
 import { SportsGameDraft, SportsNewsService, SportsStory } from "@orecce/api-core/src/news/sportsNewsService";
-import { UserSportsFeedItem, UserSportsNewsRepository, UserSportsSyncState } from "@orecce/api-core/src/news/userSportsNewsRepository";
+import { UserSportsFeedItem, UserSportsNewsRepository, UserSportsSyncState } from "@orecce/api-core/src/news/userSportsNewsTypes";
 import { UserSportsNewsService } from "@orecce/api-core/src/news/userSportsNewsService";
 
 class InMemoryUserSportsNewsRepository implements UserSportsNewsRepository {

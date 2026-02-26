@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BASE="http://127.0.0.1:5001/ai-post-dev/us-central1/api"
+BASE="http://127.0.0.1:8787"
 
 curl -s -X POST "$BASE/v1/prompt-preferences/set" -H "Content-Type: application/json" \
   -d '{"user_id":"demo-user","biography_instructions":"Focus on widely documented public milestones only. Use under-told high-stakes moments, surprising tradeoffs, and concrete why-it-matters framing for Elon Musk and Bob Iger."}' > /tmp/prefs_demo.json

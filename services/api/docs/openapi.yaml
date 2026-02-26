@@ -3,18 +3,13 @@ info:
   title: AI-Post Backend API
   version: 0.1.0
   description: |
-    Firebase Functions backend for AI-generated feed posts.
-    v0 has no auth and is intended for prototype integration.
+    Supabase-backed API for AI-generated feed posts.
+    Auth is enforced via bearer tokens.
 servers:
-  - url: https://us-central1-audit-3a7ec.cloudfunctions.net/api
-    description: Firebase cloud functions
-  - url: http://127.0.0.1:5001/{projectId}/us-central1/api
-    description: Firebase emulator (optional)
-    variables:
-      projectId:
-        default: audit-3a7ec
+  - url: https://your-api-domain.vercel.app
+    description: Production API
   - url: http://127.0.0.1:8787
-    description: Local in-memory dev server
+    description: Local Supabase-backed dev server
 tags:
   - name: Health
   - name: Posts

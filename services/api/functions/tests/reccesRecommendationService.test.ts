@@ -202,6 +202,30 @@ describe("ReccesRecommendationService", () => {
     expect(result.items.length).toBeGreaterThan(0);
   });
 
+  it("returns unseen posts on refresh-style subsequent calls", async () => {
+    const repo = new InMemoryRepository();
+    const docs = buildDocs();
+    const service = new ReccesRecommendationService(
+      new FakeReccesRepository({ paul_graham: docs }),
+      repo,
+      new InMemoryReccesUserProfileRepository()
+    );
+
+    const first = await service.recommend({
+      userId: "refresh-user",
+      authorId: "paul_graham",
+      limit: 2
+    });
+    const second = await service.recommend({
+      userId: "refresh-user",
+      authorId: "paul_graham",
+      limit: 5
+    });
+
+    const firstIds = new Set(first.items.map((item) => item.id));
+    expect(second.items.every((item) => !firstIds.has(item.id))).toBe(true);
+  });
+
   it("maintains distinct profile signals per user", async () => {
     const repo = new InMemoryRepository();
     const docs = buildDocs();

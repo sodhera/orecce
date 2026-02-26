@@ -64,14 +64,14 @@ Initial deployment check:
 2. `/v1/recommendations/recces` initially failed with `Cannot POST /v1/recommendations/recces` because endpoint had not been deployed yet.
 
 Follow-up cloud rollout:
-1. Deployed updated `api` function and Firestore indexes.
+1. Deployed updated `api` service and latest Supabase schema/index changes.
 2. First cloud recommendation calls failed with `FAILED_PRECONDITION` while new feedback index was building.
 3. After index build completion, cloud recommendation requests and feedback writes succeeded.
 
 Cloud simulation run (successful):
 ```bash
 BASE=https://api-2ljiuwaa3a-uc.a.run.app \
-AUTH_TOKEN="<firebase_id_token>" \
+AUTH_TOKEN="<supabase_jwt>" \
 USE_SERVER_IDENTITY=true \
 ROUNDS=10 LIMIT=20 RUN_ID=cloudfinal AUTHOR_ID=paul_graham \
 node services/api/scripts/recces-scroll-sim.mjs
@@ -92,7 +92,7 @@ Note:
 ## Recommendations
 1. Expand interaction signals beyond `upvote/downvote/skip`:
    - add `view`, `dwell_ms`, and hide events.
-2. Run multi-account cloud simulation (distinct Firebase users per persona) for cleaner personalization isolation.
+2. Run multi-account cloud simulation (distinct Supabase users per persona) for cleaner personalization isolation.
 3. Increase candidate pool for long-session quality:
    - use the full Recces corpus and/or topic expansion candidates.
 4. Introduce feed precompute for large corpora and longer sessions to stabilize quality and avoid repetitive fallbacks.

@@ -4,6 +4,8 @@ import {
     EnsureUserInput,
     ListFeedbackQuery,
     ListFeedbackResult,
+    ListSeenRecommendationPostsQuery,
+    MarkSeenRecommendationPostsInput,
     ListPostsQuery,
     NextPrefillPostQuery,
     ReplaceUserPrefillPostsInput,
@@ -458,6 +460,56 @@ export class PostgresRepository implements Repository {
 
         const nextCursor = hasMore ? String(items[items.length - 1]?.createdAtMs ?? "") : null;
         return { items, nextCursor: nextCursor || null };
+    }
+
+    async listSeenRecommendationPostIds(query: ListSeenRecommendationPostsQuery): Promise<string[]> {
+        const safeLimit = Math.max(1, Math.min(5000, Math.floor(Number(query.limit) || 1)));
+        const { data, error } = await this.supabase
+            .from("user_recommendation_seen_posts")
+            .select("post_id")
+            .eq("user_id", query.userId)
+            .eq("author_id", query.authorId)
+            .order("last_seen_at", { ascending: false })
+            .limit(safeLimit);
+
+        if (error) throw error;
+
+        return (data ?? [])
+            .map((row) => String(row.post_id ?? "").trim())
+            .filter(Boolean);
+    }
+
+    async markRecommendationPostsSeen(input: MarkSeenRecommendationPostsInput): Promise<void> {
+        const userId = String(input.userId ?? "").trim();
+        const authorId = String(input.authorId ?? "").trim();
+        if (!userId || !authorId) {
+            return;
+        }
+
+        const dedupedPostIds = Array.from(
+            new Set(
+                (input.postIds ?? [])
+                    .map((postId) => String(postId ?? "").trim())
+                    .filter(Boolean)
+            )
+        );
+        if (!dedupedPostIds.length) {
+            return;
+        }
+
+        const now = new Date().toISOString();
+        const rows = dedupedPostIds.map((postId) => ({
+            user_id: userId,
+            author_id: authorId,
+            post_id: postId,
+            first_seen_at: now,
+            last_seen_at: now
+        }));
+
+        const { error } = await this.supabase
+            .from("user_recommendation_seen_posts")
+            .upsert(rows, { onConflict: "user_id,author_id,post_id" });
+        if (error) throw error;
     }
 
     async getPromptPreferences(userId: string): Promise<PromptPreferences> {

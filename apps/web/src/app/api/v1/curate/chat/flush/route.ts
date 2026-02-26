@@ -35,12 +35,12 @@ function normalizeMessages(raw: unknown): ChatMessage[] {
         .slice(0, MAX_MESSAGES);
 }
 
-function buildStoragePayload(messages: ChatMessage[]): string {
-    return JSON.stringify({
+function buildStoragePayload(messages: ChatMessage[]): Record<string, unknown> {
+    return {
         source: "right_sidebar_curate_chat",
         storedAtMs: Date.now(),
         messages,
-    });
+    };
 }
 
 export const POST = withErrorHandler(async (req: NextRequest) => {
@@ -48,17 +48,36 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
 
     const body = await req.json();
     const payload = body && typeof body === "object" ? (body as Record<string, unknown>) : {};
+    const sessionId = typeof payload.session_id === "string" ? payload.session_id.trim() : "";
     const messages = normalizeMessages(payload.messages);
+
+    if (!sessionId) {
+        throw new ApiError(400, "bad_request", "session_id is required.");
+    }
 
     if (!messages.length || !messages.some((message) => message.role === "user")) {
         return ok({ storedCount: 0 });
     }
 
-    const { supabase } = getDeps();
-    const { error } = await supabase.from("user_feedback").insert({
+    const { supabase, repository } = getDeps();
+    await repository.getOrCreateUser({
+        userId: identity.uid,
+        email: identity.email,
+        displayName: identity.displayName,
+        photoURL: identity.photoURL,
+    });
+    const nowIso = new Date().toISOString();
+
+    const { error } = await supabase.from("curate_chat_sessions").upsert({
         user_id: identity.uid,
-        category: "Curate Chat",
-        message: buildStoragePayload(messages),
+        session_id: sessionId,
+        transcript: buildStoragePayload(messages),
+        message_count: messages.length,
+        last_message_at: nowIso,
+        updated_at: nowIso,
+    }, {
+        onConflict: "user_id,session_id",
+        ignoreDuplicates: false,
     });
 
     if (error) {

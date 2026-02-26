@@ -289,12 +289,15 @@ export async function sendCurationChat(
 }
 
 export async function flushCurationChatSession(
-    messages: CurationChatInputMessage[],
+    input: { sessionId: string; messages: CurationChatInputMessage[] },
     options?: RequestOptions,
 ): Promise<FlushCurationChatResult> {
     return post<FlushCurationChatResult>(
         "/curate/chat/flush",
-        { messages },
+        {
+            session_id: input.sessionId,
+            messages: input.messages,
+        },
         options,
     );
 }

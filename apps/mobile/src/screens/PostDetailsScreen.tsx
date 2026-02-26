@@ -167,6 +167,25 @@ export function PostDetailsScreen() {
         void persistPostFeedback(currentPost.id, toVoteFeedbackType(newVote));
     };
 
+    const handleLike = () => {
+        const currentVote = currentPost.userVote ?? 0;
+        if (currentVote === 1) {
+            return;
+        }
+
+        const voteDelta = currentVote === -1 ? 2 : 1;
+
+        setCurrentPost((prev) => {
+            return {
+                ...prev,
+                userVote: 1,
+                votes: (prev.votes ?? 0) + voteDelta,
+            };
+        });
+
+        void persistPostFeedback(currentPost.id, 'upvote');
+    };
+
     const handleDownvote = () => {
         const currentVote = currentPost.userVote ?? 0;
         let newVote: VoteValue;
@@ -342,6 +361,7 @@ export function PostDetailsScreen() {
                             showFullContent={true}
                             detailsMode={true}
                             onUpvote={handleUpvote}
+                            onLike={handleLike}
                             onDownvote={handleDownvote}
                             onSave={handleSave}
                         />

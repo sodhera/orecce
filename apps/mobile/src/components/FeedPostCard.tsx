@@ -15,6 +15,7 @@ import { colors } from '../styles/colors';
 import { BottomSheetMenu } from './BottomSheetMenu';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const DOUBLE_TAP_DELAY_MS = 260;
 
 export interface SourceLink {
     id: string;
@@ -52,6 +53,7 @@ interface FeedPostCardProps {
     post: FeedPostData;
     onUpvote?: (postId: string) => void;
     onDownvote?: (postId: string) => void;
+    onLike?: (postId: string) => void;
     onSave?: (postId: string) => void;
     onShare?: (postId: string) => void;
     onGoInDepth?: (postId: string) => void;
@@ -75,6 +77,7 @@ export function FeedPostCard({
     post,
     onUpvote,
     onDownvote,
+    onLike,
     onSave,
     onShare,
     onGoInDepth,
@@ -87,6 +90,8 @@ export function FeedPostCard({
     const [menuVisible, setMenuVisible] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
     const [isSeeLessPressed, setIsSeeLessPressed] = useState(false);
+    const singleTapTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+    const lastCardTapRef = React.useRef(0);
 
     const [isTextTruncated, setIsTextTruncated] = useState(false);
     const isUpvoted = post.userVote === 1;
@@ -98,6 +103,14 @@ export function FeedPostCard({
             setMenuVisible(false);
         }
     }, [isMenuForceClose]);
+
+    React.useEffect(() => {
+        return () => {
+            if (singleTapTimeoutRef.current) {
+                clearTimeout(singleTapTimeoutRef.current);
+            }
+        };
+    }, []);
 
     const stopPress = (event: GestureResponderEvent) => {
         event.stopPropagation();
@@ -120,8 +133,39 @@ export function FeedPostCard({
         setMenuVisible(true);
     };
 
-    const isCardPressDisabled = !onGoInDepth || detailsMode;
+    const canNavigateInDepth = Boolean(onGoInDepth) && !detailsMode;
+    const isCardPressDisabled = !canNavigateInDepth && !onLike;
     const isSlideMode = variant === 'slide' && !detailsMode;
+
+    const handleCardPress = React.useCallback(() => {
+        const now = Date.now();
+        const sinceLastTap = now - lastCardTapRef.current;
+
+        if (sinceLastTap > 0 && sinceLastTap < DOUBLE_TAP_DELAY_MS) {
+            if (singleTapTimeoutRef.current) {
+                clearTimeout(singleTapTimeoutRef.current);
+                singleTapTimeoutRef.current = null;
+            }
+
+            if (post.userVote !== 1) {
+                onLike?.(post.id);
+            }
+            lastCardTapRef.current = 0;
+            return;
+        }
+
+        lastCardTapRef.current = now;
+
+        if (!canNavigateInDepth) {
+            return;
+        }
+
+        singleTapTimeoutRef.current = setTimeout(() => {
+            onGoInDepth?.(post.id);
+            singleTapTimeoutRef.current = null;
+            lastCardTapRef.current = 0;
+        }, DOUBLE_TAP_DELAY_MS);
+    }, [canNavigateInDepth, onGoInDepth, onLike, post.id, post.userVote]);
 
     if (isSlideMode) {
         const cardHeight = Math.max(420, slideHeight ?? SCREEN_WIDTH * 1.3);
@@ -135,10 +179,10 @@ export function FeedPostCard({
                 style={({ pressed }) => [
                     styles.slideContainer,
                     { height: cardHeight },
-                    !isCardPressDisabled && pressed && styles.slideContainerPressed,
+                    canNavigateInDepth && pressed && styles.slideContainerPressed,
                 ]}
                 disabled={isCardPressDisabled}
-                onPress={() => onGoInDepth?.(post.id)}
+                onPress={handleCardPress}
             >
                 <BottomSheetMenu
                     visible={menuVisible}
@@ -302,11 +346,11 @@ export function FeedPostCard({
         <Pressable
             style={({ pressed }) => [
                 styles.container,
-                !isCardPressDisabled && pressed && styles.containerPressed,
+                canNavigateInDepth && pressed && styles.containerPressed,
             ]}
             disabled={isCardPressDisabled}
-            onPress={() => onGoInDepth?.(post.id)}
-            android_ripple={isCardPressDisabled ? undefined : { color: colors.surface }}
+            onPress={handleCardPress}
+            android_ripple={canNavigateInDepth ? { color: colors.surface } : undefined}
         >
             {!detailsMode && (
                 <BottomSheetMenu

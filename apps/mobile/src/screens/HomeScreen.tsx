@@ -361,6 +361,33 @@ export function HomeScreen() {
         void persistPostFeedback(postId, toVoteFeedbackType(newVote));
     };
 
+    const handleLike = (postId: string) => {
+        const post = posts.find((candidate) => candidate.id === postId);
+        if (!post) return;
+
+        const currentVote = post.userVote ?? 0;
+        if (currentVote === 1) {
+            return;
+        }
+
+        const voteDelta = currentVote === -1 ? 2 : 1;
+
+        trackInteraction(postId);
+        setPosts((currentPosts) =>
+            currentPosts.map((candidate) => {
+                if (candidate.id !== postId) return candidate;
+
+                return {
+                    ...candidate,
+                    userVote: 1,
+                    votes: (candidate.votes ?? 0) + voteDelta,
+                };
+            })
+        );
+
+        void persistPostFeedback(postId, 'upvote');
+    };
+
     const handleDownvote = (postId: string) => {
         const post = posts.find((candidate) => candidate.id === postId);
         if (!post) return;
@@ -481,6 +508,7 @@ export function HomeScreen() {
                             variant="slide"
                             slideHeight={resolvedFeedHeight}
                             onUpvote={handleUpvote}
+                            onLike={handleLike}
                             onDownvote={handleDownvote}
                             onSave={handleSave}
                             onShare={handleShare}

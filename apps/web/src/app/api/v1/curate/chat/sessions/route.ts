@@ -1,10 +1,14 @@
 import { NextRequest } from "next/server";
 import { authenticate, ok, withErrorHandler } from "@/app/api/middleware";
 import { getDeps } from "@/app/api/init";
+import { ApiError } from "@orecce/api-core/src/types/errors";
 
-interface RawTranscriptMessage {
-    role: unknown;
-    content: unknown;
+type ChatRole = "assistant" | "user";
+
+interface ParsedSessionPayload {
+    sessionId: string;
+    storedAtMs?: number;
+    messages: { role: ChatRole; content: string }[];
 }
 
 function toMs(value: string | null | undefined): number {
@@ -13,37 +17,59 @@ function toMs(value: string | null | undefined): number {
     return Number.isFinite(parsed) ? parsed : Date.now();
 }
 
-function parseTranscript(raw: unknown): { role: "assistant" | "user"; content: string }[] {
-    let payload = raw;
-    if (typeof payload === "string") {
-        try {
-            payload = JSON.parse(payload) as unknown;
-        } catch {
-            return [];
-        }
+function parseSessionPayload(raw: unknown): ParsedSessionPayload | null {
+    if (typeof raw !== "string") {
+        return null;
     }
 
-    if (!payload || typeof payload !== "object") {
-        return [];
+    let parsed: unknown;
+    try {
+        parsed = JSON.parse(raw) as unknown;
+    } catch {
+        return null;
     }
 
-    const root = payload as Record<string, unknown>;
+    if (!parsed || typeof parsed !== "object") {
+        return null;
+    }
+
+    const root = parsed as Record<string, unknown>;
+    const sessionId = typeof root.sessionId === "string" ? root.sessionId.trim() : "";
+    if (!sessionId) {
+        return null;
+    }
+
     if (!Array.isArray(root.messages)) {
-        return [];
+        return null;
     }
 
-    return root.messages
+    const messages = root.messages
         .map((item) => {
-            const row = item as RawTranscriptMessage;
-            const role = row?.role === "assistant" || row?.role === "user" ? row.role : null;
-            const content = typeof row?.content === "string" ? row.content.trim() : "";
+            if (!item || typeof item !== "object") return null;
+            const row = item as Record<string, unknown>;
+            const role = row.role === "assistant" || row.role === "user" ? row.role : null;
+            const content = typeof row.content === "string" ? row.content.trim() : "";
             if (!role || !content) return null;
             return { role, content };
         })
-        .filter((message): message is { role: "assistant" | "user"; content: string } => Boolean(message));
+        .filter((message): message is { role: ChatRole; content: string } => Boolean(message));
+
+    if (!messages.length) {
+        return null;
+    }
+
+    const storedAtMs = typeof root.storedAtMs === "number" && Number.isFinite(root.storedAtMs)
+        ? root.storedAtMs
+        : undefined;
+
+    return {
+        sessionId,
+        storedAtMs,
+        messages,
+    };
 }
 
-function previewFor(messages: { role: "assistant" | "user"; content: string }[]): string {
+function previewFor(messages: { role: ChatRole; content: string }[]): string {
     const fromUser = [...messages].reverse().find((message) => message.role === "user");
     const candidate = fromUser?.content ?? messages[messages.length - 1]?.content ?? "Untitled chat";
     return candidate.slice(0, 140);
@@ -60,38 +86,53 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
         : 20;
 
     const { data, error } = await supabase
-        .from("curate_chat_sessions")
-        .select("session_id, transcript, created_at, updated_at")
+        .from("user_feedback")
+        .select("message, created_at")
         .eq("user_id", identity.uid)
-        .order("updated_at", { ascending: false })
-        .limit(limit);
+        .eq("category", "Curate Chat")
+        .order("created_at", { ascending: false })
+        .limit(limit * 4);
 
     if (error) {
-        throw error;
+        throw new ApiError(
+            500,
+            "curate_chat_sessions_list_failed",
+            "Failed to load curate chat sessions.",
+            error.message,
+        );
     }
 
-    const items = (data ?? [])
-        .map((row) => {
-            const transcript = parseTranscript(row.transcript);
-            if (!transcript.length) {
-                return null;
-            }
+    const bySession = new Map<string, {
+        sessionId: string;
+        preview: string;
+        createdAtMs: number;
+        updatedAtMs: number;
+        messages: { role: ChatRole; content: string }[];
+    }>();
 
-            return {
-                sessionId: String(row.session_id ?? ""),
-                preview: previewFor(transcript),
-                createdAtMs: toMs(row.created_at),
-                updatedAtMs: toMs(row.updated_at),
-                messages: transcript,
-            };
-        })
-        .filter((item): item is {
-            sessionId: string;
-            preview: string;
-            createdAtMs: number;
-            updatedAtMs: number;
-            messages: { role: "assistant" | "user"; content: string }[];
-        } => Boolean(item));
+    for (const row of data ?? []) {
+        const parsed = parseSessionPayload(row.message);
+        if (!parsed) {
+            continue;
+        }
 
-    return ok({ items });
+        if (bySession.has(parsed.sessionId)) {
+            continue;
+        }
+
+        const createdAtMs = toMs(row.created_at);
+        bySession.set(parsed.sessionId, {
+            sessionId: parsed.sessionId,
+            preview: previewFor(parsed.messages),
+            createdAtMs,
+            updatedAtMs: parsed.storedAtMs ?? createdAtMs,
+            messages: parsed.messages,
+        });
+
+        if (bySession.size >= limit) {
+            break;
+        }
+    }
+
+    return ok({ items: Array.from(bySession.values()) });
 });

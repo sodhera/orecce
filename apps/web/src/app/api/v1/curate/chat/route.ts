@@ -19,10 +19,27 @@ interface UpstreamAttemptFailure {
     body: string;
 }
 
+interface TokenUsageEvent {
+    atMs: number;
+    tokens: number;
+}
+
+interface UserUsageBucket {
+    requestTimestampsMs: number[];
+    tokenUsage: TokenUsageEvent[];
+}
+
 const MAX_MESSAGES = 14;
 const MAX_MESSAGE_CHARS = 700;
+const MAX_INPUT_TOKENS_PER_REQUEST = 1_600;
+const MAX_INPUT_TOKENS_PER_WINDOW = 5_500;
+const TOKEN_WINDOW_MS = 5 * 60_000;
+const MAX_REQUESTS_PER_WINDOW = 10;
+const REQUEST_WINDOW_MS = 60_000;
+const ESTIMATED_CHARS_PER_TOKEN = 4;
 const CURATE_CHAT_MODEL = "gpt-5-mini";
 const FALLBACK_MODELS = ["gpt-4.1-mini"] as const;
+const usageByUser = new Map<string, UserUsageBucket>();
 
 function normalizeMessages(raw: unknown): ChatMessage[] {
     if (!Array.isArray(raw)) return [];
@@ -44,6 +61,72 @@ function normalizeMessages(raw: unknown): ChatMessage[] {
         })
         .filter((message): message is ChatMessage => Boolean(message))
         .slice(-MAX_MESSAGES);
+}
+
+function estimateInputTokens(messages: ChatMessage[]): number {
+    return messages.reduce((sum, message) => {
+        const contentTokens = Math.ceil(message.content.length / ESTIMATED_CHARS_PER_TOKEN);
+        // Small fixed overhead per chat message for role and serialization.
+        return sum + contentTokens + 4;
+    }, 0);
+}
+
+function pruneUsageBucket(bucket: UserUsageBucket, nowMs: number): UserUsageBucket {
+    bucket.requestTimestampsMs = bucket.requestTimestampsMs.filter(
+        (timestampMs) => nowMs - timestampMs < REQUEST_WINDOW_MS,
+    );
+    bucket.tokenUsage = bucket.tokenUsage.filter(
+        (event) => nowMs - event.atMs < TOKEN_WINDOW_MS,
+    );
+    return bucket;
+}
+
+function pruneStaleUsageBuckets(nowMs: number): void {
+    for (const [userId, bucket] of usageByUser.entries()) {
+        const pruned = pruneUsageBucket(bucket, nowMs);
+        if (!pruned.requestTimestampsMs.length && !pruned.tokenUsage.length) {
+            usageByUser.delete(userId);
+        }
+    }
+}
+
+function enforceCurateLimits(userId: string, inputTokens: number): void {
+    if (inputTokens > MAX_INPUT_TOKENS_PER_REQUEST) {
+        throw new ApiError(
+            413,
+            "curate_chat_input_too_large",
+            "Curate message is too long. Please shorten it and try again.",
+        );
+    }
+
+    const nowMs = Date.now();
+    pruneStaleUsageBuckets(nowMs);
+
+    const bucket = pruneUsageBucket(
+        usageByUser.get(userId) ?? { requestTimestampsMs: [], tokenUsage: [] },
+        nowMs,
+    );
+
+    if (bucket.requestTimestampsMs.length >= MAX_REQUESTS_PER_WINDOW) {
+        throw new ApiError(
+            429,
+            "curate_chat_rate_limited",
+            "Too many curate requests right now. Please wait a minute and try again.",
+        );
+    }
+
+    const usedTokensInWindow = bucket.tokenUsage.reduce((sum, event) => sum + event.tokens, 0);
+    if (usedTokensInWindow + inputTokens > MAX_INPUT_TOKENS_PER_WINDOW) {
+        throw new ApiError(
+            429,
+            "curate_chat_token_limited",
+            "Curate usage is temporarily capped. Please try again in a few minutes.",
+        );
+    }
+
+    bucket.requestTimestampsMs.push(nowMs);
+    bucket.tokenUsage.push({ atMs: nowMs, tokens: inputTokens });
+    usageByUser.set(userId, bucket);
 }
 
 function extractResponseText(payload: unknown): string {
@@ -189,7 +272,7 @@ function buildUpstreamRequestBody(
 }
 
 export const POST = withErrorHandler(async (req: NextRequest) => {
-    await authenticate(req);
+    const identity = await authenticate(req);
 
     const body = await req.json();
     const payload = body && typeof body === "object" ? (body as Record<string, unknown>) : {};
@@ -198,6 +281,9 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     if (!messages.length || !messages.some((message) => message.role === "user")) {
         throw new ApiError(400, "bad_request", "At least one user message is required.");
     }
+
+    const inputTokens = estimateInputTokens(messages);
+    enforceCurateLimits(identity.uid, inputTokens);
 
     const apiKey = getOpenAiApiKey();
     if (!apiKey) {

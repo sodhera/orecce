@@ -451,7 +451,10 @@ export default function RightSidebar({ mode, profile }: RightSidebarProps) {
                             ) : (
                                 <div className="curation-session-items">
                                     {sessionItems.map((item) => (
-                                        <div key={item.sessionId} className="curation-session-row">
+                                        <div
+                                            key={item.sessionId}
+                                            className={`curation-session-row ${deletingSessionId === item.sessionId ? "is-disabled" : ""}`}
+                                        >
                                             <button
                                                 type="button"
                                                 className="curation-session-item"

@@ -56,4 +56,5 @@ jobs:
         working-directory: services/api/functions
         run: |
           npx --yes vercel@latest pull --yes --environment=production --token="$VERCEL_TOKEN"
-          npx --yes vercel@latest deploy --yes --prod --token="$VERCEL_TOKEN"
+          npx --yes vercel@latest build --prod --token="$VERCEL_TOKEN"
+          npx --yes vercel@latest deploy --yes --prebuilt --prod --token="$VERCEL_TOKEN"

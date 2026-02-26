@@ -69,6 +69,24 @@ function parseSessionPayload(raw: unknown): ParsedSessionPayload | null {
     };
 }
 
+function parseDeletedSessionId(raw: unknown): string | null {
+    if (typeof raw !== "string") {
+        return null;
+    }
+
+    try {
+        const parsed = JSON.parse(raw) as unknown;
+        if (!parsed || typeof parsed !== "object") {
+            return null;
+        }
+        const root = parsed as Record<string, unknown>;
+        const sessionId = typeof root.sessionId === "string" ? root.sessionId.trim() : "";
+        return sessionId || null;
+    } catch {
+        return null;
+    }
+}
+
 function previewFor(messages: { role: ChatRole; content: string }[]): string {
     const fromUser = [...messages].reverse().find((message) => message.role === "user");
     const candidate = fromUser?.content ?? messages[messages.length - 1]?.content ?? "Untitled chat";
@@ -87,11 +105,11 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
 
     const { data, error } = await supabase
         .from("user_feedback")
-        .select("message, created_at")
+        .select("category, message, created_at")
         .eq("user_id", identity.uid)
-        .eq("category", "Curate Chat")
+        .in("category", ["Curate Chat", "Curate Chat Deleted"])
         .order("created_at", { ascending: false })
-        .limit(limit * 4);
+        .limit(limit * 10);
 
     if (error) {
         throw new ApiError(
@@ -109,14 +127,23 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
         updatedAtMs: number;
         messages: { role: ChatRole; content: string }[];
     }>();
+    const deletedSessionIds = new Set<string>();
 
     for (const row of data ?? []) {
+        if (row.category === "Curate Chat Deleted") {
+            const deletedSessionId = parseDeletedSessionId(row.message);
+            if (deletedSessionId) {
+                deletedSessionIds.add(deletedSessionId);
+            }
+            continue;
+        }
+
         const parsed = parseSessionPayload(row.message);
         if (!parsed) {
             continue;
         }
 
-        if (bySession.has(parsed.sessionId)) {
+        if (deletedSessionIds.has(parsed.sessionId) || bySession.has(parsed.sessionId)) {
             continue;
         }
 

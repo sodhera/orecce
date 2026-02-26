@@ -207,6 +207,10 @@ export interface ListCurationChatSessionsResult {
     items: CurationChatSessionSummary[];
 }
 
+export interface DeleteCurationChatSessionResult {
+    deleted: boolean;
+}
+
 export interface ReccesSlide {
     slideNumber: number;
     type: string;
@@ -321,6 +325,17 @@ export async function listCurationChatSessions(
     return get<ListCurationChatSessionsResult>(
         "/curate/chat/sessions",
         { limit },
+        options,
+    );
+}
+
+export async function deleteCurationChatSession(
+    sessionId: string,
+    options?: RequestOptions,
+): Promise<DeleteCurationChatSessionResult> {
+    return post<DeleteCurationChatSessionResult>(
+        "/curate/chat/sessions/delete",
+        { session_id: sessionId },
         options,
     );
 }

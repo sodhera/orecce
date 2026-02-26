@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
+    deleteCurationChatSession,
     flushCurationChatSession,
     listCurationChatSessions,
     sendCurationChat,
@@ -174,6 +175,7 @@ export default function RightSidebar({ mode, profile }: RightSidebarProps) {
     const [sessionItems, setSessionItems] = useState<CurationChatSessionSummary[]>([]);
     const [isSessionItemsLoading, setIsSessionItemsLoading] = useState(false);
     const [sessionItemsError, setSessionItemsError] = useState<string | null>(null);
+    const [deletingSessionId, setDeletingSessionId] = useState<string | null>(null);
     const threadRef = useRef<HTMLDivElement | null>(null);
     const shellRef = useRef<HTMLDivElement | null>(null);
 
@@ -374,6 +376,23 @@ export default function RightSidebar({ mode, profile }: RightSidebarProps) {
         setPanelView("chat");
     };
 
+    const deleteSessionItem = async (targetSessionId: string) => {
+        setDeletingSessionId(targetSessionId);
+        setSessionItemsError(null);
+        try {
+            await deleteCurationChatSession(targetSessionId);
+            setSessionItems((previous) =>
+                previous.filter((item) => item.sessionId !== targetSessionId),
+            );
+        } catch (error) {
+            setSessionItemsError(errorMessage(error));
+        } finally {
+            setDeletingSessionId((current) =>
+                current === targetSessionId ? null : current,
+            );
+        }
+    };
+
     return (
         <aside className="right-sidebar">
             <div className={`curation-chat-shell ${isPanelOpen ? "is-open" : ""}`} ref={shellRef}>
@@ -432,15 +451,28 @@ export default function RightSidebar({ mode, profile }: RightSidebarProps) {
                             ) : (
                                 <div className="curation-session-items">
                                     {sessionItems.map((item) => (
-                                        <button
-                                            key={item.sessionId}
-                                            type="button"
-                                            className="curation-session-item"
-                                            onClick={() => openSessionItem(item)}
-                                        >
-                                            <div className="curation-session-preview">{item.preview}</div>
-                                            <div className="curation-session-meta">{formatSessionTime(item.updatedAtMs)}</div>
-                                        </button>
+                                        <div key={item.sessionId} className="curation-session-row">
+                                            <button
+                                                type="button"
+                                                className="curation-session-item"
+                                                onClick={() => openSessionItem(item)}
+                                                disabled={deletingSessionId === item.sessionId}
+                                            >
+                                                <div className="curation-session-preview">{item.preview}</div>
+                                                <div className="curation-session-meta">{formatSessionTime(item.updatedAtMs)}</div>
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="curation-session-delete"
+                                                onClick={() => {
+                                                    void deleteSessionItem(item.sessionId);
+                                                }}
+                                                disabled={deletingSessionId === item.sessionId}
+                                                aria-label="Delete chat history"
+                                            >
+                                                ×
+                                            </button>
+                                        </div>
                                     ))}
                                 </div>
                             )}

@@ -1887,8 +1887,14 @@ body[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
   gap: 8px;
 }
 
+.curation-session-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
 .curation-session-item {
-  width: 100%;
+  flex: 1;
   border: 1px solid var(--bg-border);
   border-radius: 12px;
   background: var(--bg-primary);
@@ -1913,6 +1919,26 @@ body[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
   margin-top: 4px;
   color: var(--text-secondary);
   font-size: 12px;
+}
+
+.curation-session-delete {
+  width: 30px;
+  border: 1px solid var(--bg-border);
+  border-radius: 12px;
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.curation-session-delete:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.curation-session-delete:disabled,
+.curation-session-item:disabled {
+  opacity: 0.6;
 }
 
 .curation-session-state {

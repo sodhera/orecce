@@ -667,17 +667,18 @@ export default function Sidebar() {
                             className="profile-settings-modal"
                             onClick={(e) => e.stopPropagation()}
                         >
+                            <button
+                                className="profile-settings-close"
+                                onClick={closeProfileSettings}
+                                aria-label="Close profile settings"
+                                type="button"
+                            >
+                                ✕
+                            </button>
+
                             <aside className="profile-settings-nav">
                                 <div className="profile-settings-nav-head">
                                     <h2 className="profile-settings-nav-title">Settings</h2>
-                                    <button
-                                        className="profile-settings-close"
-                                        onClick={closeProfileSettings}
-                                        aria-label="Close profile settings"
-                                        type="button"
-                                    >
-                                        ✕
-                                    </button>
                                 </div>
 
                                 <div className="profile-settings-nav-list">

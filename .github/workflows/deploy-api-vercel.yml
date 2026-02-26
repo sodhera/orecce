@@ -46,8 +46,8 @@ jobs:
             exit 1
           fi
 
-      - name: Install API dependencies
-        run: npm --prefix services/api/functions ci
+      - name: Install workspace dependencies
+        run: npm ci
 
       - name: Validate API checks
         run: ./services/api/scripts/prepush-check.sh

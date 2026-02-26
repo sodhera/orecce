@@ -29,6 +29,8 @@ export default function Feed({ mode, onModeChange }: FeedProps) {
 
     const feed = useFeed(mode === "ALL" ? null : mode);
     const loadMoreRef = useRef<HTMLDivElement | null>(null);
+    const seenInSessionRef = useRef(new Set<string>());
+    const visibilityTimersRef = useRef(new Map<string, number>());
 
     useEffect(() => {
         const node = loadMoreRef.current;
@@ -53,6 +55,52 @@ export default function Feed({ mode, onModeChange }: FeedProps) {
             observer.disconnect();
         };
     }, [feed.loading, feed.loadingMore, feed.hasMore, feed.loadMore]);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                for (const entry of entries) {
+                    const element = entry.target as HTMLElement;
+                    const postId = String(element.dataset.postId ?? "").trim();
+                    if (!postId || seenInSessionRef.current.has(postId)) {
+                        continue;
+                    }
+
+                    if (entry.isIntersecting && entry.intersectionRatio >= 0.65) {
+                        if (visibilityTimersRef.current.has(postId)) {
+                            continue;
+                        }
+
+                        const timerId = window.setTimeout(() => {
+                            seenInSessionRef.current.add(postId);
+                            visibilityTimersRef.current.delete(postId);
+                            feed.markAsSeen(postId);
+                        }, 1500);
+                        visibilityTimersRef.current.set(postId, timerId);
+                        continue;
+                    }
+
+                    const existingTimer = visibilityTimersRef.current.get(postId);
+                    if (existingTimer) {
+                        window.clearTimeout(existingTimer);
+                        visibilityTimersRef.current.delete(postId);
+                    }
+                }
+            },
+            { threshold: [0.65] },
+        );
+
+        const nodes = document.querySelectorAll<HTMLElement>(".feed-slide-shell[data-post-id]");
+        nodes.forEach((node) => observer.observe(node));
+
+        return () => {
+            observer.disconnect();
+            for (const timerId of visibilityTimersRef.current.values()) {
+                window.clearTimeout(timerId);
+            }
+            visibilityTimersRef.current.clear();
+        };
+    }, [feed.items, feed.markAsSeen]);
 
     return (
         <main className="feed">
@@ -143,7 +191,7 @@ export default function Feed({ mode, onModeChange }: FeedProps) {
                     )
                 ) : (
                     feed.items.map((item) => (
-                        <div key={item.post.id} className="feed-slide-shell">
+                        <div key={item.post.id} className="feed-slide-shell" data-post-id={item.post.id}>
                             <PostCard
                                 post={item.post}
                                 variant="slide"

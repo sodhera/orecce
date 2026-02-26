@@ -40,6 +40,7 @@ interface UseFeedReturn {
     loadMore: () => void;
     toggleLike: (postId: string) => void;
     toggleSave: (postId: string) => void;
+    markAsSeen: (postId: string) => void;
     markAsRead: (postId: string) => void;
     refresh: () => void;
 }
@@ -47,6 +48,9 @@ interface UseFeedReturn {
 // ── Helpers ──────────────────────────────────────────────────────
 
 const PAGE_SIZE = 10;
+const MAX_SCAN_PAGES = 8;
+const SEEN_CACHE_LIMIT = 800;
+const FEED_SEEN_STORAGE_PREFIX = "orecce:feed:seen";
 
 async function requireUserId(): Promise<string> {
     const { data: { user }, error } = await supabase.auth.getUser();
@@ -100,6 +104,98 @@ export function useFeed(authorId?: string | null, feedMode: FeedMode = "feed"): 
     const [hasMore, setHasMore] = useState(true);
     const offsetRef = useRef(0);
     const fetchIdRef = useRef(0);
+    const userIdRef = useRef<string | null>(null);
+    const seenStorageKeyRef = useRef<string | null>(null);
+    const seenOrderRef = useRef<string[]>([]);
+    const seenIdSetRef = useRef(new Set<string>());
+
+    const getUserId = useCallback(async () => {
+        if (userIdRef.current) {
+            return userIdRef.current;
+        }
+        const userId = await requireUserId();
+        userIdRef.current = userId;
+        return userId;
+    }, []);
+
+    const resetSeenCache = useCallback(() => {
+        seenStorageKeyRef.current = null;
+        seenOrderRef.current = [];
+        seenIdSetRef.current = new Set<string>();
+    }, []);
+
+    const hydrateSeenCache = useCallback(async () => {
+        if (feedMode !== "feed" || typeof window === "undefined") {
+            resetSeenCache();
+            return;
+        }
+
+        const userId = await getUserId();
+        const scope = authorId ?? "all";
+        const key = `${FEED_SEEN_STORAGE_PREFIX}:${userId}:${scope}`;
+        seenStorageKeyRef.current = key;
+
+        try {
+            const raw = window.localStorage.getItem(key);
+            if (!raw) {
+                seenOrderRef.current = [];
+                seenIdSetRef.current = new Set<string>();
+                return;
+            }
+
+            const parsed = JSON.parse(raw);
+            if (!Array.isArray(parsed)) {
+                seenOrderRef.current = [];
+                seenIdSetRef.current = new Set<string>();
+                return;
+            }
+
+            const normalized = parsed
+                .map((item) => String(item ?? "").trim())
+                .filter(Boolean)
+                .slice(-SEEN_CACHE_LIMIT);
+
+            seenOrderRef.current = normalized;
+            seenIdSetRef.current = new Set<string>(normalized);
+        } catch {
+            seenOrderRef.current = [];
+            seenIdSetRef.current = new Set<string>();
+        }
+    }, [authorId, feedMode, getUserId, resetSeenCache]);
+
+    const rememberSeenPosts = useCallback((postIds: string[]) => {
+        if (feedMode !== "feed" || typeof window === "undefined") {
+            return;
+        }
+
+        const key = seenStorageKeyRef.current;
+        if (!key) {
+            return;
+        }
+
+        for (const postId of postIds) {
+            const normalized = String(postId ?? "").trim();
+            if (!normalized || seenIdSetRef.current.has(normalized)) {
+                continue;
+            }
+            seenIdSetRef.current.add(normalized);
+            seenOrderRef.current.push(normalized);
+        }
+
+        if (seenOrderRef.current.length > SEEN_CACHE_LIMIT) {
+            const overflow = seenOrderRef.current.length - SEEN_CACHE_LIMIT;
+            const trimmed = seenOrderRef.current.splice(0, overflow);
+            for (const postId of trimmed) {
+                seenIdSetRef.current.delete(postId);
+            }
+        }
+
+        try {
+            window.localStorage.setItem(key, JSON.stringify(seenOrderRef.current));
+        } catch {
+            // Ignore localStorage failures; feed can continue without persisted novelty memory.
+        }
+    }, [feedMode]);
 
     const fetchPage = useCallback(async (offset: number, fetchId: number) => {
         let rpcName: "get_personalized_feed" | "get_user_liked_posts" | "get_user_saved_posts" = "get_personalized_feed";
@@ -127,19 +223,71 @@ export function useFeed(authorId?: string | null, feedMode: FeedMode = "feed"): 
         return rows.map(rpcRowToState);
     }, [authorId, feedMode]);
 
+    const fetchNovelPage = useCallback(async (
+        startOffset: number,
+        fetchId: number,
+        existingIds: Set<string>,
+    ) => {
+        let offset = startOffset;
+        let reachedEnd = false;
+        const collected: FeedPostState[] = [];
+
+        for (let scanIndex = 0; scanIndex < MAX_SCAN_PAGES && collected.length < PAGE_SIZE; scanIndex += 1) {
+            const page = await fetchPage(offset, fetchId);
+            if (!page) {
+                return null;
+            }
+
+            offset += page.length;
+
+            for (const item of page) {
+                const postId = item.post.id;
+                if (existingIds.has(postId)) {
+                    continue;
+                }
+                if (feedMode === "feed" && seenIdSetRef.current.has(postId)) {
+                    continue;
+                }
+                existingIds.add(postId);
+                collected.push(item);
+                if (collected.length >= PAGE_SIZE) {
+                    break;
+                }
+            }
+
+            if (page.length < PAGE_SIZE) {
+                reachedEnd = true;
+                break;
+            }
+
+            if (feedMode !== "feed") {
+                break;
+            }
+        }
+
+        return {
+            items: collected,
+            nextOffset: offset,
+            reachedEnd,
+        };
+    }, [feedMode, fetchPage]);
+
     // ── Initial load ──
     const loadInitial = useCallback(async () => {
         const id = ++fetchIdRef.current;
         setLoading(true);
         setError(null);
         offsetRef.current = 0;
+        resetSeenCache();
 
         try {
-            const page = await fetchPage(0, id);
-            if (!page) return;
-            setItems(page);
-            setHasMore(page.length >= PAGE_SIZE);
-            offsetRef.current = page.length;
+            await hydrateSeenCache();
+            const result = await fetchNovelPage(0, id, new Set<string>());
+            if (!result) return;
+
+            setItems(result.items);
+            setHasMore(!result.reachedEnd);
+            offsetRef.current = result.nextOffset;
         } catch (err) {
             if (id === fetchIdRef.current) {
                 setError(err instanceof Error ? err.message : "Failed to load feed.");
@@ -147,7 +295,7 @@ export function useFeed(authorId?: string | null, feedMode: FeedMode = "feed"): 
         } finally {
             if (id === fetchIdRef.current) setLoading(false);
         }
-    }, [fetchPage]);
+    }, [fetchNovelPage, hydrateSeenCache, resetSeenCache]);
 
     useEffect(() => {
         void loadInitial();
@@ -160,15 +308,16 @@ export function useFeed(authorId?: string | null, feedMode: FeedMode = "feed"): 
         setLoadingMore(true);
 
         try {
-            const page = await fetchPage(offsetRef.current, id);
-            if (!page) return;
-            setItems((prev) => {
-                const existing = new Set(prev.map((i) => i.post.id));
-                const fresh = page.filter((i) => !existing.has(i.post.id));
-                return [...prev, ...fresh];
-            });
-            setHasMore(page.length >= PAGE_SIZE);
-            offsetRef.current += page.length;
+            const existingIds = new Set(items.map((item) => item.post.id));
+            const result = await fetchNovelPage(offsetRef.current, id, existingIds);
+            if (!result) return;
+
+            if (result.items.length > 0) {
+                setItems((prev) => [...prev, ...result.items]);
+            }
+
+            setHasMore(!result.reachedEnd);
+            offsetRef.current = result.nextOffset;
         } catch (err) {
             if (id === fetchIdRef.current) {
                 setError(err instanceof Error ? err.message : "Failed to load more.");
@@ -176,7 +325,7 @@ export function useFeed(authorId?: string | null, feedMode: FeedMode = "feed"): 
         } finally {
             if (id === fetchIdRef.current) setLoadingMore(false);
         }
-    }, [fetchPage, hasMore, loadingMore]);
+    }, [fetchNovelPage, hasMore, items, loadingMore]);
 
     // ── Toggle like (optimistic) ──
     const toggleLike = useCallback((postId: string) => {
@@ -272,9 +421,19 @@ export function useFeed(authorId?: string | null, feedMode: FeedMode = "feed"): 
     }, [items]);
 
     // ── Mark as read (fire-and-forget) ──
+    const markAsSeen = useCallback((postId: string) => {
+        const normalized = String(postId ?? "").trim();
+        if (!normalized || feedMode !== "feed" || seenIdSetRef.current.has(normalized)) {
+            return;
+        }
+        rememberSeenPosts([normalized]);
+    }, [feedMode, rememberSeenPosts]);
+
     const markAsRead = useCallback((postId: string) => {
         const target = items.find((item) => item.post.id === postId);
         if (!target) return;
+
+        markAsSeen(postId);
 
         const optimisticRead = true;
         setItems((prev) =>
@@ -305,7 +464,7 @@ export function useFeed(authorId?: string | null, feedMode: FeedMode = "feed"): 
                 setError(error instanceof Error ? error.message : "Failed to mark post as read.");
             }
         })();
-    }, [items]);
+    }, [items, markAsSeen]);
 
     return {
         items,
@@ -316,6 +475,7 @@ export function useFeed(authorId?: string | null, feedMode: FeedMode = "feed"): 
         loadMore,
         toggleLike,
         toggleSave,
+        markAsSeen,
         markAsRead,
         refresh: loadInitial,
     };

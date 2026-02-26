@@ -4,14 +4,10 @@
  */
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { SupabaseAuthVerifier } from "@orecce/api-core/src/auth/supabaseAuthVerifier";
-import { AI_NEWS_ENABLED } from "@orecce/api-core/src/config/features";
 import { getDefaultPrefillPostsPerMode } from "@orecce/api-core/src/config/runtimeConfig";
 import { OpenAiGateway } from "@orecce/api-core/src/llm/openAiGateway";
 import { PostgresReccesRepository } from "@orecce/api-core/src/recces/postgresReccesRepository";
 import { PostgresReccesUserProfileRepository } from "@orecce/api-core/src/recces/postgresReccesUserProfileRepository";
-import { SportsNewsService } from "@orecce/api-core/src/news/sportsNewsService";
-import { PostgresUserSportsNewsRepository } from "@orecce/api-core/src/news/postgresUserSportsNewsRepository";
-import { UserSportsNewsService } from "@orecce/api-core/src/news/userSportsNewsService";
 import { PostgresRepository } from "@orecce/api-core/src/repositories/postgresRepository";
 import { PostGenerationService } from "@orecce/api-core/src/services/postGenerationService";
 import { PrefillService } from "@orecce/api-core/src/services/prefillService";
@@ -42,12 +38,6 @@ function buildDeps() {
         repository,
         reccesUserProfileRepository
     );
-    const sportsNewsService = new SportsNewsService();
-    const userSportsNewsRepository = new PostgresUserSportsNewsRepository(supabase);
-    const userSportsNewsService = new UserSportsNewsService({
-        sportsNewsService,
-        repository: userSportsNewsRepository
-    });
 
     return {
         supabase,
@@ -56,10 +46,7 @@ function buildDeps() {
         prefillService,
         authVerifier,
         reccesRecommendationService,
-        sportsNewsService,
-        userSportsNewsService,
-        defaultPrefillPostsPerMode: getDefaultPrefillPostsPerMode(),
-        isAiNewsEnabled: AI_NEWS_ENABLED
+        defaultPrefillPostsPerMode: getDefaultPrefillPostsPerMode()
     };
 }
 

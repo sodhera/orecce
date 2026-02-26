@@ -36,23 +36,23 @@ const SECTIONS = [
 ];
 
 export function ProfileScreen() {
-    const { user: firebaseUser, signOut } = useAuth();
+    const { user: authUser, signOut } = useAuth();
     const { user: backendUser, isLoading } = useUser();
     const navigation = useNavigation();
 
     // Get display name and initials using the helper functions
-    const displayName = getDisplayName(backendUser, firebaseUser);
-    const initials = getUserInitials(backendUser, firebaseUser);
+    const displayName = getDisplayName(backendUser, authUser);
+    const initials = getUserInitials(backendUser, authUser);
 
     // Update email value dynamically with verification status
-    const isEmailVerified = Boolean(firebaseUser?.email_confirmed_at);
+    const isEmailVerified = Boolean(authUser?.email_confirmed_at);
     const sections = SECTIONS.map(section => ({
         ...section,
         data: section.data.map(item => {
             if (item.id === 'email') {
                 return {
                     ...item,
-                    value: firebaseUser?.email || '',
+                    value: authUser?.email || '',
                     isUnverified: !isEmailVerified
                 };
             }
@@ -61,14 +61,14 @@ export function ProfileScreen() {
     }));
 
     const handleVerifyEmail = async () => {
-        if (!firebaseUser?.email) {
+        if (!authUser?.email) {
             alert('No email found for this account.');
             return;
         }
         try {
             const { error } = await supabase.auth.resend({
                 type: 'signup',
-                email: firebaseUser.email,
+                email: authUser.email,
             });
             if (error) {
                 throw error;
@@ -138,7 +138,7 @@ export function ProfileScreen() {
                         <Text style={styles.avatarText}>{initials}</Text>
                     </View>
                     <Text style={styles.userName}>{displayName}</Text>
-                    <Text style={styles.userHandle}>{firebaseUser?.email || ''}</Text>
+                    <Text style={styles.userHandle}>{authUser?.email || ''}</Text>
 
                     <TouchableOpacity style={styles.editProfileButton}>
                         <Text style={styles.editProfileText}>Edit profile</Text>

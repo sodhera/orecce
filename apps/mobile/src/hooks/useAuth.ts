@@ -11,7 +11,7 @@ interface AuthState {
 
 interface AuthActions {
     signIn: (email: string, password: string) => Promise<boolean>;
-    signUp: (email: string, password: string) => Promise<boolean>;
+    signUp: (email: string, password: string, options?: { fullName?: string }) => Promise<boolean>;
     signOut: () => Promise<void>;
     resetPassword: (email: string) => Promise<boolean>;
     clearError: () => void;
@@ -67,13 +67,20 @@ export function useAuth(): AuthState & AuthActions {
     };
 
     // Sign up with email and password
-    const signUp = async (email: string, password: string): Promise<boolean> => {
+    const signUp = async (
+        email: string,
+        password: string,
+        options?: { fullName?: string }
+    ): Promise<boolean> => {
         try {
             setIsLoading(true);
             setError(null);
+
+            const fullName = options?.fullName?.trim();
             const { error: authError } = await supabase.auth.signUp({
                 email,
-                password
+                password,
+                options: fullName ? { data: { full_name: fullName } } : undefined
             });
             if (authError) {
                 setError(getErrorMessage(authError.message));

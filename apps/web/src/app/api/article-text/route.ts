@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "../_utils/requireAuth";
+import { authenticate } from "../middleware";
+import { ApiError } from "@orecce/api-core/src/types/errors";
 
 const REQUEST_TIMEOUT_MS = 10_000;
 const MAX_TEXT_CHARS = 40_000;
@@ -172,9 +173,12 @@ async function fetchHtml(url: string): Promise<{ responseUrl: string; body: stri
 }
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
-    const auth = await requireAuth(request);
-    if (auth instanceof NextResponse) {
-        return auth;
+    try {
+        await authenticate(request);
+    } catch (error) {
+        const status = error instanceof ApiError ? error.status : 401;
+        const message = error instanceof Error ? error.message : "Authentication required.";
+        return NextResponse.json({ ok: false, error: message }, { status });
     }
 
     const rawUrl = String(request.nextUrl.searchParams.get("url") ?? "").trim();

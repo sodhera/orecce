@@ -9,7 +9,6 @@ import { SavedScreen } from '../screens/SavedScreen';
 import { InboxScreen } from '../screens/InboxScreen';
 import { colors } from '../styles/colors';
 import { BottomSheetMenu } from '../components/BottomSheetMenu';
-import { AI_NEWS_ENABLED } from '../config/features';
 
 export type BottomTabParamList = {
     Home: undefined;
@@ -146,24 +145,7 @@ export function BottomTabNavigator() {
             })}
         >
             <Tab.Screen name="Home" component={HomeScreen} options={{ headerTitle: 'Orecce', tabBarLabel: 'Home' }} />
-            <Tab.Screen
-                name="Explore"
-                component={ExploreScreen}
-                options={
-                    AI_NEWS_ENABLED
-                        ? {
-                            headerRight: () => (
-                                <TouchableOpacity
-                                    style={styles.profileButton}
-                                    onPress={() => navigation.navigate('Rss')}
-                                >
-                                    <Ionicons name="logo-rss" size={24} color={colors.textPrimary} />
-                                </TouchableOpacity>
-                            ),
-                        }
-                        : {}
-                }
-            />
+            <Tab.Screen name="Explore" component={ExploreScreen} />
             <Tab.Screen
                 name="Saved"
                 component={SavedScreen}

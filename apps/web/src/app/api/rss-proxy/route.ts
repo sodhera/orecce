@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuth } from "../_utils/requireAuth";
+import { authenticate } from "../middleware";
+import { ApiError } from "@orecce/api-core/src/types/errors";
 
 const ALLOWED_FEED_URLS = new Set<string>([
     "https://openai.com/news/rss.xml",
@@ -24,9 +25,12 @@ function resolveFetchUrl(url: string): string {
 }
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
-    const auth = await requireAuth(request);
-    if (auth instanceof NextResponse) {
-        return auth;
+    try {
+        await authenticate(request);
+    } catch (error) {
+        const status = error instanceof ApiError ? error.status : 401;
+        const message = error instanceof Error ? error.message : "Authentication required.";
+        return NextResponse.json({ ok: false, error: message }, { status });
     }
 
     const url = String(request.nextUrl.searchParams.get("url") ?? "").trim();

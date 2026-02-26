@@ -48,6 +48,17 @@ interface UseFeedReturn {
 
 const PAGE_SIZE = 10;
 
+async function requireUserId(): Promise<string> {
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if (error) {
+        throw new Error(error.message);
+    }
+    if (!user) {
+        throw new Error("Authentication required.");
+    }
+    return user.id;
+}
+
 function parseSlides(raw: unknown): Slide[] {
     if (!Array.isArray(raw)) return [];
     return raw.map((s: Record<string, unknown>, i: number) => ({
@@ -169,70 +180,132 @@ export function useFeed(authorId?: string | null, feedMode: FeedMode = "feed"): 
 
     // ── Toggle like (optimistic) ──
     const toggleLike = useCallback((postId: string) => {
+        const target = items.find((item) => item.post.id === postId);
+        if (!target) return;
+
+        const optimisticLiked = !target.isLiked;
         setItems((prev) =>
-            prev.map((item) => {
-                if (item.post.id !== postId) return item;
-                const liked = !item.isLiked;
-
-                // Fire-and-forget mutation
-                (async () => {
-                    try {
-                        const { data: { user } } = await supabase.auth.getUser();
-                        if (!user) return;
-                        if (liked) {
-                            await supabase.from("user_likes").insert({ user_id: user.id, post_id: postId });
-                        } else {
-                            await supabase.from("user_likes").delete().match({ user_id: user.id, post_id: postId });
-                        }
-                        await sendPostFeedback(postId, liked ? "upvote" : "skip");
-                    } catch {
-                        // Non-blocking; optimistic UI state remains.
-                    }
-                })();
-
-                return { ...item, isLiked: liked };
-            }),
+            prev.map((item) =>
+                item.post.id === postId ? { ...item, isLiked: optimisticLiked } : item,
+            ),
         );
-    }, []);
+        setError(null);
+
+        void (async () => {
+            try {
+                const userId = await requireUserId();
+                if (optimisticLiked) {
+                    const { error: insertError } = await supabase
+                        .from("user_likes")
+                        .insert({ user_id: userId, post_id: postId });
+                    if (insertError) {
+                        throw new Error(insertError.message);
+                    }
+                } else {
+                    const { error: deleteError } = await supabase
+                        .from("user_likes")
+                        .delete()
+                        .match({ user_id: userId, post_id: postId });
+                    if (deleteError) {
+                        throw new Error(deleteError.message);
+                    }
+                }
+                await sendPostFeedback(postId, optimisticLiked ? "upvote" : "skip");
+            } catch (error) {
+                setItems((prev) =>
+                    prev.map((item) => {
+                        if (item.post.id !== postId || item.isLiked !== optimisticLiked) {
+                            return item;
+                        }
+                        return { ...item, isLiked: target.isLiked };
+                    }),
+                );
+                setError(error instanceof Error ? error.message : "Failed to update like.");
+            }
+        })();
+    }, [items]);
 
     // ── Toggle save (optimistic) ──
     const toggleSave = useCallback((postId: string) => {
+        const target = items.find((item) => item.post.id === postId);
+        if (!target) return;
+
+        const optimisticSaved = !target.isSaved;
         setItems((prev) =>
-            prev.map((item) => {
-                if (item.post.id !== postId) return item;
-                const saved = !item.isSaved;
-
-                (async () => {
-                    const { data: { user } } = await supabase.auth.getUser();
-                    if (!user) return;
-                    if (saved) {
-                        await supabase.from("user_saves").insert({ user_id: user.id, post_id: postId });
-                    } else {
-                        await supabase.from("user_saves").delete().match({ user_id: user.id, post_id: postId });
-                    }
-                })();
-
-                return { ...item, isSaved: saved };
-            }),
+            prev.map((item) =>
+                item.post.id === postId ? { ...item, isSaved: optimisticSaved } : item,
+            ),
         );
-    }, []);
+        setError(null);
+
+        void (async () => {
+            try {
+                const userId = await requireUserId();
+                if (optimisticSaved) {
+                    const { error: insertError } = await supabase
+                        .from("user_saves")
+                        .insert({ user_id: userId, post_id: postId });
+                    if (insertError) {
+                        throw new Error(insertError.message);
+                    }
+                } else {
+                    const { error: deleteError } = await supabase
+                        .from("user_saves")
+                        .delete()
+                        .match({ user_id: userId, post_id: postId });
+                    if (deleteError) {
+                        throw new Error(deleteError.message);
+                    }
+                }
+            } catch (error) {
+                setItems((prev) =>
+                    prev.map((item) => {
+                        if (item.post.id !== postId || item.isSaved !== optimisticSaved) {
+                            return item;
+                        }
+                        return { ...item, isSaved: target.isSaved };
+                    }),
+                );
+                setError(error instanceof Error ? error.message : "Failed to update saved state.");
+            }
+        })();
+    }, [items]);
 
     // ── Mark as read (fire-and-forget) ──
     const markAsRead = useCallback((postId: string) => {
+        const target = items.find((item) => item.post.id === postId);
+        if (!target) return;
+
+        const optimisticRead = true;
         setItems((prev) =>
             prev.map((item) =>
-                item.post.id === postId ? { ...item, isRead: true } : item,
+                item.post.id === postId ? { ...item, isRead: optimisticRead } : item,
             ),
         );
+        setError(null);
 
-        (async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-            await supabase
-                .from("user_history")
-                .upsert({ user_id: user.id, post_id: postId, status: "read" }, { onConflict: "user_id,post_id" });
+        void (async () => {
+            try {
+                const userId = await requireUserId();
+                const { error } = await supabase
+                    .from("user_history")
+                    .upsert({ user_id: userId, post_id: postId, status: "read" }, { onConflict: "user_id,post_id" });
+                if (error) {
+                    throw new Error(error.message);
+                }
+            } catch (error) {
+                setItems((prev) =>
+                    prev.map((item) => {
+                        if (item.post.id !== postId || item.isRead !== optimisticRead) {
+                            return item;
+                        }
+                        return { ...item, isRead: target.isRead };
+                    }),
+                );
+                setError(error instanceof Error ? error.message : "Failed to mark post as read.");
+            }
         })();
-    }, []);
+    }, [items]);
 
     return {
         items,

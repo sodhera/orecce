@@ -2,11 +2,9 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
-import { updateProfile } from 'firebase/auth';
 import { SignupStepLayout } from './SignupStepLayout';
 import { colors } from '../../styles/colors';
 import { useAuth } from '../../hooks/useAuth';
-import { auth } from '../../config/firebase';
 import { api } from '../../services/api';
 
 type SignupStackParamList = {
@@ -42,25 +40,15 @@ export const SignupPasswordScreen: React.FC<Props> = ({ navigation, route }) => 
             return;
         }
 
-        const result = await signUp(email, password);
+        const result = await signUp(email, password, { fullName: name });
 
-        // Save the user's display name to Firebase Auth profile
-        if (result && auth.currentUser) {
+        if (result) {
             try {
-                await updateProfile(auth.currentUser, {
-                    displayName: name,
-                });
-            } catch (profileError) {
-                console.error('Failed to update Firebase profile:', profileError);
-            }
-
-            // Sync user with backend to create Firestore document
-            try {
+                // Creates/updates the backend user when a session is available.
                 await api.syncCurrentUser();
-                console.log('[signup] User synced with backend');
             } catch (syncError) {
-                // Don't block signup if backend sync fails - useUser hook will retry
-                console.warn('[signup] Backend sync failed (will retry later):', syncError);
+                // Don't block signup if backend sync fails.
+                console.warn('[signup] Backend sync failed:', syncError);
             }
         }
 

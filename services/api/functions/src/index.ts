@@ -1,10 +1,9 @@
 import { initializeApp } from "firebase-admin/app";
 import { FieldPath, getFirestore } from "firebase-admin/firestore";
-import * as functionsV1 from "firebase-functions/v1";
 import { onRequest } from "firebase-functions/v2/https";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import { onSchedule } from "firebase-functions/v2/scheduler";
-import { FirebaseAuthVerifier } from "@orecce/api-core/src/auth/firebaseAuthVerifier";
+import { SupabaseAuthVerifier } from "@orecce/api-core/src/auth/supabaseAuthVerifier";
 import { AI_NEWS_ENABLED } from "@orecce/api-core/src/config/features";
 import {
   getDefaultPrefillPostsPerMode,
@@ -38,6 +37,7 @@ import { logError, logInfo } from "@orecce/api-core/src/utils/logging";
 import { PrefillService } from "@orecce/api-core/src/services/prefillService";
 import { PostGenerationService } from "@orecce/api-core/src/services/postGenerationService";
 import { ReccesRecommendationService } from "@orecce/api-core/src/services/reccesRecommendationService";
+import { getSupabaseClient } from "@orecce/api-core/src/db/supabase";
 
 initializeApp();
 
@@ -45,7 +45,7 @@ const repository = new FirestoreRepository(getFirestore());
 const gateway = new OpenAiGateway();
 const postGenerationService = new PostGenerationService(repository, gateway);
 const prefillService = new PrefillService(repository, gateway);
-const authVerifier = new FirebaseAuthVerifier();
+const authVerifier = new SupabaseAuthVerifier(getSupabaseClient());
 const reccesRepository = new FirestoreReccesRepository(getFirestore());
 const reccesUserProfileRepository = new FirestoreReccesUserProfileRepository(getFirestore());
 const reccesRecommendationService = new ReccesRecommendationService(
@@ -154,20 +154,6 @@ export const api = onRequest(
   },
   app
 );
-
-export const onAuthUserCreate = functionsV1.auth.user().onCreate(async (user) => {
-  const postsPerMode = getDefaultPrefillPostsPerMode();
-  await repository.getOrCreateUser({
-    userId: user.uid,
-    email: user.email ?? null,
-    displayName: user.displayName ?? null,
-    photoURL: user.photoURL ?? null
-  });
-  await prefillService.ensureUserPrefillsFromCommonDataset({
-    userId: user.uid,
-    postsPerMode
-  });
-});
 
 export const syncNewsEvery3Hours = onSchedule(
   {

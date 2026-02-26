@@ -11,7 +11,7 @@ import styles from "./LandingPage.module.css";
 type AuthMode = "login" | "signup" | "forgot";
 
 export default function LandingPage() {
-  const { isAuthenticated, login, signup, loginWithGoogle, resetPassword } = useAuth();
+  const { isAuthenticated, loading, login, signup, loginWithGoogle, resetPassword } = useAuth();
   const router = useRouter();
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [authMode, setAuthMode] = useState<AuthMode>("login");
@@ -23,10 +23,10 @@ export default function LandingPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (!loading && isAuthenticated) {
       router.replace("/feed");
     }
-  }, [isAuthenticated, router]);
+  }, [loading, isAuthenticated, router]);
 
   const handleAuthSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -73,7 +73,7 @@ export default function LandingPage() {
     }
   };
 
-  if (isAuthenticated) {
+  if (loading || isAuthenticated) {
     return null;
   }
 

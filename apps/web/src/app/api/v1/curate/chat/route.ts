@@ -14,8 +14,15 @@ interface ChatMessage {
     content: string;
 }
 
+interface UpstreamAttemptFailure {
+    model: string;
+    status: number | null;
+    body: string;
+}
+
 const MAX_MESSAGES = 14;
 const MAX_MESSAGE_CHARS = 700;
+const FALLBACK_MODELS = ["gpt-5-mini", "gpt-4.1-mini"] as const;
 
 function normalizeMessages(raw: unknown): ChatMessage[] {
     if (!Array.isArray(raw)) return [];
@@ -116,6 +123,71 @@ function buildSystemPrompt(mode?: string, profile?: string): string {
     ].join(" ");
 }
 
+function getLastUserMessage(messages: ChatMessage[]): string {
+    for (let index = messages.length - 1; index >= 0; index -= 1) {
+        if (messages[index]?.role === "user") {
+            return messages[index].content;
+        }
+    }
+    return "";
+}
+
+function buildLocalFallbackReply(messages: ChatMessage[]): string {
+    const latestUserMessage = getLastUserMessage(messages).replace(/\s+/g, " ").trim();
+    if (!latestUserMessage) {
+        return "I'll let Orecce know you want changes to your feed. Anything else you want adjusted?";
+    }
+
+    const withoutTrailingPunctuation = latestUserMessage.replace(/[.!?]+$/g, "").trim();
+    const compactMessage = withoutTrailingPunctuation.length > 180
+        ? `${withoutTrailingPunctuation.slice(0, 177).trimEnd()}...`
+        : withoutTrailingPunctuation;
+
+    return `I'll let Orecce know you want ${compactMessage}. Anything else you want changed?`;
+}
+
+function getModelCandidates(primaryModel: string): string[] {
+    const seen = new Set<string>();
+    const models: string[] = [];
+
+    for (const candidate of [primaryModel, ...FALLBACK_MODELS]) {
+        const model = candidate.trim();
+        if (!model) continue;
+        const key = model.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        models.push(model);
+    }
+
+    return models;
+}
+
+function buildUpstreamRequestBody(
+    model: string,
+    payload: Record<string, unknown>,
+    messages: ChatMessage[],
+): Record<string, unknown> {
+    const isGpt5Family = model.toLowerCase().startsWith("gpt-5");
+    return {
+        model,
+        max_output_tokens: 140,
+        ...(isGpt5Family ? { reasoning: { effort: "minimal" } } : { temperature: 0.3 }),
+        input: [
+            {
+                role: "system",
+                content: buildSystemPrompt(
+                    typeof payload.mode === "string" ? payload.mode : undefined,
+                    typeof payload.profile === "string" ? payload.profile : undefined,
+                ),
+            },
+            ...messages.map((message) => ({
+                role: message.role,
+                content: message.content,
+            })),
+        ],
+    };
+}
+
 export const POST = withErrorHandler(async (req: NextRequest) => {
     await authenticate(req);
 
@@ -129,62 +201,53 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
 
     const apiKey = getOpenAiApiKey();
     if (!apiKey) {
-        throw new ApiError(500, "missing_openai_key", "OpenAI key is missing. Set OPENAI_API_KEY.");
+        return ok({ reply: buildLocalFallbackReply(messages), degraded: true });
     }
 
-    const model = getOpenAiModel();
-    const isGpt5Family = model.toLowerCase().startsWith("gpt-5");
+    const failures: UpstreamAttemptFailure[] = [];
+    const openAiBaseUrl = getOpenAiBaseUrl().replace(/\/+$/, "");
 
-    const upstreamResponse = await fetch(`${getOpenAiBaseUrl()}/responses`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
-        },
-        body: JSON.stringify({
-            model,
-            max_output_tokens: 140,
-            ...(isGpt5Family ? { reasoning: { effort: "minimal" } } : { temperature: 0.3 }),
-            input: [
-                {
-                    role: "system",
-                    content: buildSystemPrompt(
-                        typeof payload.mode === "string" ? payload.mode : undefined,
-                        typeof payload.profile === "string" ? payload.profile : undefined,
-                    ),
+    for (const model of getModelCandidates(getOpenAiModel())) {
+        try {
+            const upstreamResponse = await fetch(`${openAiBaseUrl}/responses`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${apiKey}`,
                 },
-                ...messages.map((message) => ({
-                    role: message.role,
-                    content: message.content,
-                })),
-            ],
-        }),
-        signal: AbortSignal.timeout(20_000),
-    });
+                body: JSON.stringify(buildUpstreamRequestBody(model, payload, messages)),
+                signal: AbortSignal.timeout(20_000),
+            });
 
-    if (!upstreamResponse.ok) {
-        const upstreamText = await upstreamResponse.text();
-        throw new ApiError(
-            502,
-            "curate_chat_upstream_error",
-            "Curate chat generation failed.",
-            {
+            if (!upstreamResponse.ok) {
+                failures.push({
+                    model,
+                    status: upstreamResponse.status,
+                    body: (await upstreamResponse.text()).slice(0, 1200),
+                });
+                continue;
+            }
+
+            const responseJson = (await upstreamResponse.json()) as unknown;
+            const reply = extractResponseText(responseJson);
+            if (reply) {
+                return ok({ reply });
+            }
+
+            failures.push({
+                model,
                 status: upstreamResponse.status,
-                body: upstreamText.slice(0, 1200),
-            },
-        );
+                body: "empty_response_text",
+            });
+        } catch (error) {
+            failures.push({
+                model,
+                status: null,
+                body: error instanceof Error ? error.message : String(error),
+            });
+        }
     }
 
-    const responseJson = (await upstreamResponse.json()) as unknown;
-    const reply = extractResponseText(responseJson);
-
-    if (!reply) {
-        throw new ApiError(
-            502,
-            "curate_chat_empty_reply",
-            "Curate chat generation returned an empty response.",
-        );
-    }
-
-    return ok({ reply });
+    console.error("Curate chat upstream failed; using fallback response.", failures);
+    return ok({ reply: buildLocalFallbackReply(messages), degraded: true });
 });

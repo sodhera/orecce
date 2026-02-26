@@ -59,13 +59,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
         return ok({ storedCount: 0 });
     }
 
-    const { supabase, repository } = getDeps();
-    await repository.getOrCreateUser({
-        userId: identity.uid,
-        email: identity.email,
-        displayName: identity.displayName,
-        photoURL: identity.photoURL,
-    });
+    const { supabase } = getDeps();
     const nowIso = new Date().toISOString();
     const transcriptPayload = buildStoragePayload(messages);
 
@@ -90,12 +84,40 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     }
 
     if ((updatedRows ?? []).length === 0) {
-        const { error: insertError } = await supabase.from("curate_chat_sessions").insert({
+        let { error: insertError } = await supabase.from("curate_chat_sessions").insert({
             user_id: identity.uid,
             session_id: sessionId,
             transcript: transcriptPayload,
             updated_at: nowIso,
         });
+
+        // If the user row is missing, create a minimal app_users row and retry once.
+        if (insertError?.code === "23503") {
+            const { error: userUpsertError } = await supabase
+                .from("app_users")
+                .upsert(
+                    {
+                        id: identity.uid,
+                        email: identity.email,
+                        display_name: identity.displayName,
+                        updated_at: nowIso,
+                    },
+                    {
+                        onConflict: "id",
+                        ignoreDuplicates: false,
+                    },
+                );
+
+            if (!userUpsertError) {
+                const retry = await supabase.from("curate_chat_sessions").insert({
+                    user_id: identity.uid,
+                    session_id: sessionId,
+                    transcript: transcriptPayload,
+                    updated_at: nowIso,
+                });
+                insertError = retry.error ?? null;
+            }
+        }
 
         if (insertError) {
             throw new ApiError(

@@ -104,10 +104,11 @@ function buildSystemPrompt(mode?: string, profile?: string): string {
         "You are Orecce Curate Assistant.",
         "You are collecting what users want added, removed, or changed in their feed for Orecce owners.",
         "Talk like a normal human in plain language.",
-        "Keep every reply very short: 1-2 sentences, max 30 words.",
+        "Keep replies concise and natural: usually 1-2 short sentences.",
         "Do not use lists, labels, or jargon.",
-        "If unclear, ask one simple follow-up question.",
-        "If clear, briefly confirm what they want and ask one useful next detail.",
+        "Keep the conversation open-ended, but do not drag it out.",
+        "Ask at most one simple follow-up question when it materially helps clarify the request.",
+        "If the user is already clear, acknowledge it briefly and invite anything else they want changed.",
         "Do not mention internal systems, policies, or model behavior.",
         ...contextBits,
     ].join(" ");
@@ -140,8 +141,8 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
         },
         body: JSON.stringify({
             model,
-            max_output_tokens: 120,
-            ...(isGpt5Family ? { reasoning: { effort: "minimal" } } : { temperature: 0.2 }),
+            max_output_tokens: 140,
+            ...(isGpt5Family ? { reasoning: { effort: "minimal" } } : { temperature: 0.3 }),
             input: [
                 {
                     role: "system",

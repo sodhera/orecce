@@ -304,18 +304,19 @@ export default function RightSidebar({ mode, profile }: RightSidebarProps) {
                     aria-hidden={!isPanelOpen}
                 >
                     <header className="curation-chat-header">
-                        <div>
-                            <h2>Curate</h2>
-                            <p>Describe what you want to see in your feed.</p>
-                        </div>
                         <button
                             type="button"
                             className="curation-chat-close"
                             onClick={() => setIsPanelOpen(false)}
                             aria-label="Close curate panel"
                         >
-                            Close
+                            <span aria-hidden="true">×</span>
                         </button>
+                        <div className="curation-chat-heading">
+                            <h2>Curate</h2>
+                            <p>Describe what you want to see in your feed.</p>
+                        </div>
+                        <div className="curation-chat-header-spacer" aria-hidden="true" />
                     </header>
 
                     <div className="curation-chat-thread" ref={threadRef}>
@@ -370,26 +371,34 @@ export default function RightSidebar({ mode, profile }: RightSidebarProps) {
                             rows={2}
                             disabled={isSending}
                         />
-                        <button type="submit" disabled={isSending || !inputValue.trim()}>
-                            Send
+                        <button
+                            type="submit"
+                            disabled={isSending || !inputValue.trim()}
+                            aria-label="Send message"
+                        >
+                            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                <path d="M3 20.25L20.5 12L3 3.75V10.5L14 12L3 13.5V20.25Z" />
+                            </svg>
                         </button>
                     </form>
 
                     {sessionNotice && <p className="curation-chat-notice">{sessionNotice}</p>}
                 </section>
 
-                <button
-                    type="button"
-                    className="curation-trigger"
-                    aria-expanded={isPanelOpen}
-                    aria-controls="curation-chat-panel"
-                    onClick={() => {
-                        setIsPanelOpen((previous) => !previous);
-                        setSessionNotice(null);
-                    }}
-                >
-                    Curate
-                </button>
+                {!isPanelOpen && (
+                    <button
+                        type="button"
+                        className="curation-trigger"
+                        aria-expanded={isPanelOpen}
+                        aria-controls="curation-chat-panel"
+                        onClick={() => {
+                            setIsPanelOpen(true);
+                            setSessionNotice(null);
+                        }}
+                    >
+                        Curate
+                    </button>
+                )}
             </div>
         </aside>
     );

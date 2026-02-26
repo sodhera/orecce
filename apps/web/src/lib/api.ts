@@ -174,6 +174,27 @@ export async function listPosts(
 
 export type FeedbackType = "upvote" | "downvote" | "skip";
 
+export type CurationChatRole = "user" | "assistant";
+
+export interface CurationChatInputMessage {
+    role: CurationChatRole;
+    content: string;
+}
+
+export interface SendCurationChatInput {
+    messages: CurationChatInputMessage[];
+    mode?: string;
+    profile?: string;
+}
+
+export interface SendCurationChatResult {
+    reply: string;
+}
+
+export interface FlushCurationChatResult {
+    storedCount: number;
+}
+
 export interface ReccesSlide {
     slideNumber: number;
     type: string;
@@ -248,6 +269,32 @@ export async function sendPostFeedback(
             post_id: postId,
             feedback_type: feedbackType,
         },
+        options,
+    );
+}
+
+export async function sendCurationChat(
+    input: SendCurationChatInput,
+    options?: RequestOptions,
+): Promise<SendCurationChatResult> {
+    return post<SendCurationChatResult>(
+        "/curate/chat",
+        {
+            messages: input.messages,
+            ...(input.mode ? { mode: input.mode } : {}),
+            ...(input.profile ? { profile: input.profile } : {}),
+        },
+        options,
+    );
+}
+
+export async function flushCurationChatSession(
+    messages: CurationChatInputMessage[],
+    options?: RequestOptions,
+): Promise<FlushCurationChatResult> {
+    return post<FlushCurationChatResult>(
+        "/curate/chat/flush",
+        { messages },
         options,
     );
 }

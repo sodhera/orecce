@@ -109,6 +109,8 @@ function buildSystemPrompt(mode?: string, profile?: string): string {
         "Keep the conversation open-ended, but do not drag it out.",
         "Ask at most one simple follow-up question when it materially helps clarify the request.",
         "If the user is already clear, acknowledge it briefly and invite anything else they want changed.",
+        "When confirming a request, use wording like: I'll let Orecce know you want ...",
+        "Do not imply you will personally make product changes.",
         "Do not mention internal systems, policies, or model behavior.",
         ...contextBits,
     ].join(" ");

@@ -1794,9 +1794,9 @@ body[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
 }
 
 .curation-chat-header {
-  display: flex;
+  display: grid;
+  grid-template-columns: 24px 1fr 24px;
   align-items: center;
-  justify-content: space-between;
   gap: 12px;
   padding: 10px 12px 8px;
   border-bottom: 1px solid var(--bg-border);
@@ -1806,6 +1806,7 @@ body[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
 .curation-chat-heading {
   display: flex;
   align-items: center;
+  justify-content: center;
   min-width: 0;
 }
 
@@ -1814,6 +1815,27 @@ body[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
   line-height: 1.15;
   font-weight: 800;
   letter-spacing: -0.015em;
+}
+
+.curation-chat-back {
+  width: auto;
+  height: auto;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 18px;
+  line-height: 1;
+  padding: 0;
+  justify-self: start;
+  transition: color 0.2s ease;
+}
+
+.curation-chat-back:hover {
+  color: var(--text-primary);
+}
+
+.curation-chat-back-ghost {
+  visibility: hidden;
 }
 
 .curation-chat-close {
@@ -1826,11 +1848,79 @@ body[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
   font-size: 24px;
   line-height: 1;
   padding: 0;
+  justify-self: end;
   transition: color 0.2s ease;
 }
 
 .curation-chat-close:hover {
   color: var(--text-primary);
+}
+
+.curation-session-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.curation-session-new {
+  width: 100%;
+  border: 1px solid var(--bg-border);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.curation-session-new:hover {
+  background: var(--bg-hover);
+}
+
+.curation-session-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.curation-session-item {
+  width: 100%;
+  border: 1px solid var(--bg-border);
+  border-radius: 12px;
+  background: var(--bg-primary);
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.curation-session-item:hover {
+  background: var(--bg-hover);
+}
+
+.curation-session-preview {
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.curation-session-meta {
+  margin-top: 4px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.curation-session-state {
+  border: 1px solid var(--bg-border);
+  border-radius: 12px;
+  padding: 12px;
+  color: var(--text-secondary);
+  font-size: 13px;
 }
 
 .curation-chat-thread {

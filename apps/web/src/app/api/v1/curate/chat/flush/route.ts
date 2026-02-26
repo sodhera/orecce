@@ -67,26 +67,44 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
         photoURL: identity.photoURL,
     });
     const nowIso = new Date().toISOString();
+    const transcriptPayload = buildStoragePayload(messages);
 
-    const { error } = await supabase.from("curate_chat_sessions").upsert({
-        user_id: identity.uid,
-        session_id: sessionId,
-        transcript: buildStoragePayload(messages),
-        message_count: messages.length,
-        last_message_at: nowIso,
-        updated_at: nowIso,
-    }, {
-        onConflict: "user_id,session_id",
-        ignoreDuplicates: false,
-    });
+    const { data: updatedRows, error: updateError } = await supabase
+        .from("curate_chat_sessions")
+        .update({
+            transcript: transcriptPayload,
+            updated_at: nowIso,
+        })
+        .eq("user_id", identity.uid)
+        .eq("session_id", sessionId)
+        .select("id")
+        .limit(1);
 
-    if (error) {
+    if (updateError) {
         throw new ApiError(
             500,
             "curate_chat_flush_failed",
             "Failed to persist curate chat session.",
-            error.message,
+            updateError.message,
         );
+    }
+
+    if ((updatedRows ?? []).length === 0) {
+        const { error: insertError } = await supabase.from("curate_chat_sessions").insert({
+            user_id: identity.uid,
+            session_id: sessionId,
+            transcript: transcriptPayload,
+            updated_at: nowIso,
+        });
+
+        if (insertError) {
+            throw new ApiError(
+                500,
+                "curate_chat_flush_failed",
+                "Failed to persist curate chat session.",
+                insertError.message,
+            );
+        }
     }
 
     return ok({ storedCount: messages.length });

@@ -195,6 +195,18 @@ export interface FlushCurationChatResult {
     storedCount: number;
 }
 
+export interface CurationChatSessionSummary {
+    sessionId: string;
+    preview: string;
+    createdAtMs: number;
+    updatedAtMs: number;
+    messages: CurationChatInputMessage[];
+}
+
+export interface ListCurationChatSessionsResult {
+    items: CurationChatSessionSummary[];
+}
+
 export interface ReccesSlide {
     slideNumber: number;
     type: string;
@@ -298,6 +310,17 @@ export async function flushCurationChatSession(
             session_id: input.sessionId,
             messages: input.messages,
         },
+        options,
+    );
+}
+
+export async function listCurationChatSessions(
+    limit: number = 20,
+    options?: RequestOptions,
+): Promise<ListCurationChatSessionsResult> {
+    return get<ListCurationChatSessionsResult>(
+        "/curate/chat/sessions",
+        { limit },
         options,
     );
 }

@@ -130,7 +130,7 @@ export default function Sidebar() {
                 style={{
                     position: "fixed",
                     top: 12,
-                    left: 12,
+                    right: 12,
                     zIndex: 70,
                 }}
             >

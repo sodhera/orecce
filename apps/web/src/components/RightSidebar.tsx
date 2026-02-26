@@ -60,7 +60,7 @@ function createMessage(role: CurateRole, text: string): CurateMessage {
 function getDefaultAssistantMessage(): CurateMessage {
     return createMessage(
         "assistant",
-        "Tell me what you want more or less of. I will pass it to Orecce owners.",
+        "Tell me what you want more and less of in your feed. I will tune topics, formats, and tone.",
     );
 }
 

@@ -13,6 +13,8 @@ interface FeedProps {
 }
 
 const RECOMMENDED_COUNT = 3;
+const SEEN_VISIBILITY_RATIO = 0.7;
+const SEEN_IMPRESSION_MS = 2500;
 
 export default function Feed({ mode, onModeChange }: FeedProps) {
     const { authors, followedIds, toggleFollow } = useAuthors();
@@ -66,7 +68,7 @@ export default function Feed({ mode, onModeChange }: FeedProps) {
                         continue;
                     }
 
-                    if (entry.isIntersecting && entry.intersectionRatio >= 0.65) {
+                    if (entry.isIntersecting && entry.intersectionRatio > SEEN_VISIBILITY_RATIO) {
                         if (visibilityTimersRef.current.has(postId)) {
                             continue;
                         }
@@ -75,7 +77,7 @@ export default function Feed({ mode, onModeChange }: FeedProps) {
                             seenInSessionRef.current.add(postId);
                             visibilityTimersRef.current.delete(postId);
                             feed.markAsSeen(postId);
-                        }, 1500);
+                        }, SEEN_IMPRESSION_MS);
                         visibilityTimersRef.current.set(postId, timerId);
                         continue;
                     }
@@ -87,7 +89,7 @@ export default function Feed({ mode, onModeChange }: FeedProps) {
                     }
                 }
             },
-            { threshold: [0.65] },
+            { threshold: [SEEN_VISIBILITY_RATIO] },
         );
 
         const nodes = document.querySelectorAll<HTMLElement>(".feed-slide-shell[data-post-id]");

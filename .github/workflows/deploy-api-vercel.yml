@@ -20,7 +20,7 @@ jobs:
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_API_PROJECT_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_API_PROJECT_ID || secrets.VERCEL_PROJECT_ID }}
 
     steps:
       - name: Checkout
@@ -29,7 +29,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
 
       - name: Validate Vercel secrets
         run: |
@@ -42,7 +42,7 @@ jobs:
             exit 1
           fi
           if [ -z "$VERCEL_PROJECT_ID" ]; then
-            echo "Missing required secret: VERCEL_API_PROJECT_ID"
+            echo "Missing required secret: VERCEL_API_PROJECT_ID (or fallback VERCEL_PROJECT_ID)"
             exit 1
           fi
 
@@ -56,5 +56,4 @@ jobs:
         working-directory: services/api/functions
         run: |
           npx --yes vercel@latest pull --yes --environment=production --token="$VERCEL_TOKEN"
-          npx --yes vercel@latest build --prod --token="$VERCEL_TOKEN"
-          npx --yes vercel@latest deploy --prebuilt --prod --token="$VERCEL_TOKEN"
+          npx --yes vercel@latest deploy --yes --prod --token="$VERCEL_TOKEN"

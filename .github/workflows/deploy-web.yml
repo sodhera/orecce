@@ -56,4 +56,5 @@ jobs:
         working-directory: apps/web
         run: |
           npx --yes vercel@latest pull --yes --environment=production --token="$VERCEL_TOKEN"
-          npx --yes vercel@latest deploy --yes --prod --token="$VERCEL_TOKEN"
+          npx --yes vercel@latest build --standalone --prod --token="$VERCEL_TOKEN"
+          npx --yes vercel@latest deploy --yes --prebuilt --prod --token="$VERCEL_TOKEN"

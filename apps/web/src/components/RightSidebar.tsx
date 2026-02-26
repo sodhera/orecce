@@ -304,6 +304,9 @@ export default function RightSidebar({ mode, profile }: RightSidebarProps) {
                     aria-hidden={!isPanelOpen}
                 >
                     <header className="curation-chat-header">
+                        <div className="curation-chat-heading">
+                            <h2>Curate</h2>
+                        </div>
                         <button
                             type="button"
                             className="curation-chat-close"
@@ -312,11 +315,6 @@ export default function RightSidebar({ mode, profile }: RightSidebarProps) {
                         >
                             <span aria-hidden="true">×</span>
                         </button>
-                        <div className="curation-chat-heading">
-                            <h2>Curate</h2>
-                            <p>Describe what you want to see in your feed.</p>
-                        </div>
-                        <div className="curation-chat-header-spacer" aria-hidden="true" />
                     </header>
 
                     <div className="curation-chat-thread" ref={threadRef}>

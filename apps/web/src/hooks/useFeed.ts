@@ -12,6 +12,10 @@ interface RpcRow {
     theme: string | null;
     author_name: string | null;
     author_avatar: string | null;
+    source_url?: string | null;
+    source_title?: string | null;
+    source_domain?: string | null;
+    source?: string | null;
     slides: unknown;
     post_type: string | null;
     tags: string[] | null;
@@ -72,21 +76,41 @@ function parseSlides(raw: unknown): Slide[] {
     }));
 }
 
+function normalizeMatchReason(matchReason: string | null): string {
+    const normalized = String(matchReason ?? "").trim();
+    if (!normalized) {
+        return "Recommended";
+    }
+    if (normalized.toLowerCase() === "following author") {
+        return "Following";
+    }
+    return normalized;
+}
+
+function deriveSourceTitle(row: RpcRow): string | undefined {
+    const candidate = row.source_title ?? row.source_domain ?? row.source;
+    const normalized = String(candidate ?? "").trim();
+    return normalized || undefined;
+}
+
 function rpcRowToState(row: RpcRow): FeedPostState {
     const slides = parseSlides(row.slides);
+    const topic = normalizeMatchReason(row.match_reason);
     return {
         post: {
             id: row.feed_post_id,
             post_type: (row.post_type as Post["post_type"]) ?? "carousel",
-            topic: row.match_reason ?? "Recommended",
+            topic,
             title: row.theme ?? "Untitled",
+            sourceUrl: row.source_url ?? undefined,
+            sourceTitle: deriveSourceTitle(row),
             slides,
             date: "",
         },
         isLiked: row.has_liked,
         isSaved: row.has_saved,
         isRead: false,
-        matchReason: row.match_reason ?? "",
+        matchReason: topic,
         authorName: row.author_name ?? "Unknown",
         authorAvatar: row.author_avatar ?? null,
     };

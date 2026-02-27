@@ -34,6 +34,7 @@ export interface Post {
     createdAtMs?: number;
     date: string;
     sourceUrl?: string;
+    sourceTitle?: string;
 }
 
 interface PostCardProps {
@@ -85,6 +86,17 @@ function getSourceLabel(sourceUrl?: string): string | null {
     }
 }
 
+function normalizeTopicLabel(topic: string): string {
+    const trimmed = String(topic ?? "").trim();
+    if (!trimmed) {
+        return "Recommended";
+    }
+    if (trimmed.toLowerCase() === "following author") {
+        return "Following";
+    }
+    return trimmed;
+}
+
 function hashSeed(seed: string): number {
     let hash = 0;
     for (let index = 0; index < seed.length; index += 1) {
@@ -126,7 +138,18 @@ export default function PostCard({
     const lastTapPointRef = useRef<{ x: number; y: number } | null>(null);
     const isSlideVariant = variant === "slide";
     const authorLabel = useMemo(() => normalizeAuthorLabel(authorName), [authorName]);
+    const topicLabel = useMemo(() => normalizeTopicLabel(post.topic), [post.topic]);
     const sourceLabel = useMemo(() => getSourceLabel(post.sourceUrl), [post.sourceUrl]);
+    const captionSourceLabel = useMemo(() => {
+        const explicitSourceTitle = String(post.sourceTitle ?? "").trim();
+        if (explicitSourceTitle) {
+            return explicitSourceTitle;
+        }
+        if (sourceLabel) {
+            return sourceLabel;
+        }
+        return "Source";
+    }, [post.sourceTitle, sourceLabel]);
 
     const slideCount = Math.max(1, post.slides.length);
     const currentSlide = useMemo(
@@ -286,7 +309,7 @@ export default function PostCard({
                         <div className="ig-post-author-info">
                             <span className="ig-post-author-name">{authorLabel}</span>
                             <span className="ig-post-author-dot">·</span>
-                            <span className="ig-post-topic">{post.topic}</span>
+                            <span className="ig-post-topic">{topicLabel}</span>
                         </div>
                     </div>
                 </div>
@@ -372,19 +395,21 @@ export default function PostCard({
                         <span className="ig-post-caption-author">{authorLabel}</span>
                         {" "}
                         <span className="ig-post-caption-title">{post.title}</span>
-                        {post.sourceUrl && sourceLabel && (
-                            <>
-                                <span className="ig-post-caption-separator"> · </span>
-                                <a
-                                    className="ig-post-caption-source"
-                                    href={post.sourceUrl}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    onClick={() => emitInteraction("source")}
-                                >
-                                    {sourceLabel}
-                                </a>
-                            </>
+                        <span className="ig-post-caption-separator"> · </span>
+                        {post.sourceUrl ? (
+                            <a
+                                className="ig-post-caption-source"
+                                href={post.sourceUrl}
+                                target="_blank"
+                                rel="noreferrer"
+                                onClick={() => emitInteraction("source")}
+                            >
+                                {captionSourceLabel}
+                            </a>
+                        ) : (
+                            <span className="ig-post-caption-source-static">
+                                {captionSourceLabel}
+                            </span>
                         )}
                     </div>
                 )}

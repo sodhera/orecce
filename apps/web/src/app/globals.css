@@ -4187,6 +4187,11 @@ body[data-theme="light"] .ig-post-dot.active {
   text-decoration: underline;
 }
 
+.ig-post-caption-source-static {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
 /* ── Actions row below the square ── */
 .ig-post-actions {
   display: flex;

@@ -131,7 +131,7 @@ export default function Feed({ mode, onModeChange }: FeedProps) {
                 ))}
             </div>
 
-            <div className="feed-posts-container feed-posts-slides">
+            <div className="feed-posts-container feed-posts-slides feed-posts-slides-center">
                 {feed.loading ? (
                     <div
                         style={{
@@ -193,7 +193,11 @@ export default function Feed({ mode, onModeChange }: FeedProps) {
                     )
                 ) : (
                     feed.items.map((item) => (
-                        <div key={item.post.id} className="feed-slide-shell" data-post-id={item.post.id}>
+                        <div
+                            key={item.post.id}
+                            className={`feed-slide-shell ${item.post.post_type === "carousel" ? "feed-slide-shell-carousel" : ""}`}
+                            data-post-id={item.post.id}
+                        >
                             <PostCard
                                 post={item.post}
                                 variant="slide"

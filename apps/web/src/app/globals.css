@@ -2954,6 +2954,7 @@ body[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
 }
 
 .feed-posts-slides {
+  --feed-posts-inline-padding: 10px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -2964,10 +2965,15 @@ body[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
   scroll-margin-top: 130px;
   border-bottom: 1px solid rgba(128, 128, 128, 0.15);
   padding-bottom: 12px;
-  margin-left: -10px;
-  margin-right: -10px;
-  padding-left: 10px;
-  padding-right: 10px;
+  margin-left: calc(-1 * var(--feed-posts-inline-padding));
+  margin-right: calc(-1 * var(--feed-posts-inline-padding));
+  padding-left: var(--feed-posts-inline-padding);
+  padding-right: var(--feed-posts-inline-padding);
+}
+
+.feed-posts-slides-center .feed-slide-shell-carousel {
+  padding-left: 0;
+  padding-right: 0;
 }
 
 .feed-reset-recommendations {
@@ -3692,6 +3698,7 @@ body[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
   }
 
   .feed-posts-slides {
+    --feed-posts-inline-padding: 8px;
     padding: 8px 8px 12px;
   }
 

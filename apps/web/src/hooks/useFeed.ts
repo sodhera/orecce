@@ -25,6 +25,12 @@ interface RpcRow {
     has_saved: boolean;
 }
 
+interface SourceRow {
+    id: string;
+    source_url: string | null;
+    source_title: string | null;
+}
+
 interface FeedPostState {
     post: Post;
     isLiked: boolean;
@@ -244,6 +250,34 @@ export function useFeed(authorId?: string | null, feedMode: FeedMode = "feed"): 
 
         if (rpcError) throw new Error(rpcError.message);
         const rows = (data ?? []) as RpcRow[];
+        if (!rows.length) {
+            return [];
+        }
+
+        const missingSourceIds = rows
+            .filter((row) => !row.source_url || !row.source_title)
+            .map((row) => row.feed_post_id);
+
+        if (missingSourceIds.length > 0) {
+            const { data: sources } = await supabase
+                .from("posts")
+                .select("id,source_url,source_title")
+                .in("id", missingSourceIds);
+
+            const sourceMap = new Map<string, SourceRow>(
+                ((sources ?? []) as SourceRow[]).map((source) => [source.id, source]),
+            );
+
+            for (const row of rows) {
+                const source = sourceMap.get(row.feed_post_id);
+                if (!source) {
+                    continue;
+                }
+                row.source_url = row.source_url ?? source.source_url;
+                row.source_title = row.source_title ?? source.source_title;
+            }
+        }
+
         return rows.map(rpcRowToState);
     }, [authorId, feedMode]);
 

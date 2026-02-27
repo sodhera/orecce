@@ -29,6 +29,8 @@ create policy "Users manage own saves" on user_saves for all using (auth.uid() =
 -- Updated feed RPC with has_liked / has_saved
 -- ==========================================
 
+drop function if exists get_personalized_feed(integer, integer, uuid);
+
 create or replace function get_personalized_feed(
   p_limit int default 10,
   p_offset int default 0,
@@ -39,6 +41,7 @@ returns table (
   theme text,
   author_name text,
   author_avatar text,
+  source_url text,
   slides jsonb,
   post_type text,
   tags text[],
@@ -72,6 +75,7 @@ begin
     p.theme,
     a.name as author_name,
     a.avatar_url as author_avatar,
+    p.source_url,
     p.slides,
     p.post_type,
     p.tags,
@@ -103,6 +107,8 @@ end;
 $$;
 
 -- ── 3. GET USER LIKED POSTS RPC ──
+drop function if exists get_user_liked_posts(integer, integer);
+
 create or replace function get_user_liked_posts(
   p_limit int default 10,
   p_offset int default 0
@@ -112,6 +118,7 @@ returns table (
   theme text,
   author_name text,
   author_avatar text,
+  source_url text,
   slides jsonb,
   post_type text,
   tags text[],
@@ -132,6 +139,7 @@ begin
     p.theme,
     a.name as author_name,
     a.avatar_url as author_avatar,
+    p.source_url,
     p.slides,
     p.post_type,
     p.tags,
@@ -149,6 +157,8 @@ end;
 $$;
 
 -- ── 4. GET USER SAVED POSTS RPC ──
+drop function if exists get_user_saved_posts(integer, integer);
+
 create or replace function get_user_saved_posts(
   p_limit int default 10,
   p_offset int default 0
@@ -158,6 +168,7 @@ returns table (
   theme text,
   author_name text,
   author_avatar text,
+  source_url text,
   slides jsonb,
   post_type text,
   tags text[],
@@ -178,6 +189,7 @@ begin
     p.theme,
     a.name as author_name,
     a.avatar_url as author_avatar,
+    p.source_url,
     p.slides,
     p.post_type,
     p.tags,

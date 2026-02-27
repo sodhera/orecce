@@ -3951,6 +3951,26 @@ body[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
   color: var(--text-secondary);
 }
 
+.ig-post-source-btn,
+.post-header-source-btn {
+  margin-left: auto;
+  color: var(--text-secondary);
+  text-decoration: none;
+  padding: 6px;
+  border-radius: 50%;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.ig-post-source-btn:hover,
+.post-header-source-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
 /* ── The Square ── */
 .ig-post-square {
   position: relative;

@@ -17,6 +17,7 @@ import {
     BsHeartFill,
     BsChevronLeft,
     BsChevronRight,
+    BsBoxArrowUpRight,
 } from "react-icons/bs";
 
 export interface Slide {
@@ -354,6 +355,19 @@ export default function PostCard({
                             <span className="ig-post-topic">{topicLabel}</span>
                         </div>
                     </div>
+                    {post.sourceUrl && (
+                        <a
+                            href={post.sourceUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="ig-post-source-btn"
+                            onClick={() => emitInteraction("source")}
+                            title="Go to source"
+                            aria-label="Go to source"
+                        >
+                            <BsBoxArrowUpRight size={14} />
+                        </a>
+                    )}
                 </div>
 
                 {/* ── Square content card ── */}
@@ -460,6 +474,19 @@ export default function PostCard({
                     <span className="post-topic-badge">{post.topic}</span>
                     <span className="post-dot">·</span>
                     <span className="post-time">{post.date}</span>
+                    {post.sourceUrl && (
+                        <a
+                            href={post.sourceUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="post-header-source-btn"
+                            onClick={() => emitInteraction("source")}
+                            title="Go to source"
+                            aria-label="Go to source"
+                        >
+                            <BsBoxArrowUpRight size={14} />
+                        </a>
+                    )}
                 </div>
 
                 {post.title && <div className="post-title">{post.title}</div>}

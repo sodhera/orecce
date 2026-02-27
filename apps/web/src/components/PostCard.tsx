@@ -451,16 +451,6 @@ export default function PostCard({
                         <span className="ig-post-caption-author">{authorLabel}</span>
                         {" "}
                         <span className="ig-post-caption-title">{post.title}</span>
-                        <span className="ig-post-caption-separator"> · </span>
-                        <a
-                            className="ig-post-caption-source"
-                            href={sourceHref}
-                            target="_blank"
-                            rel="noreferrer"
-                            onClick={() => emitInteraction("source")}
-                        >
-                            {captionSourceLabel}
-                        </a>
                     </div>
                 )}
             </article>

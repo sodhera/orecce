@@ -9,6 +9,7 @@ import {
     type CurationChatInputMessage,
     type CurationChatSessionSummary,
 } from "@/lib/api";
+import { useAuthors } from "@/hooks/useAuthors";
 
 interface RightSidebarProps {
     mode: string;
@@ -395,6 +396,7 @@ export default function RightSidebar({ mode, profile }: RightSidebarProps) {
 
     return (
         <aside className="right-sidebar">
+            <RecommendedRecces />
             <div className={`curation-chat-shell ${isPanelOpen ? "is-open" : ""}`} ref={shellRef}>
                 <section
                     id="curation-chat-panel"
@@ -563,5 +565,46 @@ export default function RightSidebar({ mode, profile }: RightSidebarProps) {
                 )}
             </div>
         </aside>
+    );
+}
+
+const MAX_RECOMMENDATIONS = 4;
+
+function RecommendedRecces() {
+    const { authors, followedIds, toggleFollow } = useAuthors();
+
+    const unfollowed = useMemo(
+        () => authors.filter((a) => !followedIds.has(a.id)).slice(0, MAX_RECOMMENDATIONS),
+        [authors, followedIds],
+    );
+
+    if (unfollowed.length === 0) return null;
+
+    return (
+        <div className="post-page-recces-card">
+            <h3 className="post-page-recces-title">You might be interested in</h3>
+            <div className="post-page-recces-list">
+                {unfollowed.map((a) => (
+                    <div key={a.id} className="post-page-recce-item">
+                        <div className="post-page-recce-avatar">
+                            {a.name?.charAt(0).toUpperCase() || "?"}
+                        </div>
+                        <div className="post-page-recce-info">
+                            <span className="post-page-recce-name">{a.name}</span>
+                            {a.bio && (
+                                <span className="post-page-recce-bio">{a.bio}</span>
+                            )}
+                        </div>
+                        <button
+                            type="button"
+                            className="post-page-recce-follow-btn"
+                            onClick={() => toggleFollow(a.id)}
+                        >
+                            Follow
+                        </button>
+                    </div>
+                ))}
+            </div>
+        </div>
     );
 }

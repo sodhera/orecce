@@ -12,7 +12,7 @@ export default function AuthGate({ children }: AuthGateProps) {
     const { isAuthenticated, loading, setShowAuthModal } = useAuth();
     const pathname = usePathname();
     const router = useRouter();
-    const isPublicRoute = pathname === "/";
+    const isPublicRoute = pathname === "/" || pathname.startsWith("/post/");
 
     useEffect(() => {
         if (!loading && !isAuthenticated && !isPublicRoute) {

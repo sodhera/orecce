@@ -4,6 +4,7 @@ import {
     type CSSProperties,
     type MouseEvent,
     type PointerEvent,
+    useEffect,
     useMemo,
     useRef,
     useState,
@@ -18,6 +19,7 @@ import {
     BsChevronLeft,
     BsChevronRight,
     BsBoxArrowUpRight,
+    BsSend,
 } from "react-icons/bs";
 
 export interface Slide {
@@ -165,11 +167,13 @@ export default function PostCard({
 }: PostCardProps) {
     const [liked, setLiked] = useState(isLikedProp ?? false);
     const [saved, setSaved] = useState(isSavedProp ?? false);
+    const [copied, setCopied] = useState(false);
     const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
     const carouselRef = useRef<HTMLDivElement>(null);
     const lastSlideNotifiedRef = useRef(false);
     const lastTapAtRef = useRef(0);
     const lastTapPointRef = useRef<{ x: number; y: number } | null>(null);
+    const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isSlideVariant = variant === "slide";
     const authorLabel = useMemo(() => normalizeAuthorLabel(authorName), [authorName]);
     const topicLabel = useMemo(() => normalizeTopicLabel(post.topic), [post.topic]);
@@ -204,6 +208,25 @@ export default function PostCard({
         [isSlideVariant, post.id, post.topic],
     );
     const canSlide = post.post_type === "carousel" && slideCount > 1;
+
+    // Clean up copied toast timer on unmount
+    useEffect(() => {
+        return () => {
+            if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+        };
+    }, []);
+
+    const handleShare = useCallback(() => {
+        const shareUrl =
+            typeof window !== "undefined"
+                ? `${window.location.origin}/post/${post.id}`
+                : `/post/${post.id}`;
+        void navigator.clipboard.writeText(shareUrl).then(() => {
+            setCopied(true);
+            if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+            copiedTimerRef.current = setTimeout(() => setCopied(false), 2000);
+        });
+    }, [post.id]);
 
     const emitInteraction = useCallback((type: "like" | "save" | "flip" | "source") => {
         onInteraction?.({
@@ -322,6 +345,18 @@ export default function PostCard({
         </button>
     );
 
+    const shareButton = (
+        <button
+            type="button"
+            className="post-action post-share"
+            onClick={handleShare}
+            aria-label="Share post"
+            title="Share"
+        >
+            <BsSend aria-hidden="true" />
+        </button>
+    );
+
     const saveButton = (
         <button
             type="button"
@@ -342,6 +377,7 @@ export default function PostCard({
             )}
         </button>
     );
+
 
     if (isSlideVariant) {
         return (
@@ -441,6 +477,7 @@ export default function PostCard({
                         {likeButton}
                     </div>
                     <div className="ig-post-actions-right">
+                        {shareButton}
                         {saveButton}
                     </div>
                 </div>
@@ -452,6 +489,11 @@ export default function PostCard({
                         {" "}
                         <span className="ig-post-caption-title">{post.title}</span>
                     </div>
+                )}
+
+                {/* Share toast */}
+                {copied && (
+                    <div className="share-toast">Link copied!</div>
                 )}
             </article>
         );
@@ -525,7 +567,10 @@ export default function PostCard({
 
                 <div className="post-actions">
                     <div className="post-vote-group">{likeButton}</div>
-                    {saveButton}
+                    <div className="post-actions-right-group">
+                        {saveButton}
+                        {shareButton}
+                    </div>
                 </div>
             </div>
         </article>

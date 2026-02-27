@@ -3997,6 +3997,9 @@ body[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
   overflow-y: hidden;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .ig-post-carousel::-webkit-scrollbar {
@@ -4014,6 +4017,9 @@ body[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
   align-items: center;
   text-align: center;
   scroll-snap-align: center;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .ig-post-content {
@@ -4025,6 +4031,8 @@ body[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .ig-post-title {
@@ -4041,6 +4049,8 @@ body[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
   font-size: 15px;
   line-height: 1.6;
   overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .ig-post-text strong {

@@ -7,6 +7,8 @@ import {
     StyleSheet,
     ViewToken,
     ImageSourcePropType,
+    Pressable,
+    GestureResponderEvent,
 } from 'react-native';
 import { colors } from '../styles/colors';
 
@@ -23,6 +25,8 @@ export interface ImageCarouselProps {
     height?: number;
     /** Border radius for the images */
     borderRadius?: number;
+    /** Optional callback when media is tapped */
+    onMediaPress?: (event: GestureResponderEvent) => void;
 }
 
 /**
@@ -35,6 +39,7 @@ export function ImageCarousel({
     width,
     height,
     borderRadius = 8,
+    onMediaPress,
 }: ImageCarouselProps) {
     const [activeIndex, setActiveIndex] = useState(0);
     const resolvedWidth = width ?? size;
@@ -66,11 +71,16 @@ export function ImageCarousel({
     if (images.length === 1) {
         return (
             <View style={[styles.container, { width: resolvedWidth }]}>
-                <Image
-                    source={typeof images[0] === 'string' ? { uri: images[0] } : images[0]}
-                    style={[styles.image, { width: resolvedWidth, height: resolvedHeight, borderRadius }]}
-                    resizeMode="cover"
-                />
+                <Pressable
+                    disabled={!onMediaPress}
+                    onPress={onMediaPress}
+                >
+                    <Image
+                        source={typeof images[0] === 'string' ? { uri: images[0] } : images[0]}
+                        style={[styles.image, { width: resolvedWidth, height: resolvedHeight, borderRadius }]}
+                        resizeMode="cover"
+                    />
+                </Pressable>
             </View>
         );
     }
@@ -88,11 +98,16 @@ export function ImageCarousel({
                 onViewableItemsChanged={onViewableItemsChanged}
                 viewabilityConfig={viewabilityConfig}
                 renderItem={({ item }) => (
-                    <Image
-                        source={typeof item === 'string' ? { uri: item } : item}
-                        style={[styles.image, { width: resolvedWidth, height: resolvedHeight, borderRadius }]}
-                        resizeMode="cover"
-                    />
+                    <Pressable
+                        disabled={!onMediaPress}
+                        onPress={onMediaPress}
+                    >
+                        <Image
+                            source={typeof item === 'string' ? { uri: item } : item}
+                            style={[styles.image, { width: resolvedWidth, height: resolvedHeight, borderRadius }]}
+                            resizeMode="cover"
+                        />
+                    </Pressable>
                 )}
                 getItemLayout={(_, index) => ({
                     length: resolvedWidth,

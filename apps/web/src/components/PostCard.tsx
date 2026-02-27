@@ -1,6 +1,14 @@
 "use client";
 
-import { type CSSProperties, useMemo, useRef, useState, useCallback } from "react";
+import {
+    type CSSProperties,
+    type MouseEvent,
+    type PointerEvent,
+    useMemo,
+    useRef,
+    useState,
+    useCallback,
+} from "react";
 import ReactMarkdown from "react-markdown";
 import {
     BsBookmark,
@@ -50,6 +58,9 @@ interface PostCardProps {
     variant?: "default" | "slide";
 }
 
+const DOUBLE_TAP_DELAY_MS = 300;
+const DOUBLE_TAP_MAX_DISTANCE_PX = 28;
+
 function hashSeed(seed: string): number {
     let hash = 0;
     for (let index = 0; index < seed.length; index += 1) {
@@ -87,6 +98,8 @@ export default function PostCard({
     const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
     const carouselRef = useRef<HTMLDivElement>(null);
     const lastSlideNotifiedRef = useRef(false);
+    const lastTapAtRef = useRef(0);
+    const lastTapPointRef = useRef<{ x: number; y: number } | null>(null);
     const isSlideVariant = variant === "slide";
 
     const slideCount = Math.max(1, post.slides.length);
@@ -140,6 +153,8 @@ export default function PostCard({
     const handleScroll = useCallback(() => {
         if (!carouselRef.current) return;
         const container = carouselRef.current;
+        lastTapAtRef.current = 0;
+        lastTapPointRef.current = null;
         const scrollPosition = container.scrollLeft;
         const slideWidth = container.clientWidth;
         // Calculate which slide constitutes the majority of the view
@@ -150,15 +165,59 @@ export default function PostCard({
         }
     }, [carouselRef, currentSlideIndex, slideCount, flipSlide]);
 
+    const setLikeState = useCallback((nextLiked: boolean) => {
+        setLiked((previousLiked) => {
+            if (previousLiked === nextLiked) {
+                return previousLiked;
+            }
+
+            onLikeToggle?.(nextLiked);
+            emitInteraction("like");
+            return nextLiked;
+        });
+    }, [emitInteraction, onLikeToggle]);
+
+    const likeOnDoubleTap = useCallback(() => {
+        setLikeState(true);
+    }, [setLikeState]);
+
+    const handleCarouselPointerUp = useCallback((event: PointerEvent<HTMLDivElement>) => {
+        if (event.pointerType === "mouse" && event.button !== 0) {
+            return;
+        }
+
+        const now = Date.now();
+        const point = { x: event.clientX, y: event.clientY };
+        const previousPoint = lastTapPointRef.current;
+
+        const isWithinDelay = now - lastTapAtRef.current <= DOUBLE_TAP_DELAY_MS;
+        const isWithinDistance = previousPoint
+            ? Math.hypot(point.x - previousPoint.x, point.y - previousPoint.y) <= DOUBLE_TAP_MAX_DISTANCE_PX
+            : true;
+
+        if (isWithinDelay && isWithinDistance) {
+            likeOnDoubleTap();
+            lastTapAtRef.current = 0;
+            lastTapPointRef.current = null;
+            return;
+        }
+
+        lastTapAtRef.current = now;
+        lastTapPointRef.current = point;
+    }, [likeOnDoubleTap]);
+
+    const handleCarouselDoubleClick = useCallback((event: MouseEvent<HTMLDivElement>) => {
+        event.preventDefault();
+        likeOnDoubleTap();
+    }, [likeOnDoubleTap]);
+
     const likeButton = (
         <button
             type="button"
             className={`post-action post-like ${liked ? "active" : ""}`}
             onClick={() => {
                 const next = !liked;
-                setLiked(next);
-                onLikeToggle?.(next);
-                emitInteraction("like");
+                setLikeState(next);
             }}
             aria-label={liked ? "Unlike post" : "Like post"}
             title={liked ? "Unlike" : "Like"}
@@ -220,6 +279,8 @@ export default function PostCard({
                         className="ig-post-carousel"
                         ref={carouselRef}
                         onScroll={handleScroll}
+                        onPointerUp={handleCarouselPointerUp}
+                        onDoubleClick={handleCarouselDoubleClick}
                     >
                         {post.slides.map((slide, i) => (
                             <div key={`slide-${post.id}-${i}`} className="ig-post-slide">

@@ -167,6 +167,11 @@ export function FeedPostCard({
         }, DOUBLE_TAP_DELAY_MS);
     }, [canNavigateInDepth, onGoInDepth, onLike, post.id, post.userVote]);
 
+    const handleMediaPress = React.useCallback((event: GestureResponderEvent) => {
+        event.stopPropagation();
+        handleCardPress();
+    }, [handleCardPress]);
+
     if (isSlideMode) {
         const cardHeight = Math.max(420, slideHeight ?? SCREEN_WIDTH * 1.3);
         const mediaWidth = SCREEN_WIDTH - 20;
@@ -226,6 +231,7 @@ export function FeedPostCard({
                             width={mediaWidth}
                             height={mediaHeight}
                             borderRadius={22}
+                            onMediaPress={handleMediaPress}
                         />
                     ) : (
                         <View style={[styles.slideTextOnly, { width: mediaWidth, height: mediaHeight }]}>
@@ -411,7 +417,10 @@ export function FeedPostCard({
 
             {/* Image Carousel (Only for Image Posts) */}
             {post.type === 'image' && (
-                <ImageCarousel images={post.images} />
+                <ImageCarousel
+                    images={post.images}
+                    onMediaPress={handleMediaPress}
+                />
             )}
 
             {/* Text Content */}

@@ -61,6 +61,30 @@ interface PostCardProps {
 const DOUBLE_TAP_DELAY_MS = 300;
 const DOUBLE_TAP_MAX_DISTANCE_PX = 28;
 
+function normalizeAuthorLabel(authorName?: string): string {
+    const trimmed = String(authorName ?? "").trim();
+    if (!trimmed) {
+        return "Unknown";
+    }
+    if (trimmed.toLowerCase() === "following author") {
+        return "Following";
+    }
+    return trimmed;
+}
+
+function getSourceLabel(sourceUrl?: string): string | null {
+    if (!sourceUrl) {
+        return null;
+    }
+
+    try {
+        const host = new URL(sourceUrl).hostname.replace(/^www\./i, "").trim();
+        return host || "source";
+    } catch {
+        return "source";
+    }
+}
+
 function hashSeed(seed: string): number {
     let hash = 0;
     for (let index = 0; index < seed.length; index += 1) {
@@ -101,6 +125,8 @@ export default function PostCard({
     const lastTapAtRef = useRef(0);
     const lastTapPointRef = useRef<{ x: number; y: number } | null>(null);
     const isSlideVariant = variant === "slide";
+    const authorLabel = useMemo(() => normalizeAuthorLabel(authorName), [authorName]);
+    const sourceLabel = useMemo(() => getSourceLabel(post.sourceUrl), [post.sourceUrl]);
 
     const slideCount = Math.max(1, post.slides.length);
     const currentSlide = useMemo(
@@ -258,7 +284,7 @@ export default function PostCard({
                 <div className="ig-post-header">
                     <div className="ig-post-author">
                         <div className="ig-post-author-info">
-                            <span className="ig-post-author-name">{authorName ?? "Unknown"}</span>
+                            <span className="ig-post-author-name">{authorLabel}</span>
                             <span className="ig-post-author-dot">·</span>
                             <span className="ig-post-topic">{post.topic}</span>
                         </div>
@@ -343,8 +369,23 @@ export default function PostCard({
                 {/* ── Caption (theme) below actions ── */}
                 {post.title && (
                     <div className="ig-post-caption">
-                        <span className="ig-post-caption-author">{authorName ?? "Unknown"}</span>
-                        {" "}{post.title}
+                        <span className="ig-post-caption-author">{authorLabel}</span>
+                        {" "}
+                        <span className="ig-post-caption-title">{post.title}</span>
+                        {post.sourceUrl && sourceLabel && (
+                            <>
+                                <span className="ig-post-caption-separator"> · </span>
+                                <a
+                                    className="ig-post-caption-source"
+                                    href={post.sourceUrl}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    onClick={() => emitInteraction("source")}
+                                >
+                                    {sourceLabel}
+                                </a>
+                            </>
+                        )}
                     </div>
                 )}
             </article>

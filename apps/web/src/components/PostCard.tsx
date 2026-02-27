@@ -86,6 +86,39 @@ function getSourceLabel(sourceUrl?: string): string | null {
     }
 }
 
+function buildSourceHref({
+    sourceUrl,
+    sourceTitle,
+    postTitle,
+    authorLabel,
+}: {
+    sourceUrl?: string;
+    sourceTitle?: string;
+    postTitle: string;
+    authorLabel: string;
+}): string {
+    const trimmedUrl = String(sourceUrl ?? "").trim();
+    if (trimmedUrl) {
+        try {
+            const normalized = /^https?:\/\//i.test(trimmedUrl)
+                ? trimmedUrl
+                : `https://${trimmedUrl}`;
+            return new URL(normalized).toString();
+        } catch {
+            // Fall back to search URL below.
+        }
+    }
+
+    const queryParts = [sourceTitle, postTitle, authorLabel]
+        .map((value) => String(value ?? "").trim())
+        .filter(Boolean);
+    const query = queryParts.join(" ");
+    if (!query) {
+        return "https://www.google.com";
+    }
+    return `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+}
+
 function normalizeTopicLabel(topic: string): string {
     const trimmed = String(topic ?? "").trim();
     if (!trimmed) {
@@ -150,6 +183,15 @@ export default function PostCard({
         }
         return "Source";
     }, [post.sourceTitle, sourceLabel]);
+    const sourceHref = useMemo(
+        () => buildSourceHref({
+            sourceUrl: post.sourceUrl,
+            sourceTitle: post.sourceTitle,
+            postTitle: post.title,
+            authorLabel,
+        }),
+        [authorLabel, post.sourceTitle, post.sourceUrl, post.title],
+    );
 
     const slideCount = Math.max(1, post.slides.length);
     const currentSlide = useMemo(
@@ -396,21 +438,15 @@ export default function PostCard({
                         {" "}
                         <span className="ig-post-caption-title">{post.title}</span>
                         <span className="ig-post-caption-separator"> · </span>
-                        {post.sourceUrl ? (
-                            <a
-                                className="ig-post-caption-source"
-                                href={post.sourceUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                onClick={() => emitInteraction("source")}
-                            >
-                                {captionSourceLabel}
-                            </a>
-                        ) : (
-                            <span className="ig-post-caption-source-static">
-                                {captionSourceLabel}
-                            </span>
-                        )}
+                        <a
+                            className="ig-post-caption-source"
+                            href={sourceHref}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={() => emitInteraction("source")}
+                        >
+                            {captionSourceLabel}
+                        </a>
                     </div>
                 )}
             </article>

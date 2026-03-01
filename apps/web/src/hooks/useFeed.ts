@@ -126,7 +126,7 @@ function rpcRowToState(row: RpcRow): FeedPostState {
 
 export type FeedMode = "feed" | "liked" | "saved";
 
-export function useFeed(authorId?: string | null, feedMode: FeedMode = "feed"): UseFeedReturn {
+export function useFeed(authorId?: string | null, feedMode: FeedMode = "feed", collectionId?: string | null): UseFeedReturn {
     const [items, setItems] = useState<FeedPostState[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
@@ -228,11 +228,14 @@ export function useFeed(authorId?: string | null, feedMode: FeedMode = "feed"): 
     }, [feedMode]);
 
     const fetchPage = useCallback(async (offset: number, fetchId: number) => {
-        let rpcName: "get_personalized_feed" | "get_user_liked_posts" | "get_user_saved_posts" = "get_personalized_feed";
+        let rpcName: "get_personalized_feed" | "get_user_liked_posts" | "get_user_saved_posts" | "get_collection_posts" = "get_personalized_feed";
         let rpcParams: Record<string, unknown> = { p_limit: PAGE_SIZE, p_offset: offset };
 
         if (feedMode === "liked") {
             rpcName = "get_user_liked_posts";
+        } else if (feedMode === "saved" && collectionId) {
+            rpcName = "get_collection_posts";
+            rpcParams = { ...rpcParams, p_collection_id: collectionId };
         } else if (feedMode === "saved") {
             rpcName = "get_user_saved_posts";
         } else {
@@ -279,7 +282,7 @@ export function useFeed(authorId?: string | null, feedMode: FeedMode = "feed"): 
         }
 
         return rows.map(rpcRowToState);
-    }, [authorId, feedMode]);
+    }, [authorId, feedMode, collectionId]);
 
     const fetchNovelPage = useCallback(async (
         startOffset: number,
@@ -357,7 +360,7 @@ export function useFeed(authorId?: string | null, feedMode: FeedMode = "feed"): 
 
     useEffect(() => {
         void loadInitial();
-    }, [loadInitial, authorId, feedMode]);
+    }, [loadInitial, authorId, feedMode, collectionId]);
 
     // ── Load more (infinite scroll) ──
     const loadMore = useCallback(async () => {
@@ -449,9 +452,13 @@ export function useFeed(authorId?: string | null, feedMode: FeedMode = "feed"): 
             try {
                 const userId = await requireUserId();
                 if (optimisticSaved) {
+                    // Ensure user has a default collection and save into it
+                    const { data: defaultColId } = await supabase.rpc(
+                        "ensure_default_collection" as any,
+                    );
                     const { error: insertError } = await supabase
                         .from("user_saves")
-                        .insert({ user_id: userId, post_id: postId });
+                        .insert({ user_id: userId, post_id: postId, collection_id: defaultColId });
                     if (insertError) {
                         throw new Error(insertError.message);
                     }

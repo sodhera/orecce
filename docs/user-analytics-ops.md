@@ -74,7 +74,7 @@ When updating this file:
 
 - web landing/auth: `landing_viewed`, `auth_modal_opened`, signup/login/OAuth/password reset/logout lifecycle events
 - web feed: `feed_viewed`, `feed_load_more_requested`, `feed_post_impression`, `feed_post_seen`, `feed_post_read`, votes, saves, shares, source opens, carousel events
-- web discover: `discover_viewed`, `discover_recce_impression`, `recce_followed`, `recce_unfollowed`
+- web discover: `discover_viewed`, `discover_recce_impression`, `recce_followed`, `recce_unfollowed` across a category-filtered Recce browser
 - web collections/saved: `saved_viewed`, `collection_create_started`, `collection_created`, `collection_renamed`, `collection_deleted`, `collection_opened`
 - web notifications: `notifications_viewed`, `notification_opened`, `notification_marked_read`, `notifications_cleared`
 - web curation/feedback: panel, prompt, send/reply, session lifecycle, feedback submitted/failed
@@ -140,3 +140,4 @@ When updating this file:
 - Instrumented major mobile and web user-behavior flows with a shared taxonomy.
 - Created and aligned the recurring analytics audit automation.
 - Expanded web Recce analytics from author-only events to generic author/topic Recce discovery and follow events.
+- Grouped Discover Recces into category buckets with a dropdown filter while keeping the same discover/follow analytics events.

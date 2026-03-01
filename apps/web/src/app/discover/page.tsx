@@ -1,14 +1,58 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import { useRecces } from "@/hooks/useRecces";
 import { useAuth } from "@/context/AuthContext";
 import { trackAnalyticsEvent } from "@/lib/analytics";
+import {
+    getRecceCategoryKey,
+    RECCE_CATEGORY_LABELS,
+    RECCE_CATEGORY_ORDER,
+    type Recce,
+    type RecceCategoryKey,
+} from "@/lib/recces";
+
+type DiscoverCategoryFilter = "all" | RecceCategoryKey;
+
+interface RecceSection {
+    key: RecceCategoryKey;
+    label: string;
+    items: Recce[];
+}
 
 export default function DiscoverPage() {
     const { isAuthenticated } = useAuth();
     const { recces, followedKeys, loading, error, toggleFollow } = useRecces();
+    const [selectedCategory, setSelectedCategory] = useState<DiscoverCategoryFilter>("all");
+
+    const sections = useMemo<RecceSection[]>(() => {
+        const grouped = new Map<RecceCategoryKey, Recce[]>();
+
+        for (const recce of recces) {
+            const categoryKey = getRecceCategoryKey(recce);
+            const current = grouped.get(categoryKey) ?? [];
+            current.push(recce);
+            grouped.set(categoryKey, current);
+        }
+
+        return RECCE_CATEGORY_ORDER
+            .map((categoryKey) => ({
+                key: categoryKey,
+                label: RECCE_CATEGORY_LABELS[categoryKey],
+                items: (grouped.get(categoryKey) ?? []).sort((left, right) =>
+                    left.name.localeCompare(right.name),
+                ),
+            }))
+            .filter((section) => section.items.length > 0);
+    }, [recces]);
+
+    const visibleSections = useMemo(() => {
+        if (selectedCategory === "all") {
+            return sections;
+        }
+        return sections.filter((section) => section.key === selectedCategory);
+    }, [sections, selectedCategory]);
 
     useEffect(() => {
         if (loading || error || recces.length === 0) {
@@ -44,7 +88,33 @@ export default function DiscoverPage() {
 
                 <div className="utility-page-body">
                     <section className="utility-card">
-                        <h2 className="utility-card-title">Recces</h2>
+                        <div className="discover-recces-toolbar">
+                            <div>
+                                <h2 className="utility-card-title">Recces</h2>
+                                <p className="discover-recces-caption">
+                                    Browse by category, then follow the ones you want in your feed.
+                                </p>
+                            </div>
+                            <label className="discover-recces-filter">
+                                <span className="discover-recces-filter-label">Category</span>
+                                <select
+                                    className="discover-recces-select"
+                                    value={selectedCategory}
+                                    onChange={(event) =>
+                                        setSelectedCategory(
+                                            event.target.value as DiscoverCategoryFilter,
+                                        )
+                                    }
+                                >
+                                    <option value="all">All Categories</option>
+                                    {sections.map((section) => (
+                                        <option key={section.key} value={section.key}>
+                                            {section.label} ({section.items.length})
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                        </div>
 
                         {loading ? (
                             <div className="authors-loading">
@@ -57,47 +127,63 @@ export default function DiscoverPage() {
                                 No recces available yet.
                             </div>
                         ) : (
-                            <div className="authors-grid">
-                                {recces.map((recce) => {
-                                    const isFollowed = followedKeys.has(
-                                        recce.key,
-                                    );
-                                    return (
-                                        <article
-                                            key={recce.key}
-                                            className="author-card"
-                                        >
-                                            <div className="author-card-info">
-                                                <h3 className="author-card-name">
-                                                    {recce.name}
-                                                </h3>
-                                                {recce.bio && (
-                                                    <p className="author-card-bio">
-                                                        {recce.bio}
-                                                    </p>
-                                                )}
-                                                {!recce.bio && (
-                                                    <p className="author-card-bio">
-                                                        {recce.kind === "topic" ? "Topic Recce" : "Author Recce"}
-                                                    </p>
-                                                )}
-                                            </div>
-                                            {isAuthenticated && (
-                                                <button
-                                                    type="button"
-                                                    className={`author-follow-btn ${isFollowed ? "following" : ""}`}
-                                                    onClick={() =>
-                                                        toggleFollow(recce)
-                                                    }
-                                                >
-                                                    {isFollowed
-                                                        ? "Following"
-                                                        : "Follow"}
-                                                </button>
-                                            )}
-                                        </article>
-                                    );
-                                })}
+                            <div className="discover-recces-sections">
+                                {visibleSections.map((section) => (
+                                    <section key={section.key} className="discover-recces-section">
+                                        <div className="discover-recces-section-header">
+                                            <h3 className="discover-recces-section-title">
+                                                {section.label}
+                                            </h3>
+                                            <span className="discover-recces-section-count">
+                                                {section.items.length}
+                                            </span>
+                                        </div>
+                                        <div className="authors-grid">
+                                            {section.items.map((recce) => {
+                                                const isFollowed = followedKeys.has(
+                                                    recce.key,
+                                                );
+                                                return (
+                                                    <article
+                                                        key={recce.key}
+                                                        className="author-card"
+                                                    >
+                                                        <div className="author-card-info">
+                                                            <h3 className="author-card-name">
+                                                                {recce.name}
+                                                            </h3>
+                                                            {recce.bio && (
+                                                                <p className="author-card-bio">
+                                                                    {recce.bio}
+                                                                </p>
+                                                            )}
+                                                            {!recce.bio && (
+                                                                <p className="author-card-bio">
+                                                                    {recce.kind === "topic"
+                                                                        ? "Topic Recce"
+                                                                        : "Author Recce"}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                        {isAuthenticated && (
+                                                            <button
+                                                                type="button"
+                                                                className={`author-follow-btn ${isFollowed ? "following" : ""}`}
+                                                                onClick={() =>
+                                                                    toggleFollow(recce)
+                                                                }
+                                                            >
+                                                                {isFollowed
+                                                                    ? "Following"
+                                                                    : "Follow"}
+                                                            </button>
+                                                        )}
+                                                    </article>
+                                                );
+                                            })}
+                                        </div>
+                                    </section>
+                                ))}
                             </div>
                         )}
                     </section>

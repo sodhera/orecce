@@ -3681,6 +3681,15 @@ body[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
     padding: 12px;
   }
 
+  .discover-recces-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .discover-recces-filter {
+    min-width: 0;
+  }
+
   .discover-list-item {
     flex-direction: column;
     align-items: flex-start;
@@ -4315,6 +4324,88 @@ body[data-theme="light"] .ig-post-dot.active {
 
 .authors-error {
   color: #e74c3c;
+}
+
+.discover-recces-toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 16px 14px;
+  border-bottom: 1px solid var(--bg-border);
+}
+
+.discover-recces-caption {
+  margin: 6px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.discover-recces-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 220px;
+}
+
+.discover-recces-filter-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.discover-recces-select {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--bg-border);
+  border-radius: 12px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: var(--font-sans);
+}
+
+.discover-recces-sections {
+  display: flex;
+  flex-direction: column;
+}
+
+.discover-recces-section + .discover-recces-section {
+  border-top: 1px solid var(--bg-border);
+}
+
+.discover-recces-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 16px 8px;
+}
+
+.discover-recces-section-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.discover-recces-section-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .authors-grid {

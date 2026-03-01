@@ -13,6 +13,8 @@ import { listAllPostFeedback, PostFeedbackType, sendPostFeedback } from '../serv
 type PostDetailsScreenRouteProp = RouteProp<RootStackParamList, 'PostDetails'>;
 type VoteValue = -1 | 0 | 1;
 type VoteFeedbackType = 'upvote' | 'downvote' | 'skip';
+type TimeoutHandle = ReturnType<typeof setTimeout>;
+type IntervalHandle = ReturnType<typeof setInterval>;
 
 function toVoteFeedbackType(vote: VoteValue): VoteFeedbackType {
     if (vote === 1) return 'upvote';
@@ -32,9 +34,9 @@ export function PostDetailsScreen() {
     >([]);
     const [areSourcesExpanded, setAreSourcesExpanded] = useState(true);
     const scrollRef = useRef<ScrollView | null>(null);
-    const typingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-    const loadingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const loadingDotsIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const typingIntervalRef = useRef<IntervalHandle | null>(null);
+    const loadingTimeoutRef = useRef<TimeoutHandle | null>(null);
+    const loadingDotsIntervalRef = useRef<IntervalHandle | null>(null);
     const [loadingDots, setLoadingDots] = useState('.');
     const insets = useSafeAreaInsets();
     const { showToast } = useToast();

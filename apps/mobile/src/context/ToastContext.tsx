@@ -40,11 +40,13 @@ interface ToastProviderProps {
     children: React.ReactNode;
 }
 
+type TimeoutHandle = ReturnType<typeof setTimeout>;
+
 export function ToastProvider({ children }: ToastProviderProps) {
     const [toast, setToast] = useState<ToastData | null>(null);
     const slideAnim = useRef(new Animated.Value(100)).current;
     const fadeAnim = useRef(new Animated.Value(0)).current;
-    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const timeoutRef = useRef<TimeoutHandle | null>(null);
 
     const hideToast = useCallback(() => {
         Animated.parallel([

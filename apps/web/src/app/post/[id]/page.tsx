@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/context/AuthContext";
-import { useAuthors } from "@/hooks/useAuthors";
+import { useRecces } from "@/hooks/useRecces";
 import Sidebar from "@/components/Sidebar";
 import PostCard, { type Post, type Slide } from "@/components/PostCard";
 import { trackAnalyticsEvent } from "@/lib/analytics";
+import { buildRecceKey, type Recce } from "@/lib/recces";
 
 interface PostRow {
     id: string;
@@ -17,6 +18,7 @@ interface PostRow {
     source_url: string | null;
     source_title: string | null;
     author_id: string | null;
+    topics: string[] | null;
     authors: { name: string; avatar_url: string | null } | null;
 }
 
@@ -34,7 +36,7 @@ export default function PublicPostPage() {
     const router = useRouter();
     const postId = typeof params.id === "string" ? params.id : "";
     const { isAuthenticated, setShowAuthModal } = useAuth();
-    const { followedIds, toggleFollow } = useAuthors();
+    const { followedKeys, toggleFollow } = useRecces();
 
     const [post, setPost] = useState<Post | null>(null);
     const [authorId, setAuthorId] = useState<string | null>(null);
@@ -43,6 +45,21 @@ export default function PublicPostPage() {
     const [authorBio, setAuthorBio] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    const authorRecce = useMemo<Recce | null>(() => {
+        if (!authorId) {
+            return null;
+        }
+        return {
+            id: authorId,
+            key: buildRecceKey("author", authorId),
+            kind: "author",
+            name: authorName,
+            bio: authorBio,
+            avatarUrl: authorAvatar,
+            websiteUrl: null,
+        };
+    }, [authorAvatar, authorBio, authorId, authorName]);
 
     useEffect(() => {
         if (!postId) {
@@ -55,7 +72,7 @@ export default function PublicPostPage() {
             try {
                 const { data, error: fetchError } = await supabase
                     .from("posts")
-                    .select("id, theme, slides, post_type, source_url, source_title, author_id, authors(name, avatar_url, bio)")
+                    .select("id, theme, slides, post_type, source_url, source_title, author_id, topics, authors(name, avatar_url, bio)")
                     .eq("id", postId)
                     .single();
 
@@ -68,7 +85,7 @@ export default function PublicPostPage() {
                 setPost({
                     id: row.id,
                     post_type: (row.post_type as Post["post_type"]) ?? "carousel",
-                    topic: "",
+                    topic: row.topics?.[0] ?? "",
                     title: row.theme ?? "Untitled",
                     sourceUrl: row.source_url ?? undefined,
                     sourceTitle: row.source_title ?? undefined,
@@ -108,7 +125,7 @@ export default function PublicPostPage() {
         });
     }, [authorId, authorName, post]);
 
-    const isFollowing = authorId ? followedIds.has(authorId) : false;
+    const isFollowing = authorRecce ? followedKeys.has(authorRecce.key) : false;
 
     // ── Center content ──
     const centerContent = loading ? (
@@ -151,7 +168,11 @@ export default function PublicPostPage() {
                     <button
                         type="button"
                         className={`post-page-author-follow-btn ${isFollowing ? "is-following" : ""}`}
-                        onClick={() => toggleFollow(authorId)}
+                        onClick={() => {
+                            if (authorRecce) {
+                                toggleFollow(authorRecce);
+                            }
+                        }}
                     >
                         {isFollowing ? "Following" : "Follow"}
                     </button>

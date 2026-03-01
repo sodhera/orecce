@@ -28,7 +28,7 @@ When updating this file:
 | Mobile feed and post details | Green | Feed view/impression/seen/open/read plus vote/save/share/source/chat events are instrumented and batched to the analytics endpoint. |
 | Web landing and auth | Green | Landing, auth modal, signup/login/password reset, OAuth, logout, and page/session lifecycle are instrumented. |
 | Web feed and recommendations | Green | Feed views, impressions, seen, load more, votes, saves, reads, shares, source opens, and carousel events are instrumented. |
-| Web discover/search | Yellow | Discover views and author impressions are instrumented; search-specific analytics are still sparse on web. |
+| Web discover/search | Green | Discover views plus generic Recce impressions and follow/unfollow events now cover both author and topic Recces; search-specific analytics are still sparse on web. |
 | Web collections | Green | Collection create/open/rename/delete flows are instrumented. |
 | Web notifications | Yellow | View/open/mark-read/clear events are instrumented, but the product surface is still fairly thin. |
 | Curation and feedback | Green | Curation panel, prompts, send/reply, session lifecycle, and feedback submission outcomes are instrumented. |
@@ -66,6 +66,7 @@ When updating this file:
 - web `user_saves`
 - web `user_history`
 - web `user_author_follows`
+- web `user_topic_follows`
 - web `save_collections`
 - `user_feedback`
 
@@ -73,7 +74,7 @@ When updating this file:
 
 - web landing/auth: `landing_viewed`, `auth_modal_opened`, signup/login/OAuth/password reset/logout lifecycle events
 - web feed: `feed_viewed`, `feed_load_more_requested`, `feed_post_impression`, `feed_post_seen`, `feed_post_read`, votes, saves, shares, source opens, carousel events
-- web discover: `discover_viewed`, `discover_author_impression`, follow/unfollow
+- web discover: `discover_viewed`, `discover_recce_impression`, `recce_followed`, `recce_unfollowed`
 - web collections/saved: `saved_viewed`, `collection_create_started`, `collection_created`, `collection_renamed`, `collection_deleted`, `collection_opened`
 - web notifications: `notifications_viewed`, `notification_opened`, `notification_marked_read`, `notifications_cleared`
 - web curation/feedback: panel, prompt, send/reply, session lifecycle, feedback submitted/failed
@@ -138,3 +139,4 @@ When updating this file:
 - Added the shared analytics event contract, batching clients, ingestion endpoint, raw storage, and derived views.
 - Instrumented major mobile and web user-behavior flows with a shared taxonomy.
 - Created and aligned the recurring analytics audit automation.
+- Expanded web Recce analytics from author-only events to generic author/topic Recce discovery and follow events.

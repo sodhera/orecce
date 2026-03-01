@@ -54,6 +54,8 @@ Review every login, logout, token-refresh, OAuth, password-reset, and session-st
 
 Review every route, RPC, direct Supabase client query, server-side service-role query, and table policy. The output should map which identities may read or write which records, and whether that control lives in app code, RLS, or both.
 
+Current web client direct-write scope now includes both author and topic follow state (`user_author_follows`, `user_topic_follows`), so those tables and their RLS policies must stay aligned with product changes.
+
 ### 3. Client storage, browser, and transport security
 
 Review local storage, AsyncStorage, deep links, browser headers, TLS assumptions, mobile transport settings, and any client-side caching of user data. The output should identify where tokens or sensitive state live and whether transport or origin rules are too permissive.

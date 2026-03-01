@@ -64,6 +64,8 @@ Recommended content properties:
 
 - `post_id`
 - `author_id`
+- `recce_id`
+- `recce_type`
 - `collection_id`
 - `topic`
 - `match_reason`
@@ -241,9 +243,9 @@ Key properties:
 ### Discover, follows, and search
 
 - `discover_viewed`
-- `discover_author_impression`
-- `author_followed`
-- `author_unfollowed`
+- `discover_recce_impression`
+- `recce_followed`
+- `recce_unfollowed`
 - `search_started`
 - `search_submitted`
 - `search_result_opened`
@@ -251,7 +253,10 @@ Key properties:
 
 Key properties:
 
-- `author_id`
+- `recce_id`
+- `recce_key`
+- `recce_name`
+- `recce_type`
 - `query_length`
 - `query_category`
 - `result_count`
@@ -335,7 +340,7 @@ Status: mostly complete
 
 - Feed impressions, seen, opens, reads, slide interactions, votes, saves, shares, and source opens are instrumented.
 - Auth success/failure is instrumented.
-- Discover follows/unfollows are instrumented.
+- Discover Recce impressions and author/topic follows are instrumented.
 - Saved and collection actions are instrumented.
 
 ### Phase 2: Instrument secondary journeys

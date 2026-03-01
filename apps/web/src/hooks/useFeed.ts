@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import type { Post, Slide } from "@/components/PostCard";
 import { sendPostFeedback } from "@/lib/api";
 import { trackAnalyticsEvent } from "@/lib/analytics";
+import type { Recce } from "@/lib/recces";
 
 // ── Types ────────────────────────────────────────────────────────
 
@@ -30,6 +31,17 @@ interface SourceRow {
     id: string;
     source_url: string | null;
     source_title: string | null;
+}
+
+interface TopicScopedRow {
+    id: string;
+    theme: string | null;
+    source_url: string | null;
+    source_title: string | null;
+    slides: unknown;
+    post_type: string | null;
+    topics: string[] | null;
+    authors: Array<{ name: string | null; avatar_url: string | null }> | null;
 }
 
 interface FeedPostState {
@@ -123,11 +135,43 @@ function rpcRowToState(row: RpcRow): FeedPostState {
     };
 }
 
+function topicRowToState(
+    row: TopicScopedRow,
+    selectedTopic: string,
+    likedIds: Set<string>,
+    savedIds: Set<string>,
+): FeedPostState {
+    const slides = parseSlides(row.slides);
+    const author = Array.isArray(row.authors) ? row.authors[0] : row.authors;
+    return {
+        post: {
+            id: row.id,
+            post_type: (row.post_type as Post["post_type"]) ?? "carousel",
+            topic: selectedTopic,
+            title: row.theme ?? "Untitled",
+            sourceUrl: row.source_url ?? undefined,
+            sourceTitle: row.source_title ?? undefined,
+            slides,
+            date: "",
+        },
+        isLiked: likedIds.has(row.id),
+        isSaved: savedIds.has(row.id),
+        isRead: false,
+        matchReason: selectedTopic,
+        authorName: author?.name ?? "Unknown",
+        authorAvatar: author?.avatar_url ?? null,
+    };
+}
+
 // ── Hook ─────────────────────────────────────────────────────────
 
 export type FeedMode = "feed" | "liked" | "saved";
 
-export function useFeed(authorId?: string | null, feedMode: FeedMode = "feed", collectionId?: string | null): UseFeedReturn {
+export function useFeed(
+    selectedRecce?: Pick<Recce, "id" | "key" | "kind" | "name"> | null,
+    feedMode: FeedMode = "feed",
+    collectionId?: string | null,
+): UseFeedReturn {
     const [items, setItems] = useState<FeedPostState[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
@@ -139,6 +183,7 @@ export function useFeed(authorId?: string | null, feedMode: FeedMode = "feed", c
     const seenStorageKeyRef = useRef<string | null>(null);
     const seenOrderRef = useRef<string[]>([]);
     const seenIdSetRef = useRef(new Set<string>());
+    const readPostIdsRef = useRef(new Set<string>());
 
     const getUserId = useCallback(async () => {
         if (userIdRef.current) {
@@ -162,7 +207,7 @@ export function useFeed(authorId?: string | null, feedMode: FeedMode = "feed", c
         }
 
         const userId = await getUserId();
-        const scope = authorId ?? "all";
+        const scope = selectedRecce?.key ?? "all";
         const key = `${FEED_SEEN_STORAGE_PREFIX}:${userId}:${scope}`;
         seenStorageKeyRef.current = key;
 
@@ -192,7 +237,29 @@ export function useFeed(authorId?: string | null, feedMode: FeedMode = "feed", c
             seenOrderRef.current = [];
             seenIdSetRef.current = new Set<string>();
         }
-    }, [authorId, feedMode, getUserId, resetSeenCache]);
+    }, [feedMode, getUserId, resetSeenCache, selectedRecce?.key]);
+
+    const hydrateReadCache = useCallback(async () => {
+        readPostIdsRef.current = new Set<string>();
+        if (feedMode !== "feed") {
+            return;
+        }
+
+        const userId = await getUserId();
+        const { data, error } = await supabase
+            .from("user_history")
+            .select("post_id")
+            .eq("user_id", userId)
+            .in("status", ["read", "skipped"]);
+
+        if (error) {
+            throw new Error(error.message);
+        }
+
+        readPostIdsRef.current = new Set(
+            (data ?? []).map((row) => String(row.post_id ?? "").trim()).filter(Boolean),
+        );
+    }, [feedMode, getUserId]);
 
     const rememberSeenPosts = useCallback((postIds: string[]) => {
         if (feedMode !== "feed" || typeof window === "undefined") {
@@ -228,7 +295,59 @@ export function useFeed(authorId?: string | null, feedMode: FeedMode = "feed", c
         }
     }, [feedMode]);
 
+    const fetchTopicPage = useCallback(async (offset: number, fetchId: number) => {
+        if (selectedRecce?.kind !== "topic") {
+            return [];
+        }
+
+        const userId = await getUserId();
+        const { data, error: postsError } = await supabase
+            .from("posts")
+            .select("id, theme, source_url, source_title, slides, post_type, topics, authors(name, avatar_url)")
+            .contains("topics", [selectedRecce.name])
+            .order("global_popularity_score", { ascending: false })
+            .order("created_at", { ascending: false })
+            .range(offset, offset + PAGE_SIZE - 1);
+
+        if (fetchId !== fetchIdRef.current) return null;
+        if (postsError) throw new Error(postsError.message);
+
+        const rows = (data ?? []) as TopicScopedRow[];
+        if (!rows.length) {
+            return [];
+        }
+
+        const postIds = rows.map((row) => row.id);
+        const [
+            { data: likeRows, error: likesError },
+            { data: saveRows, error: savesError },
+        ] = await Promise.all([
+            supabase
+                .from("user_likes")
+                .select("post_id")
+                .eq("user_id", userId)
+                .in("post_id", postIds),
+            supabase
+                .from("user_saves")
+                .select("post_id")
+                .eq("user_id", userId)
+                .in("post_id", postIds),
+        ]);
+
+        if (fetchId !== fetchIdRef.current) return null;
+        if (likesError) throw new Error(likesError.message);
+        if (savesError) throw new Error(savesError.message);
+
+        const likedIds = new Set((likeRows ?? []).map((row) => String(row.post_id)));
+        const savedIds = new Set((saveRows ?? []).map((row) => String(row.post_id)));
+        return rows.map((row) => topicRowToState(row, selectedRecce.name, likedIds, savedIds));
+    }, [getUserId, selectedRecce]);
+
     const fetchPage = useCallback(async (offset: number, fetchId: number) => {
+        if (feedMode === "feed" && selectedRecce?.kind === "topic") {
+            return fetchTopicPage(offset, fetchId);
+        }
+
         let rpcName: "get_personalized_feed" | "get_user_liked_posts" | "get_user_saved_posts" | "get_collection_posts" = "get_personalized_feed";
         let rpcParams: Record<string, unknown> = { p_limit: PAGE_SIZE, p_offset: offset };
 
@@ -241,7 +360,10 @@ export function useFeed(authorId?: string | null, feedMode: FeedMode = "feed", c
             rpcName = "get_user_saved_posts";
         } else {
             // "feed" mode (Home)
-            rpcParams = { ...rpcParams, p_author_id: authorId ?? null };
+            rpcParams = {
+                ...rpcParams,
+                p_author_id: selectedRecce?.kind === "author" ? selectedRecce.id : null,
+            };
         }
 
         const { data, error: rpcError } = await supabase.rpc(
@@ -283,7 +405,7 @@ export function useFeed(authorId?: string | null, feedMode: FeedMode = "feed", c
         }
 
         return rows.map(rpcRowToState);
-    }, [authorId, feedMode, collectionId]);
+    }, [collectionId, feedMode, fetchTopicPage, selectedRecce]);
 
     const fetchNovelPage = useCallback(async (
         startOffset: number,
@@ -305,6 +427,9 @@ export function useFeed(authorId?: string | null, feedMode: FeedMode = "feed", c
             for (const item of page) {
                 const postId = item.post.id;
                 if (existingIds.has(postId)) {
+                    continue;
+                }
+                if (feedMode === "feed" && readPostIdsRef.current.has(postId)) {
                     continue;
                 }
                 if (feedMode === "feed" && seenIdSetRef.current.has(postId)) {
@@ -344,6 +469,7 @@ export function useFeed(authorId?: string | null, feedMode: FeedMode = "feed", c
 
         try {
             await hydrateSeenCache();
+            await hydrateReadCache();
             const result = await fetchNovelPage(0, id, new Set<string>());
             if (!result) return;
 
@@ -357,11 +483,11 @@ export function useFeed(authorId?: string | null, feedMode: FeedMode = "feed", c
         } finally {
             if (id === fetchIdRef.current) setLoading(false);
         }
-    }, [fetchNovelPage, hydrateSeenCache, resetSeenCache]);
+    }, [fetchNovelPage, hydrateReadCache, hydrateSeenCache, resetSeenCache]);
 
     useEffect(() => {
         void loadInitial();
-    }, [loadInitial, authorId, feedMode, collectionId]);
+    }, [collectionId, feedMode, loadInitial, selectedRecce?.key]);
 
     // ── Load more (infinite scroll) ──
     const loadMore = useCallback(async () => {
@@ -537,6 +663,7 @@ export function useFeed(authorId?: string | null, feedMode: FeedMode = "feed", c
                 if (error) {
                     throw new Error(error.message);
                 }
+                readPostIdsRef.current.add(postId);
                 trackAnalyticsEvent({
                     eventName: "feed_post_read",
                     surface: feedMode,

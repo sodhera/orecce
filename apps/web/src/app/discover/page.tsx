@@ -2,29 +2,31 @@
 
 import { useEffect } from "react";
 import Sidebar from "@/components/Sidebar";
-import { useAuthors } from "@/hooks/useAuthors";
+import { useRecces } from "@/hooks/useRecces";
 import { useAuth } from "@/context/AuthContext";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 
 export default function DiscoverPage() {
     const { isAuthenticated } = useAuth();
-    const { authors, followedIds, loading, error, toggleFollow } = useAuthors();
+    const { recces, followedKeys, loading, error, toggleFollow } = useRecces();
 
     useEffect(() => {
-        if (loading || error || authors.length === 0) {
+        if (loading || error || recces.length === 0) {
             return;
         }
-        for (const author of authors) {
+        for (const recce of recces) {
             trackAnalyticsEvent({
-                eventName: "discover_author_impression",
+                eventName: "discover_recce_impression",
                 surface: "discover",
                 properties: {
-                    author_id: author.id,
-                    author_name: author.name,
+                    recce_id: recce.id,
+                    recce_key: recce.key,
+                    recce_name: recce.name,
+                    recce_type: recce.kind,
                 },
             });
         }
-    }, [authors, error, loading]);
+    }, [error, loading, recces]);
 
     return (
         <div className="app-layout">
@@ -50,28 +52,33 @@ export default function DiscoverPage() {
                             </div>
                         ) : error ? (
                             <div className="authors-error">Error: {error}</div>
-                        ) : authors.length === 0 ? (
+                        ) : recces.length === 0 ? (
                             <div className="authors-empty">
                                 No recces available yet.
                             </div>
                         ) : (
                             <div className="authors-grid">
-                                {authors.map((author) => {
-                                    const isFollowed = followedIds.has(
-                                        author.id,
+                                {recces.map((recce) => {
+                                    const isFollowed = followedKeys.has(
+                                        recce.key,
                                     );
                                     return (
                                         <article
-                                            key={author.id}
+                                            key={recce.key}
                                             className="author-card"
                                         >
                                             <div className="author-card-info">
                                                 <h3 className="author-card-name">
-                                                    {author.name}
+                                                    {recce.name}
                                                 </h3>
-                                                {author.bio && (
+                                                {recce.bio && (
                                                     <p className="author-card-bio">
-                                                        {author.bio}
+                                                        {recce.bio}
+                                                    </p>
+                                                )}
+                                                {!recce.bio && (
+                                                    <p className="author-card-bio">
+                                                        {recce.kind === "topic" ? "Topic Recce" : "Author Recce"}
                                                     </p>
                                                 )}
                                             </div>
@@ -80,7 +87,7 @@ export default function DiscoverPage() {
                                                     type="button"
                                                     className={`author-follow-btn ${isFollowed ? "following" : ""}`}
                                                     onClick={() =>
-                                                        toggleFollow(author.id)
+                                                        toggleFollow(recce)
                                                     }
                                                 >
                                                     {isFollowed

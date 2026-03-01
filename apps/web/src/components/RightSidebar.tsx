@@ -9,8 +9,9 @@ import {
     type CurationChatInputMessage,
     type CurationChatSessionSummary,
 } from "@/lib/api";
-import { useAuthors } from "@/hooks/useAuthors";
+import { useRecces } from "@/hooks/useRecces";
 import { trackAnalyticsEvent } from "@/lib/analytics";
+import type { Recce } from "@/lib/recces";
 
 interface RightSidebarProps {
     mode: string;
@@ -619,12 +620,19 @@ export default function RightSidebar({ mode, profile }: RightSidebarProps) {
 
 const MAX_RECOMMENDATIONS = 4;
 
+function recceSubtitle(recce: Recce): string | null {
+    if (recce.bio?.trim()) {
+        return recce.bio.trim();
+    }
+    return recce.kind === "topic" ? "Topic Recce" : null;
+}
+
 function RecommendedRecces() {
-    const { authors, followedIds, toggleFollow } = useAuthors();
+    const { recces, followedKeys, toggleFollow } = useRecces();
 
     const unfollowed = useMemo(
-        () => authors.filter((a) => !followedIds.has(a.id)).slice(0, MAX_RECOMMENDATIONS),
-        [authors, followedIds],
+        () => recces.filter((recce) => !followedKeys.has(recce.key)).slice(0, MAX_RECOMMENDATIONS),
+        [followedKeys, recces],
     );
 
     if (unfollowed.length === 0) return null;
@@ -634,20 +642,20 @@ function RecommendedRecces() {
             <h3 className="post-page-recces-title">You might be interested in</h3>
             <div className="post-page-recces-list">
                 {unfollowed.map((a) => (
-                    <div key={a.id} className="post-page-recce-item">
+                    <div key={a.key} className="post-page-recce-item">
                         <div className="post-page-recce-avatar">
                             {a.name?.charAt(0).toUpperCase() || "?"}
                         </div>
                         <div className="post-page-recce-info">
                             <span className="post-page-recce-name">{a.name}</span>
-                            {a.bio && (
-                                <span className="post-page-recce-bio">{a.bio}</span>
+                            {recceSubtitle(a) && (
+                                <span className="post-page-recce-bio">{recceSubtitle(a)}</span>
                             )}
                         </div>
                         <button
                             type="button"
                             className="post-page-recce-follow-btn"
-                            onClick={() => toggleFollow(a.id)}
+                            onClick={() => toggleFollow(a)}
                         >
                             Follow
                         </button>

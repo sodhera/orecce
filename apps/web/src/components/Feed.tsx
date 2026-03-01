@@ -4,8 +4,9 @@ import { useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import PostCard from "./PostCard";
 import { useFeed } from "@/hooks/useFeed";
-import { useAuthors } from "@/hooks/useAuthors";
+import { useRecces } from "@/hooks/useRecces";
 import { trackAnalyticsEvent } from "@/lib/analytics";
+import type { Recce } from "@/lib/recces";
 
 interface FeedProps {
     mode: string;
@@ -17,20 +18,30 @@ const RECOMMENDED_COUNT = 3;
 const SEEN_VISIBILITY_RATIO = 0.7;
 const SEEN_IMPRESSION_MS = 2500;
 
+function recceSubtitle(recce: Recce): string | null {
+    if (recce.bio?.trim()) {
+        return recce.bio.trim();
+    }
+    return recce.kind === "topic" ? "Topic Recce" : null;
+}
+
 export default function Feed({ mode, onModeChange }: FeedProps) {
-    const { authors, followedIds, toggleFollow } = useAuthors();
-    const followedAuthors = useMemo(
-        () => authors.filter((a) => followedIds.has(a.id)),
-        [authors, followedIds]
+    const { recces, followedKeys, toggleFollow } = useRecces();
+    const followedRecces = useMemo(
+        () => recces.filter((recce) => followedKeys.has(recce.key)),
+        [followedKeys, recces]
+    );
+    const selectedRecce = useMemo(
+        () => recces.find((recce) => recce.key === mode) ?? null,
+        [mode, recces]
     );
 
-    // Pick a few unfollowed authors to recommend
-    const recommendedAuthors = useMemo(
-        () => authors.filter((a) => !followedIds.has(a.id)).slice(0, RECOMMENDED_COUNT),
-        [authors, followedIds]
+    const recommendedRecces = useMemo(
+        () => recces.filter((recce) => !followedKeys.has(recce.key)).slice(0, RECOMMENDED_COUNT),
+        [followedKeys, recces]
     );
 
-    const feed = useFeed(mode === "ALL" ? null : mode);
+    const feed = useFeed(mode === "ALL" ? null : selectedRecce);
     const loadMoreRef = useRef<HTMLDivElement | null>(null);
     const seenInSessionRef = useRef(new Set<string>());
     const impressedInSessionRef = useRef(new Set<string>());
@@ -162,20 +173,22 @@ export default function Feed({ mode, onModeChange }: FeedProps) {
     }, [feed.error, feed.items.length, feed.loading]);
 
     useEffect(() => {
-        if (feed.loading || feed.items.length > 0 || recommendedAuthors.length === 0) {
+        if (feed.loading || feed.items.length > 0 || recommendedRecces.length === 0) {
             return;
         }
-        for (const author of recommendedAuthors) {
+        for (const recce of recommendedRecces) {
             trackAnalyticsEvent({
-                eventName: "discover_author_impression",
+                eventName: "discover_recce_impression",
                 surface: "feed",
                 properties: {
-                    author_id: author.id,
-                    author_name: author.name,
+                    recce_id: recce.id,
+                    recce_key: recce.key,
+                    recce_name: recce.name,
+                    recce_type: recce.kind,
                 },
             });
         }
-    }, [feed.items.length, feed.loading, recommendedAuthors]);
+    }, [feed.items.length, feed.loading, recommendedRecces]);
 
     return (
         <main className="feed">
@@ -193,13 +206,13 @@ export default function Feed({ mode, onModeChange }: FeedProps) {
                 >
                     All
                 </button>
-                {followedAuthors.map((author) => (
+                {followedRecces.map((recce) => (
                     <button
-                        key={author.id}
-                        className={`feed-category-pill ${mode === author.id ? "active" : ""}`}
-                        onClick={() => onModeChange?.(author.id)}
+                        key={recce.key}
+                        className={`feed-category-pill ${mode === recce.key ? "active" : ""}`}
+                        onClick={() => onModeChange?.(recce.key)}
                     >
-                        {author.name}
+                        {recce.name}
                     </button>
                 ))}
             </div>
@@ -234,23 +247,23 @@ export default function Feed({ mode, onModeChange }: FeedProps) {
                                 Follow recces to see their posts here. Here are a few to get you started:
                             </p>
 
-                            {recommendedAuthors.length > 0 && (
+                            {recommendedRecces.length > 0 && (
                                 <div className="feed-recommended-authors">
-                                    {recommendedAuthors.map((author) => (
-                                        <div key={author.id} className="feed-rec-author-card">
+                                    {recommendedRecces.map((recce) => (
+                                        <div key={recce.key} className="feed-rec-author-card">
                                             <div className="feed-rec-author-avatar">
-                                                {author.name?.charAt(0).toUpperCase() || "?"}
+                                                {recce.name?.charAt(0).toUpperCase() || "?"}
                                             </div>
                                             <div className="feed-rec-author-info">
-                                                <span className="feed-rec-author-name">{author.name}</span>
-                                                {author.bio && (
-                                                    <span className="feed-rec-author-bio">{author.bio}</span>
+                                                <span className="feed-rec-author-name">{recce.name}</span>
+                                                {recceSubtitle(recce) && (
+                                                    <span className="feed-rec-author-bio">{recceSubtitle(recce)}</span>
                                                 )}
                                             </div>
                                             <button
                                                 type="button"
                                                 className="feed-rec-follow-btn"
-                                                onClick={() => toggleFollow(author.id)}
+                                                onClick={() => toggleFollow(recce)}
                                             >
                                                 Follow
                                             </button>

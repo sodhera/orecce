@@ -10,6 +10,7 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../styles/colors';
+import { trackMobileAnalyticsEvent } from '../services/analytics';
 
 const { width, height } = Dimensions.get('window');
 
@@ -56,7 +57,13 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                         {/* Create account button */}
                         <TouchableOpacity
                             style={styles.primaryButton}
-                            onPress={onCreateAccount}
+                            onPress={() => {
+                                trackMobileAnalyticsEvent({
+                                    eventName: 'signup_entry_selected',
+                                    surface: 'landing',
+                                });
+                                onCreateAccount();
+                            }}
                             activeOpacity={0.9}
                         >
                             <Text style={styles.primaryButtonText}>Create an account</Text>
@@ -65,7 +72,13 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
                         {/* Sign in button */}
                         <TouchableOpacity
                             style={styles.secondaryButton}
-                            onPress={onSignIn}
+                            onPress={() => {
+                                trackMobileAnalyticsEvent({
+                                    eventName: 'login_entry_selected',
+                                    surface: 'landing',
+                                });
+                                onSignIn();
+                            }}
                             activeOpacity={0.9}
                         >
                             <Text style={styles.secondaryButtonText}>I have an account</Text>

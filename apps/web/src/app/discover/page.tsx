@@ -1,12 +1,30 @@
 "use client";
 
+import { useEffect } from "react";
 import Sidebar from "@/components/Sidebar";
 import { useAuthors } from "@/hooks/useAuthors";
 import { useAuth } from "@/context/AuthContext";
+import { trackAnalyticsEvent } from "@/lib/analytics";
 
 export default function DiscoverPage() {
     const { isAuthenticated } = useAuth();
     const { authors, followedIds, loading, error, toggleFollow } = useAuthors();
+
+    useEffect(() => {
+        if (loading || error || authors.length === 0) {
+            return;
+        }
+        for (const author of authors) {
+            trackAnalyticsEvent({
+                eventName: "discover_author_impression",
+                surface: "discover",
+                properties: {
+                    author_id: author.id,
+                    author_name: author.name,
+                },
+            });
+        }
+    }, [authors, error, loading]);
 
     return (
         <div className="app-layout">

@@ -21,6 +21,7 @@ import {
     BsBoxArrowUpRight,
     BsSend,
 } from "react-icons/bs";
+import { trackAnalyticsEvent } from "@/lib/analytics";
 
 export interface Slide {
     slide_number: number;
@@ -226,15 +227,38 @@ export default function PostCard({
             if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
             copiedTimerRef.current = setTimeout(() => setCopied(false), 2000);
         });
-    }, [post.id]);
+        trackAnalyticsEvent({
+            eventName: "post_shared",
+            surface: isSlideVariant ? "feed" : "post_detail",
+            properties: {
+                post_id: post.id,
+                author_name: authorLabel,
+                topic: post.topic,
+                source_url: post.sourceUrl ?? null,
+            },
+        });
+    }, [authorLabel, isSlideVariant, post.id, post.sourceUrl, post.topic]);
 
     const emitInteraction = useCallback((type: "like" | "save" | "flip" | "source") => {
+        if (type === "source") {
+            trackAnalyticsEvent({
+                eventName: "post_source_opened",
+                surface: isSlideVariant ? "feed" : "post_detail",
+                properties: {
+                    post_id: post.id,
+                    author_name: authorLabel,
+                    topic: post.topic,
+                    source_url: sourceHref,
+                    source_label: sourceLabel,
+                },
+            });
+        }
         onInteraction?.({
             postId: post.id,
             topic: post.topic,
             type,
         });
-    }, [onInteraction, post.id, post.topic]);
+    }, [authorLabel, isSlideVariant, onInteraction, post.id, post.topic, sourceHref, sourceLabel]);
 
     const flipSlide = useCallback((nextIndex: number) => {
         if (nextIndex < 0 || nextIndex >= slideCount || nextIndex === currentSlideIndex) {
@@ -246,14 +270,35 @@ export default function PostCard({
             currentSlideIndex: nextIndex,
             slideCount,
         });
+        trackAnalyticsEvent({
+            eventName: "carousel_slide_advanced",
+            surface: isSlideVariant ? "feed" : "post_detail",
+            properties: {
+                post_id: post.id,
+                author_name: authorLabel,
+                topic: post.topic,
+                slide_index: nextIndex,
+                slide_count: slideCount,
+            },
+        });
         emitInteraction("flip");
 
         // Fire onLastSlide once when user reaches the final slide
         if (nextIndex === slideCount - 1 && !lastSlideNotifiedRef.current) {
             lastSlideNotifiedRef.current = true;
+            trackAnalyticsEvent({
+                eventName: "carousel_completed",
+                surface: isSlideVariant ? "feed" : "post_detail",
+                properties: {
+                    post_id: post.id,
+                    author_name: authorLabel,
+                    topic: post.topic,
+                    slide_count: slideCount,
+                },
+            });
             onLastSlide?.(post.id);
         }
-    }, [slideCount, currentSlideIndex, onSlideFlip, emitInteraction, onLastSlide, post.id]);
+    }, [authorLabel, slideCount, currentSlideIndex, onSlideFlip, emitInteraction, onLastSlide, post.id, post.topic, isSlideVariant]);
 
     const scrollToSlide = useCallback((index: number) => {
         if (!carouselRef.current) return;

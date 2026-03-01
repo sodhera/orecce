@@ -5,6 +5,7 @@ import Sidebar from "@/components/Sidebar";
 import RightSidebar from "@/components/RightSidebar";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/context/AuthContext";
+import { trackAnalyticsEvent } from "@/lib/analytics";
 
 type FeedbackCategory = "Bug" | "Feature Request" | "Feedback" | "Other";
 
@@ -47,9 +48,25 @@ export default function FeedbackPage() {
             setSubmitStatus("success");
             setMessage("");
             setCategory("Feedback");
+            trackAnalyticsEvent({
+                eventName: "feedback_submitted",
+                surface: "feedback",
+                properties: {
+                    feedback_category: category,
+                    message_length: message.trim().length,
+                },
+            });
         } catch (err: any) {
             setErrorMsg(err.message || "Failed to submit. Please try again.");
             setSubmitStatus("error");
+            trackAnalyticsEvent({
+                eventName: "feedback_submit_failed",
+                surface: "feedback",
+                properties: {
+                    feedback_category: category,
+                    error_code: err?.message ?? "unknown",
+                },
+            });
         } finally {
             setIsSubmitting(false);
         }

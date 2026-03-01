@@ -14,6 +14,7 @@ import { ApiError } from "../types/errors";
 import { logError, logInfo } from "../utils/logging";
 import { normalizeProfileKey } from "../utils/text";
 import {
+  analyticsBatchRequestSchema,
   feedbackRequestSchema,
   generatePostRequestSchema,
   listFeedbackRequestSchema,
@@ -146,6 +147,12 @@ function summarizeBody(path: string, body: unknown): Record<string, unknown> | n
     };
   }
 
+  if (path === "/v1/analytics/events/batch") {
+    return {
+      events_count: Array.isArray(payload.events) ? payload.events.length : 0
+    };
+  }
+
   if (path === "/v1/prompt-preferences/set") {
     const biography = String(payload.biography_instructions ?? "");
     const niche = String(payload.niche_instructions ?? "");
@@ -184,6 +191,15 @@ function readBearerToken(req: Request): string {
     throw new ApiError(401, "missing_auth", "Authorization bearer token is empty.");
   }
   return token;
+}
+
+function readOptionalBearerToken(req: Request): string | null {
+  const raw = String(req.headers.authorization ?? "").trim();
+  if (!raw.toLowerCase().startsWith("bearer ")) {
+    return null;
+  }
+  const token = raw.slice(7).trim();
+  return token || null;
 }
 
 function getAuthIdentity(res: Response): AuthIdentity {
@@ -304,6 +320,52 @@ export function createApp(deps: CreateAppDeps): express.Express {
   app.get("/health", (_req, res) => {
     res.json({ ok: true });
   });
+
+  app.post(
+    "/v1/analytics/events/batch",
+    withAsync(async (req, res) => {
+      const parsed = analyticsBatchRequestSchema.safeParse(req.body ?? {});
+      if (!parsed.success) {
+        throw new ApiError(400, "bad_request", "Invalid analytics batch payload.", parsed.error.flatten());
+      }
+
+      let userId: string | null = null;
+      const token = readOptionalBearerToken(req);
+      if (token && deps.authVerifier) {
+        try {
+          const identity = await deps.authVerifier.verifyBearerToken(token);
+          userId = identity.uid;
+        } catch {
+          userId = null;
+        }
+      }
+
+      await deps.repository.saveAnalyticsEvents({
+        userId,
+        events: parsed.data.events.map((event) => ({
+          eventId: event.event_id,
+          eventName: event.event_name,
+          platform: event.platform,
+          surface: event.surface,
+          occurredAtMs: event.occurred_at_ms,
+          sessionId: event.session_id,
+          anonymousId: event.anonymous_id,
+          deviceId: event.device_id,
+          appVersion: event.app_version,
+          routeName: event.route_name,
+          requestId: event.request_id,
+          properties: event.properties
+        }))
+      });
+
+      res.json({
+        ok: true,
+        data: {
+          accepted_count: parsed.data.events.length
+        }
+      });
+    })
+  );
 
   app.use(
     ["/v1/news/sources", "/v1/news/articles", "/v1/news/articles/:articleId"],

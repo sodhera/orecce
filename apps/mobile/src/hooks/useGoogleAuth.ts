@@ -3,6 +3,7 @@ import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import Constants from 'expo-constants';
 import { supabase } from '../config/supabase';
+import { trackMobileAnalyticsEvent } from '../services/analytics';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -53,9 +54,25 @@ export function useGoogleAuth(): GoogleAuthState & GoogleAuthActions {
                 });
                 if (authError) {
                     setError(authError.message);
+                    trackMobileAnalyticsEvent({
+                        eventName: 'login_failed',
+                        surface: 'auth',
+                        properties: { method: 'google', error_code: authError.message },
+                    });
+                } else {
+                    trackMobileAnalyticsEvent({
+                        eventName: 'oauth_completed',
+                        surface: 'auth',
+                        properties: { provider: 'google' },
+                    });
                 }
             } catch (err: unknown) {
                 setError(err instanceof Error ? err.message : 'Google sign-in failed');
+                trackMobileAnalyticsEvent({
+                    eventName: 'login_failed',
+                    surface: 'auth',
+                    properties: { method: 'google', error_code: err instanceof Error ? err.message : 'unknown' },
+                });
             } finally {
                 setIsLoading(false);
             }
@@ -66,6 +83,11 @@ export function useGoogleAuth(): GoogleAuthState & GoogleAuthActions {
         try {
             setIsLoading(true);
             setError(null);
+            trackMobileAnalyticsEvent({
+                eventName: 'oauth_started',
+                surface: 'auth',
+                properties: { provider: 'google' },
+            });
 
             if (!request) {
                 setError('Google Auth is not ready');

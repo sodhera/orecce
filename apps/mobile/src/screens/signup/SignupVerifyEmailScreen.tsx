@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Linking, Platform } from 'rea
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../styles/colors';
+import { trackMobileAnalyticsEvent } from '../../services/analytics';
 
 type Props = {
     email: string;
@@ -19,6 +20,11 @@ export const SignupVerifyEmailScreen: React.FC<Props> = ({ email, onLater }) => 
         } else {
             Linking.openURL('mailto:');
         }
+        trackMobileAnalyticsEvent({
+            eventName: 'verification_email_opened',
+            surface: 'auth',
+            properties: { email },
+        });
     };
 
     return (
@@ -26,7 +32,14 @@ export const SignupVerifyEmailScreen: React.FC<Props> = ({ email, onLater }) => 
             {/* Header with Later button */}
             <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
                 <View style={styles.spacer} />
-                <TouchableOpacity onPress={onLater}>
+                <TouchableOpacity onPress={() => {
+                    trackMobileAnalyticsEvent({
+                        eventName: 'verification_deferred',
+                        surface: 'auth',
+                        properties: { email },
+                    });
+                    onLater();
+                }}>
                     <Text style={styles.laterText}>Later</Text>
                 </TouchableOpacity>
             </View>

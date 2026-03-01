@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../config/supabase';
+import { setMobileAnalyticsUserId, trackMobileAnalyticsEvent } from '../services/analytics';
 
 interface AuthState {
     user: User | null;
@@ -29,6 +30,7 @@ export function useAuth(): AuthState & AuthActions {
         supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
             setSession(initialSession);
             setUser(initialSession?.user ?? null);
+            setMobileAnalyticsUserId(initialSession?.user?.id ?? null);
             setIsLoading(false);
         });
 
@@ -37,6 +39,7 @@ export function useAuth(): AuthState & AuthActions {
             (_event, newSession) => {
                 setSession(newSession);
                 setUser(newSession?.user ?? null);
+                setMobileAnalyticsUserId(newSession?.user?.id ?? null);
                 setIsLoading(false);
             }
         );
@@ -49,17 +52,37 @@ export function useAuth(): AuthState & AuthActions {
         try {
             setIsLoading(true);
             setError(null);
+            trackMobileAnalyticsEvent({
+                eventName: 'login_started',
+                surface: 'auth',
+                properties: { method: 'password' },
+            });
             const { error: authError } = await supabase.auth.signInWithPassword({
                 email,
                 password
             });
             if (authError) {
                 setError(getErrorMessage(authError.message));
+                trackMobileAnalyticsEvent({
+                    eventName: 'login_failed',
+                    surface: 'auth',
+                    properties: { method: 'password', error_code: authError.message },
+                });
                 return false;
             }
+            trackMobileAnalyticsEvent({
+                eventName: 'login_completed',
+                surface: 'auth',
+                properties: { method: 'password' },
+            });
             return true;
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : 'An error occurred');
+            trackMobileAnalyticsEvent({
+                eventName: 'login_failed',
+                surface: 'auth',
+                properties: { method: 'password', error_code: err instanceof Error ? err.message : 'unknown' },
+            });
             return false;
         } finally {
             setIsLoading(false);
@@ -75,6 +98,11 @@ export function useAuth(): AuthState & AuthActions {
         try {
             setIsLoading(true);
             setError(null);
+            trackMobileAnalyticsEvent({
+                eventName: 'signup_started',
+                surface: 'auth',
+                properties: { method: 'password' },
+            });
 
             const fullName = options?.fullName?.trim();
             const { error: authError } = await supabase.auth.signUp({
@@ -84,11 +112,26 @@ export function useAuth(): AuthState & AuthActions {
             });
             if (authError) {
                 setError(getErrorMessage(authError.message));
+                trackMobileAnalyticsEvent({
+                    eventName: 'signup_failed',
+                    surface: 'auth',
+                    properties: { method: 'password', error_code: authError.message },
+                });
                 return false;
             }
+            trackMobileAnalyticsEvent({
+                eventName: 'signup_completed',
+                surface: 'auth',
+                properties: { method: 'password' },
+            });
             return true;
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : 'An error occurred');
+            trackMobileAnalyticsEvent({
+                eventName: 'signup_failed',
+                surface: 'auth',
+                properties: { method: 'password', error_code: err instanceof Error ? err.message : 'unknown' },
+            });
             return false;
         } finally {
             setIsLoading(false);
@@ -100,6 +143,10 @@ export function useAuth(): AuthState & AuthActions {
         try {
             setIsLoading(true);
             await supabase.auth.signOut();
+            trackMobileAnalyticsEvent({
+                eventName: 'logout_completed',
+                surface: 'settings',
+            });
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : 'An error occurred');
         } finally {
@@ -117,6 +164,11 @@ export function useAuth(): AuthState & AuthActions {
                 setError(getErrorMessage(authError.message));
                 return false;
             }
+            trackMobileAnalyticsEvent({
+                eventName: 'password_reset_requested',
+                surface: 'auth',
+                properties: { has_email: Boolean(email.trim()) },
+            });
             return true;
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : 'An error occurred');

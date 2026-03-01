@@ -1,7 +1,9 @@
 import { SupabaseClient } from "@supabase/supabase-js";
+import { AnalyticsEventInput } from "../analytics/types";
 import { DEFAULT_PROFILE_BY_MODE } from "../services/prefillBlueprint";
 import {
     EnsureUserInput,
+    SaveAnalyticsEventsInput,
     ListFeedbackQuery,
     ListFeedbackResult,
     ListSeenRecommendationPostsQuery,
@@ -462,6 +464,19 @@ export class PostgresRepository implements Repository {
         return { items, nextCursor: nextCursor || null };
     }
 
+    async saveAnalyticsEvents(input: SaveAnalyticsEventsInput): Promise<void> {
+        const safeUserId = String(input.userId ?? "").trim() || null;
+        const rows = input.events.map((event) => this.mapAnalyticsRow(event, safeUserId));
+        if (!rows.length) {
+            return;
+        }
+
+        const { error } = await this.supabase
+            .from("analytics_events_raw")
+            .upsert(rows, { onConflict: "event_id", ignoreDuplicates: true });
+        if (error) throw error;
+    }
+
     async listSeenRecommendationPostIds(query: ListSeenRecommendationPostsQuery): Promise<string[]> {
         const safeLimit = Math.max(1, Math.min(5000, Math.floor(Number(query.limit) || 1)));
         const { data, error } = await this.supabase
@@ -620,6 +635,25 @@ export class PostgresRepository implements Repository {
             createdAtMs: toMs(row.created_at as string),
             updatedAtMs: toMs(row.updated_at as string),
             prefillUpdatedAtMs: row.prefill_updated_at ? toMs(row.prefill_updated_at as string) : undefined
+        };
+    }
+
+    private mapAnalyticsRow(event: AnalyticsEventInput, userId: string | null): Record<string, unknown> {
+        const occurredAtMs = Math.max(1, Math.floor(Number(event.occurredAtMs) || Date.now()));
+        return {
+            event_id: event.eventId,
+            event_name: event.eventName,
+            platform: event.platform,
+            surface: event.surface ?? null,
+            user_id: userId,
+            anonymous_id: event.anonymousId ?? null,
+            session_id: event.sessionId ?? null,
+            device_id: event.deviceId ?? null,
+            app_version: event.appVersion ?? null,
+            route_name: event.routeName ?? null,
+            request_id: event.requestId ?? null,
+            properties: event.properties ?? {},
+            occurred_at: new Date(occurredAtMs).toISOString()
         };
     }
 

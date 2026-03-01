@@ -9,6 +9,7 @@ import { colors } from '../styles/colors';
 import { RootStackParamList } from '../navigation/RootNavigator';
 import { useToast } from '../context/ToastContext';
 import { listAllPostFeedback, PostFeedbackType, sendPostFeedback } from '../services/api';
+import { trackMobileAnalyticsEvent } from '../services/analytics';
 
 type PostDetailsScreenRouteProp = RouteProp<RootStackParamList, 'PostDetails'>;
 type VoteValue = -1 | 0 | 1;
@@ -96,6 +97,26 @@ export function PostDetailsScreen() {
         };
     }, [post.id]);
 
+    useEffect(() => {
+        trackMobileAnalyticsEvent({
+            eventName: 'post_detail_viewed',
+            surface: 'post_detail',
+            properties: {
+                post_id: post.id,
+                topic: post.topic ?? null,
+                post_type: post.type,
+            },
+        });
+        trackMobileAnalyticsEvent({
+            eventName: 'feed_post_read',
+            surface: 'post_detail',
+            properties: {
+                post_id: post.id,
+                topic: post.topic ?? null,
+            },
+        });
+    }, [post.id, post.topic, post.type]);
+
     const persistPostFeedback = async (postId: string, feedbackType: PostFeedbackType) => {
         try {
             await sendPostFeedback(postId, feedbackType);
@@ -114,6 +135,14 @@ export function PostDetailsScreen() {
 
     const handleShare = () => {
         console.log('Share post:', currentPost.id);
+        trackMobileAnalyticsEvent({
+            eventName: 'post_shared',
+            surface: 'post_detail',
+            properties: {
+                post_id: currentPost.id,
+                topic: currentPost.topic ?? null,
+            },
+        });
         setMenuVisible(false);
     };
 
@@ -139,6 +168,14 @@ export function PostDetailsScreen() {
         }
 
         void persistPostFeedback(currentPost.id, newIsSaved ? 'save' : 'unsave');
+        trackMobileAnalyticsEvent({
+            eventName: newIsSaved ? 'post_saved' : 'post_unsaved',
+            surface: 'post_detail',
+            properties: {
+                post_id: currentPost.id,
+                topic: currentPost.topic ?? null,
+            },
+        });
         setMenuVisible(false);
     };
 
@@ -167,6 +204,14 @@ export function PostDetailsScreen() {
         });
 
         void persistPostFeedback(currentPost.id, toVoteFeedbackType(newVote));
+        trackMobileAnalyticsEvent({
+            eventName: newVote === 1 ? 'post_upvoted' : 'post_vote_cleared',
+            surface: 'post_detail',
+            properties: {
+                post_id: currentPost.id,
+                topic: currentPost.topic ?? null,
+            },
+        });
     };
 
     const handleLike = () => {
@@ -186,6 +231,15 @@ export function PostDetailsScreen() {
         });
 
         void persistPostFeedback(currentPost.id, 'upvote');
+        trackMobileAnalyticsEvent({
+            eventName: 'post_upvoted',
+            surface: 'post_detail',
+            properties: {
+                post_id: currentPost.id,
+                topic: currentPost.topic ?? null,
+                interaction_type: 'double_tap_like',
+            },
+        });
     };
 
     const handleDownvote = () => {
@@ -213,11 +267,28 @@ export function PostDetailsScreen() {
         });
 
         void persistPostFeedback(currentPost.id, toVoteFeedbackType(newVote));
+        trackMobileAnalyticsEvent({
+            eventName: newVote === -1 ? 'post_downvoted' : 'post_vote_cleared',
+            surface: 'post_detail',
+            properties: {
+                post_id: currentPost.id,
+                topic: currentPost.topic ?? null,
+            },
+        });
     };
 
     const handleSendMessage = () => {
         const text = chatMessage.trim();
         if (!text) return;
+        trackMobileAnalyticsEvent({
+            eventName: 'curation_message_sent',
+            surface: 'post_detail',
+            properties: {
+                post_id: currentPost.id,
+                topic: currentPost.topic ?? null,
+                message_length: text.length,
+            },
+        });
 
         const userId = `${Date.now()}-${Math.random().toString(16).slice(2)}`;
         const assistantId = `${userId}-assistant`;
@@ -266,6 +337,15 @@ export function PostDetailsScreen() {
 
                 if (idx >= assistantText.length) {
                     if (typingIntervalRef.current) clearInterval(typingIntervalRef.current);
+                    trackMobileAnalyticsEvent({
+                        eventName: 'curation_reply_received',
+                        surface: 'post_detail',
+                        properties: {
+                            post_id: currentPost.id,
+                            topic: currentPost.topic ?? null,
+                            reply_length: assistantText.length,
+                        },
+                    });
                     requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true }));
                 }
             }, 25);
@@ -372,7 +452,17 @@ export function PostDetailsScreen() {
                             <TouchableOpacity
                                 style={styles.sourcesContainer}
                                 activeOpacity={0.7}
-                                onPress={() => setAreSourcesExpanded((prev) => !prev)}
+                                onPress={() => {
+                                    trackMobileAnalyticsEvent({
+                                        eventName: areSourcesExpanded ? 'sources_collapsed' : 'sources_expanded',
+                                        surface: 'post_detail',
+                                        properties: {
+                                            post_id: currentPost.id,
+                                            source_count: currentPost.sources?.length ?? 0,
+                                        },
+                                    });
+                                    setAreSourcesExpanded((prev) => !prev);
+                                }}
                             >
                                 <Text style={styles.sourcesText}>Sources</Text>
                                 <Ionicons
@@ -392,7 +482,19 @@ export function PostDetailsScreen() {
                                     <TouchableOpacity
                                         key={source.id}
                                         style={styles.sourceItem}
-                                        onPress={() => console.log('Open URL:', source.url)}
+                                        onPress={() => {
+                                            console.log('Open URL:', source.url);
+                                            trackMobileAnalyticsEvent({
+                                                eventName: 'post_source_opened',
+                                                surface: 'post_detail',
+                                                properties: {
+                                                    post_id: currentPost.id,
+                                                    source_id: source.id,
+                                                    source_name: source.sourceName ?? null,
+                                                    source_url: source.url,
+                                                },
+                                            });
+                                        }}
                                         activeOpacity={0.7}
                                     >
                                         {source.imageUrl && (

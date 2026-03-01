@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { IoCheckmark, IoCheckmarkDone } from "react-icons/io5";
+import { trackAnalyticsEvent } from "@/lib/analytics";
 
 export interface NotificationItemData {
     id: string;
@@ -38,7 +39,20 @@ export default function NotificationItem({
     );
 
     const mainContent = notification.href ? (
-        <Link href={notification.href} className="notification-main notification-link">
+        <Link
+            href={notification.href}
+            className="notification-main notification-link"
+            onClick={() => {
+                trackAnalyticsEvent({
+                    eventName: "notification_opened",
+                    surface: "notifications",
+                    properties: {
+                        notification_id: notification.id,
+                        href: notification.href,
+                    },
+                });
+            }}
+        >
             {content}
         </Link>
     ) : (

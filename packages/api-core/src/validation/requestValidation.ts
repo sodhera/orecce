@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ANALYTICS_PLATFORMS } from "../analytics/types";
 import { FEED_MODES, FEEDBACK_TYPES, POST_LENGTHS } from "../types/domain";
 
 export const generatePostRequestSchema = z.object({
@@ -61,4 +62,23 @@ export const reccesInteractionRequestSchema = z.object({
   slide_flip_count: z.number().int().min(1).max(100),
   max_slide_index: z.number().int().min(0).max(200).optional(),
   slide_count: z.number().int().min(1).max(200).optional()
+});
+
+export const analyticsEventSchema = z.object({
+  event_id: z.string().trim().min(8).max(200).regex(/^[A-Za-z0-9._:-]+$/),
+  event_name: z.string().trim().min(3).max(120).regex(/^[a-z0-9_]+$/),
+  platform: z.enum(ANALYTICS_PLATFORMS),
+  surface: z.string().trim().min(1).max(80).optional(),
+  occurred_at_ms: z.number().int().min(1),
+  session_id: z.string().trim().min(1).max(200).optional(),
+  anonymous_id: z.string().trim().min(1).max(200).optional(),
+  device_id: z.string().trim().min(1).max(200).optional(),
+  app_version: z.string().trim().min(1).max(80).optional(),
+  route_name: z.string().trim().min(1).max(200).optional(),
+  request_id: z.string().trim().min(1).max(200).optional(),
+  properties: z.record(z.string(), z.unknown()).default({})
+});
+
+export const analyticsBatchRequestSchema = z.object({
+  events: z.array(analyticsEventSchema).min(1).max(50)
 });

@@ -172,7 +172,7 @@ export async function listPosts(
     });
 }
 
-export type FeedbackType = "upvote" | "downvote" | "skip";
+export type FeedbackType = "upvote" | "downvote" | "skip" | "save" | "unsave";
 
 export type CurationChatRole = "user" | "assistant";
 

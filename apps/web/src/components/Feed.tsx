@@ -5,6 +5,7 @@ import Link from "next/link";
 import PostCard from "./PostCard";
 import { useFeed } from "@/hooks/useFeed";
 import { useAuthors } from "@/hooks/useAuthors";
+import { trackAnalyticsEvent } from "@/lib/analytics";
 
 interface FeedProps {
     mode: string;
@@ -32,6 +33,7 @@ export default function Feed({ mode, onModeChange }: FeedProps) {
     const feed = useFeed(mode === "ALL" ? null : mode);
     const loadMoreRef = useRef<HTMLDivElement | null>(null);
     const seenInSessionRef = useRef(new Set<string>());
+    const impressedInSessionRef = useRef(new Set<string>());
     const visibilityTimersRef = useRef(new Map<string, number>());
 
     useEffect(() => {
@@ -44,6 +46,13 @@ export default function Feed({ mode, onModeChange }: FeedProps) {
             (entries) => {
                 for (const entry of entries) {
                     if (entry.isIntersecting) {
+                        trackAnalyticsEvent({
+                            eventName: "feed_load_more_requested",
+                            surface: "feed",
+                            properties: {
+                                current_count: feed.items.length,
+                            },
+                        });
                         void feed.loadMore();
                         break;
                     }
@@ -64,7 +73,32 @@ export default function Feed({ mode, onModeChange }: FeedProps) {
                 for (const entry of entries) {
                     const element = entry.target as HTMLElement;
                     const postId = String(element.dataset.postId ?? "").trim();
-                    if (!postId || seenInSessionRef.current.has(postId)) {
+                    if (!postId) {
+                        continue;
+                    }
+
+                    if (
+                        entry.isIntersecting &&
+                        entry.intersectionRatio > SEEN_VISIBILITY_RATIO &&
+                        !impressedInSessionRef.current.has(postId)
+                    ) {
+                        impressedInSessionRef.current.add(postId);
+                        const matchingItem = feed.items.find((item) => item.post.id === postId);
+                        trackAnalyticsEvent({
+                            eventName: "feed_post_impression",
+                            surface: "feed",
+                            properties: {
+                                post_id: postId,
+                                author_name: matchingItem?.authorName ?? null,
+                                topic: matchingItem?.post.topic ?? null,
+                                match_reason: matchingItem?.matchReason ?? null,
+                                feed_position: feed.items.findIndex((item) => item.post.id === postId),
+                                visible_ratio: entry.intersectionRatio,
+                            },
+                        });
+                    }
+
+                    if (seenInSessionRef.current.has(postId)) {
                         continue;
                     }
 
@@ -77,6 +111,20 @@ export default function Feed({ mode, onModeChange }: FeedProps) {
                             seenInSessionRef.current.add(postId);
                             visibilityTimersRef.current.delete(postId);
                             feed.markAsSeen(postId);
+                            const matchingItem = feed.items.find((item) => item.post.id === postId);
+                            trackAnalyticsEvent({
+                                eventName: "feed_post_seen",
+                                surface: "feed",
+                                properties: {
+                                    post_id: postId,
+                                    author_name: matchingItem?.authorName ?? null,
+                                    topic: matchingItem?.post.topic ?? null,
+                                    match_reason: matchingItem?.matchReason ?? null,
+                                    feed_position: feed.items.findIndex((item) => item.post.id === postId),
+                                    dwell_ms: SEEN_IMPRESSION_MS,
+                                    visible_ratio: entry.intersectionRatio,
+                                },
+                            });
                         }, SEEN_IMPRESSION_MS);
                         visibilityTimersRef.current.set(postId, timerId);
                         continue;
@@ -103,6 +151,31 @@ export default function Feed({ mode, onModeChange }: FeedProps) {
             visibilityTimersRef.current.clear();
         };
     }, [feed.items, feed.markAsSeen]);
+
+    useEffect(() => {
+        if (!feed.loading && !feed.error && feed.items.length === 0) {
+            trackAnalyticsEvent({
+                eventName: "feed_empty_state_viewed",
+                surface: "feed",
+            });
+        }
+    }, [feed.error, feed.items.length, feed.loading]);
+
+    useEffect(() => {
+        if (feed.loading || feed.items.length > 0 || recommendedAuthors.length === 0) {
+            return;
+        }
+        for (const author of recommendedAuthors) {
+            trackAnalyticsEvent({
+                eventName: "discover_author_impression",
+                surface: "feed",
+                properties: {
+                    author_id: author.id,
+                    author_name: author.name,
+                },
+            });
+        }
+    }, [feed.items.length, feed.loading, recommendedAuthors]);
 
     return (
         <main className="feed">
@@ -219,10 +292,26 @@ export default function Feed({ mode, onModeChange }: FeedProps) {
                         className="sports-load-more-trigger"
                         role="button"
                         tabIndex={0}
-                        onClick={() => void feed.loadMore()}
+                        onClick={() => {
+                            trackAnalyticsEvent({
+                                eventName: "feed_load_more_requested",
+                                surface: "feed",
+                                properties: {
+                                    current_count: feed.items.length,
+                                },
+                            });
+                            void feed.loadMore();
+                        }}
                         onKeyDown={(event) => {
                             if (event.key === "Enter" || event.key === " ") {
                                 event.preventDefault();
+                                trackAnalyticsEvent({
+                                    eventName: "feed_load_more_requested",
+                                    surface: "feed",
+                                    properties: {
+                                        current_count: feed.items.length,
+                                    },
+                                });
                                 void feed.loadMore();
                             }
                         }}

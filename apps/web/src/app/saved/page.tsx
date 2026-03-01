@@ -16,6 +16,7 @@ import {
     BsCheck2,
     BsX,
 } from "react-icons/bs";
+import { trackAnalyticsEvent } from "@/lib/analytics";
 
 /* ── Collection Detail (posts inside a collection) ──────────── */
 
@@ -361,7 +362,18 @@ function CollectionsList({
                                 key={collection.id}
                                 type="button"
                                 className="collection-card"
-                                onClick={() => onSelect(collection)}
+                                onClick={() => {
+                                    trackAnalyticsEvent({
+                                        eventName: "collection_opened",
+                                        surface: "saved",
+                                        properties: {
+                                            collection_id: collection.id,
+                                            collection_name: collection.name,
+                                            post_count: collection.postCount,
+                                        },
+                                    });
+                                    onSelect(collection);
+                                }}
                             >
                                 <div className="collection-card-icon">
                                     <BsFolder2 size={22} />
@@ -423,7 +435,13 @@ function CollectionsList({
                             <button
                                 type="button"
                                 className="collection-card collection-card-new"
-                                onClick={() => setShowCreate(true)}
+                                onClick={() => {
+                                    trackAnalyticsEvent({
+                                        eventName: "collection_create_started",
+                                        surface: "saved",
+                                    });
+                                    setShowCreate(true);
+                                }}
                             >
                                 <div className="collection-card-icon new">
                                     <BsFolderPlus size={22} />

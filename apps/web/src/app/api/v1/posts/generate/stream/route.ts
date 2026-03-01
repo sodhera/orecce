@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { authenticate } from "@/app/api/middleware";
 import { getDeps } from "@/app/api/init";
+import { enforceWebRequestRateLimit } from "@/app/api/rateLimit";
 import { generatePostRequestSchema } from "@orecce/api-core/src/validation/requestValidation";
 import { normalizeProfileKey } from "@orecce/api-core/src/utils/text";
 import { ApiError } from "@orecce/api-core/src/types/errors";
@@ -8,6 +9,14 @@ import { ApiError } from "@orecce/api-core/src/types/errors";
 export async function POST(req: NextRequest) {
     try {
         const identity = await authenticate(req);
+        enforceWebRequestRateLimit({
+            scope: "posts_generate_stream",
+            actorId: identity.uid,
+            windowMs: 60_000,
+            maxRequests: 60,
+            code: "post_generation_rate_limited",
+            message: "Streaming post generation is temporarily capped. Please slow down and try again.",
+        });
         const body = await req.json();
         const parsed = generatePostRequestSchema.safeParse(body);
         if (!parsed.success) {

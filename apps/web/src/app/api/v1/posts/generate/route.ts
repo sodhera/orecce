@@ -1,12 +1,21 @@
 import { NextRequest } from "next/server";
 import { authenticate, ok, withErrorHandler } from "@/app/api/middleware";
 import { getDeps } from "@/app/api/init";
+import { enforceWebRequestRateLimit } from "@/app/api/rateLimit";
 import { generatePostRequestSchema } from "@orecce/api-core/src/validation/requestValidation";
 import { normalizeProfileKey } from "@orecce/api-core/src/utils/text";
 import { ApiError } from "@orecce/api-core/src/types/errors";
 
 export const POST = withErrorHandler(async (req: NextRequest) => {
     const identity = await authenticate(req);
+    enforceWebRequestRateLimit({
+        scope: "posts_generate",
+        actorId: identity.uid,
+        windowMs: 60_000,
+        maxRequests: 90,
+        code: "post_generation_rate_limited",
+        message: "Post generation is temporarily capped. Please slow down and try again.",
+    });
     const body = await req.json();
     const parsed = generatePostRequestSchema.safeParse(body);
     if (!parsed.success) {

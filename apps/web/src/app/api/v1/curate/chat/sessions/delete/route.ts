@@ -1,10 +1,19 @@
 import { NextRequest } from "next/server";
 import { authenticate, ok, withErrorHandler } from "@/app/api/middleware";
 import { getDeps } from "@/app/api/init";
+import { enforceWebRequestRateLimit } from "@/app/api/rateLimit";
 import { ApiError } from "@orecce/api-core/src/types/errors";
 
 export const POST = withErrorHandler(async (req: NextRequest) => {
     const identity = await authenticate(req);
+    enforceWebRequestRateLimit({
+        scope: "curate_chat_delete",
+        actorId: identity.uid,
+        windowMs: 10 * 60_000,
+        maxRequests: 20,
+        code: "curate_chat_delete_rate_limited",
+        message: "Curate chat deletes are temporarily capped. Please try again later.",
+    });
 
     const body = await req.json();
     const payload = body && typeof body === "object" ? (body as Record<string, unknown>) : {};

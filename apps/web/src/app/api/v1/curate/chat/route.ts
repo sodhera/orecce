@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { authenticate, ok, withErrorHandler } from "@/app/api/middleware";
+import { enforceWebCostRateLimit, enforceWebRequestRateLimit } from "@/app/api/rateLimit";
 import {
     getOpenAiApiKey,
     getOpenAiBaseUrl,
@@ -19,27 +20,16 @@ interface UpstreamAttemptFailure {
     body: string;
 }
 
-interface TokenUsageEvent {
-    atMs: number;
-    tokens: number;
-}
-
-interface UserUsageBucket {
-    requestTimestampsMs: number[];
-    tokenUsage: TokenUsageEvent[];
-}
-
 const MAX_MESSAGES = 14;
 const MAX_MESSAGE_CHARS = 700;
 const MAX_INPUT_TOKENS_PER_REQUEST = 1_600;
 const MAX_INPUT_TOKENS_PER_WINDOW = 5_500;
 const TOKEN_WINDOW_MS = 5 * 60_000;
 const MAX_REQUESTS_PER_WINDOW = 10;
-const REQUEST_WINDOW_MS = 60_000;
+const REQUEST_WINDOW_MS = 5 * 60_000;
 const ESTIMATED_CHARS_PER_TOKEN = 4;
 const CURATE_CHAT_MODEL = "gpt-5-mini";
 const FALLBACK_MODELS = ["gpt-4.1-mini"] as const;
-const usageByUser = new Map<string, UserUsageBucket>();
 
 function normalizeMessages(raw: unknown): ChatMessage[] {
     if (!Array.isArray(raw)) return [];
@@ -71,25 +61,6 @@ function estimateInputTokens(messages: ChatMessage[]): number {
     }, 0);
 }
 
-function pruneUsageBucket(bucket: UserUsageBucket, nowMs: number): UserUsageBucket {
-    bucket.requestTimestampsMs = bucket.requestTimestampsMs.filter(
-        (timestampMs) => nowMs - timestampMs < REQUEST_WINDOW_MS,
-    );
-    bucket.tokenUsage = bucket.tokenUsage.filter(
-        (event) => nowMs - event.atMs < TOKEN_WINDOW_MS,
-    );
-    return bucket;
-}
-
-function pruneStaleUsageBuckets(nowMs: number): void {
-    for (const [userId, bucket] of usageByUser.entries()) {
-        const pruned = pruneUsageBucket(bucket, nowMs);
-        if (!pruned.requestTimestampsMs.length && !pruned.tokenUsage.length) {
-            usageByUser.delete(userId);
-        }
-    }
-}
-
 function enforceCurateLimits(userId: string, inputTokens: number): void {
     if (inputTokens > MAX_INPUT_TOKENS_PER_REQUEST) {
         throw new ApiError(
@@ -99,34 +70,23 @@ function enforceCurateLimits(userId: string, inputTokens: number): void {
         );
     }
 
-    const nowMs = Date.now();
-    pruneStaleUsageBuckets(nowMs);
-
-    const bucket = pruneUsageBucket(
-        usageByUser.get(userId) ?? { requestTimestampsMs: [], tokenUsage: [] },
-        nowMs,
-    );
-
-    if (bucket.requestTimestampsMs.length >= MAX_REQUESTS_PER_WINDOW) {
-        throw new ApiError(
-            429,
-            "curate_chat_rate_limited",
-            "Too many curate requests right now. Please wait a minute and try again.",
-        );
-    }
-
-    const usedTokensInWindow = bucket.tokenUsage.reduce((sum, event) => sum + event.tokens, 0);
-    if (usedTokensInWindow + inputTokens > MAX_INPUT_TOKENS_PER_WINDOW) {
-        throw new ApiError(
-            429,
-            "curate_chat_token_limited",
-            "Curate usage is temporarily capped. Please try again in a few minutes.",
-        );
-    }
-
-    bucket.requestTimestampsMs.push(nowMs);
-    bucket.tokenUsage.push({ atMs: nowMs, tokens: inputTokens });
-    usageByUser.set(userId, bucket);
+    enforceWebRequestRateLimit({
+        scope: "curate_chat",
+        actorId: userId,
+        windowMs: REQUEST_WINDOW_MS,
+        maxRequests: MAX_REQUESTS_PER_WINDOW,
+        code: "curate_chat_rate_limited",
+        message: "Too many curate requests right now. Please wait a few minutes and try again.",
+    });
+    enforceWebCostRateLimit({
+        scope: "curate_chat_tokens",
+        actorId: userId,
+        windowMs: TOKEN_WINDOW_MS,
+        maxCost: MAX_INPUT_TOKENS_PER_WINDOW,
+        cost: inputTokens,
+        code: "curate_chat_token_limited",
+        message: "Curate usage is temporarily capped. Please try again in a few minutes.",
+    });
 }
 
 function extractResponseText(payload: unknown): string {

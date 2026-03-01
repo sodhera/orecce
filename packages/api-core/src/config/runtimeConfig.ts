@@ -159,3 +159,40 @@ export function getNewsCrawlerUserAgent(): string {
   }
   return "OrecceNewsBot/1.0 (+https://orecce.local/news-ingest)";
 }
+
+function parseOriginList(raw: string | undefined): string[] {
+  return String(raw ?? "")
+    .split(",")
+    .map((item) => item.trim().replace(/\/+$/, ""))
+    .filter(Boolean);
+}
+
+export function getCorsAllowedOrigins(): string[] {
+  const explicit = parseOriginList(process.env.CORS_ALLOWED_ORIGINS);
+  if (explicit.length) {
+    return explicit;
+  }
+
+  const derived = [
+    ...parseOriginList(process.env.APP_URL),
+    ...parseOriginList(process.env.WEB_APP_URL),
+    ...parseOriginList(process.env.NEXT_PUBLIC_APP_URL)
+  ];
+  if (derived.length) {
+    return Array.from(new Set(derived));
+  }
+
+  const nodeEnv = String(process.env.NODE_ENV ?? "").trim().toLowerCase();
+  if (nodeEnv !== "production") {
+    return [
+      "http://localhost:3000",
+      "http://127.0.0.1:3000",
+      "http://localhost:3001",
+      "http://127.0.0.1:3001",
+      "http://localhost:8081",
+      "http://127.0.0.1:8081"
+    ];
+  }
+
+  return [];
+}

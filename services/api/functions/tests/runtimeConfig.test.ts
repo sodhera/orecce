@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import {
+  getCorsAllowedOrigins,
   getNewsArticleConcurrency,
   getNewsArticleTimeoutMs,
   getNewsMaxArticlesPerSource,
@@ -137,5 +138,24 @@ describe("runtimeConfig", () => {
     expect(isSportsRefreshSchedulerEnabled()).toBe(false);
     expect(getSportsRefreshMaxUsers()).toBe(5000);
     expect(getSportsRefreshConcurrency()).toBe(1);
+  });
+
+  it("uses explicit CORS origins when configured", () => {
+    process.env.CORS_ALLOWED_ORIGINS = "https://app.orecce.com/, https://staging.orecce.com";
+    expect(getCorsAllowedOrigins()).toEqual([
+      "https://app.orecce.com",
+      "https://staging.orecce.com"
+    ]);
+  });
+
+  it("falls back to local origins outside production when CORS origins are unset", () => {
+    delete process.env.CORS_ALLOWED_ORIGINS;
+    delete process.env.APP_URL;
+    delete process.env.WEB_APP_URL;
+    delete process.env.NEXT_PUBLIC_APP_URL;
+    process.env.NODE_ENV = "test";
+
+    expect(getCorsAllowedOrigins()).toContain("http://localhost:3000");
+    expect(getCorsAllowedOrigins()).toContain("http://127.0.0.1:3000");
   });
 });

@@ -2,8 +2,14 @@ import cors from "cors";
 import { randomUUID } from "crypto";
 import express, { NextFunction, Request, Response } from "express";
 import { AuthIdentity, AuthVerifier } from "../auth/types";
-import { getNewsArticleTimeoutMs, getNewsCrawlerUserAgent, getNewsFeedTimeoutMs } from "../config/runtimeConfig";
+import {
+  getCorsAllowedOrigins,
+  getNewsArticleTimeoutMs,
+  getNewsCrawlerUserAgent,
+  getNewsFeedTimeoutMs
+} from "../config/runtimeConfig";
 import { NewsReadServiceContract } from "../news/newsReadTypes";
+import { enforceRequestRateLimit } from "../security/rateLimit";
 import { SportsNewsService } from "../news/sportsNewsService";
 import { UserSportsNewsService } from "../news/userSportsNewsService";
 import { PrefillService } from "../services/prefillService";
@@ -284,8 +290,28 @@ async function refreshSportsForUser(
 export function createApp(deps: CreateAppDeps): express.Express {
   const app = express();
   const isAiNewsEnabled = deps.isAiNewsEnabled !== false;
+  const allowedCorsOrigins = new Set(getCorsAllowedOrigins());
 
-  app.use(cors({ origin: true }));
+  app.use(
+    cors({
+      origin(origin, callback) {
+        const normalizedOrigin = String(origin ?? "").trim().replace(/\/+$/, "");
+        if (!normalizedOrigin || allowedCorsOrigins.has(normalizedOrigin)) {
+          callback(null, true);
+          return;
+        }
+        callback(null, false);
+      }
+    })
+  );
+  app.use((req, _res, next) => {
+    const origin = String(req.headers.origin ?? "").trim().replace(/\/+$/, "");
+    if (!origin || allowedCorsOrigins.has(origin)) {
+      next();
+      return;
+    }
+    next(new ApiError(403, "origin_forbidden", "Origin not allowed."));
+  });
   app.use(express.json({ limit: "1mb" }));
   app.use((req, res, next) => {
     const requestIdHeader = req.headers["x-request-id"];
@@ -506,6 +532,15 @@ export function createApp(deps: CreateAppDeps): express.Express {
         throw new ApiError(500, "server_misconfigured", "Prefill service is not configured.");
       }
 
+      enforceRequestRateLimit({
+        scope: "api:prefills_regenerate",
+        actorId: identity.uid,
+        windowMs: 30 * 60_000,
+        maxRequests: 3,
+        code: "prefill_regeneration_rate_limited",
+        message: "Prefill regeneration is temporarily capped. Please try again later."
+      });
+
       const summary = await deps.prefillService.regenerateCommonDatasetAndCopyToUser({
         userId: identity.uid,
         postsPerMode: parsed.data.posts_per_mode ?? deps.defaultPrefillPostsPerMode
@@ -531,6 +566,15 @@ export function createApp(deps: CreateAppDeps): express.Express {
       const identity = getAuthIdentity(res);
       const body = parsed.data;
       assertUserIdCompatible(body.user_id, identity.uid);
+
+      enforceRequestRateLimit({
+        scope: "api:prompt_preferences_set",
+        actorId: identity.uid,
+        windowMs: 10 * 60_000,
+        maxRequests: 30,
+        code: "prompt_preferences_rate_limited",
+        message: "Prompt preference updates are temporarily capped. Please try again later."
+      });
 
       const preferences = await deps.repository.setPromptPreferences(identity.uid, {
         biographyInstructions: body.biography_instructions,
@@ -567,6 +611,15 @@ export function createApp(deps: CreateAppDeps): express.Express {
       const body = parsed.data;
       assertUserIdCompatible(body.user_id, identity.uid);
 
+      enforceRequestRateLimit({
+        scope: "api:posts_generate",
+        actorId: identity.uid,
+        windowMs: 60_000,
+        maxRequests: 90,
+        code: "post_generation_rate_limited",
+        message: "Post generation is temporarily capped. Please slow down and try again."
+      });
+
       await ensureUserHasPrefills(deps, identity.uid, identity.email);
       const post = await deps.repository.getNextPrefillPost({
         userId: identity.uid,
@@ -595,6 +648,14 @@ export function createApp(deps: CreateAppDeps): express.Express {
     const identity = getAuthIdentity(res);
     try {
       assertUserIdCompatible(body.user_id, identity.uid);
+      enforceRequestRateLimit({
+        scope: "api:posts_generate_stream",
+        actorId: identity.uid,
+        windowMs: 60_000,
+        maxRequests: 60,
+        code: "post_generation_rate_limited",
+        message: "Streaming post generation is temporarily capped. Please slow down and try again."
+      });
       await ensureUserHasPrefills(deps, identity.uid, identity.email);
       const post = await deps.repository.getNextPrefillPost({
         userId: identity.uid,
@@ -687,6 +748,15 @@ export function createApp(deps: CreateAppDeps): express.Express {
       const body = parsed.data;
       assertUserIdCompatible(body.user_id, identity.uid);
 
+      enforceRequestRateLimit({
+        scope: "api:recces_recommendations",
+        actorId: identity.uid,
+        windowMs: 60_000,
+        maxRequests: 90,
+        code: "recommendation_rate_limited",
+        message: "Recommendation refresh is temporarily capped. Please try again shortly."
+      });
+
       const recommendations = await deps.reccesRecommendationService.recommend({
         userId: identity.uid,
         authorId: body.author_id,
@@ -719,6 +789,15 @@ export function createApp(deps: CreateAppDeps): express.Express {
       const body = parsed.data;
       assertUserIdCompatible(body.user_id, identity.uid);
 
+      enforceRequestRateLimit({
+        scope: "api:recces_interaction",
+        actorId: identity.uid,
+        windowMs: 60_000,
+        maxRequests: 240,
+        code: "recommendation_interaction_rate_limited",
+        message: "Recommendation interaction updates are temporarily capped. Please try again shortly."
+      });
+
       await deps.reccesRecommendationService.recordSlideInteractionSignal({
         userId: identity.uid,
         postId: body.post_id,
@@ -747,6 +826,15 @@ export function createApp(deps: CreateAppDeps): express.Express {
       const identity = getAuthIdentity(res);
       const body = parsed.data;
       assertUserIdCompatible(body.user_id, identity.uid);
+
+      enforceRequestRateLimit({
+        scope: "api:post_feedback",
+        actorId: identity.uid,
+        windowMs: 10 * 60_000,
+        maxRequests: 120,
+        code: "post_feedback_rate_limited",
+        message: "Feedback submissions are temporarily capped. Please try again later."
+      });
 
       const feedback = await deps.repository.saveFeedback({
         userId: identity.uid,
@@ -880,6 +968,14 @@ export function createApp(deps: CreateAppDeps): express.Express {
       const identity = getAuthIdentity(res);
 
       if (refresh) {
+        enforceRequestRateLimit({
+          scope: "api:sports_refresh",
+          actorId: identity.uid,
+          windowMs: 10 * 60_000,
+          maxRequests: 6,
+          code: "sports_refresh_rate_limited",
+          message: "Sports refresh is temporarily capped. Please try again later."
+        });
         await refreshSportsForUser(deps, {
           userId: identity.uid,
           sport,
@@ -917,6 +1013,14 @@ export function createApp(deps: CreateAppDeps): express.Express {
       const limitRaw = Number(req.body?.limit ?? req.query.limit ?? "8");
       const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(20, Math.floor(limitRaw))) : 8;
       const identity = getAuthIdentity(res);
+      enforceRequestRateLimit({
+        scope: "api:sports_refresh",
+        actorId: identity.uid,
+        windowMs: 10 * 60_000,
+        maxRequests: 6,
+        code: "sports_refresh_rate_limited",
+        message: "Sports refresh is temporarily capped. Please try again later."
+      });
       await refreshSportsForUser(deps, {
         userId: identity.uid,
         sport,

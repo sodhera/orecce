@@ -6,6 +6,7 @@ import type { Post, Slide } from "@/components/PostCard";
 import { sendPostFeedback } from "@/lib/api";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import type { Recce } from "@/lib/recces";
+import { readTabCache, writeTabCache } from "@/lib/tabCache";
 
 // ── Types ────────────────────────────────────────────────────────
 
@@ -68,12 +69,22 @@ interface UseFeedReturn {
     refresh: () => void;
 }
 
+interface PersistedFeedSnapshot {
+    userId: string | null;
+    scopeKey: string;
+    items: FeedPostState[];
+    hasMore: boolean;
+    nextOffset: number;
+}
+
 // ── Helpers ──────────────────────────────────────────────────────
 
 const PAGE_SIZE = 10;
 const MAX_SCAN_PAGES = 8;
 const SEEN_CACHE_LIMIT = 800;
 const FEED_SEEN_STORAGE_PREFIX = "orecce:feed:seen";
+const FEED_VIEW_CACHE_PREFIX = "orecce:web:feed:view:v1";
+const FEED_VIEW_CACHE_TTL_MS = 10 * 60 * 1000;
 
 async function requireUserId(): Promise<string> {
     const { data: { user }, error } = await supabase.auth.getUser();
@@ -84,6 +95,33 @@ async function requireUserId(): Promise<string> {
         throw new Error("Authentication required.");
     }
     return user.id;
+}
+
+async function getSessionUserId(): Promise<string | null> {
+    const {
+        data: { session },
+        error,
+    } = await supabase.auth.getSession();
+
+    if (error) {
+        throw new Error(error.message);
+    }
+
+    return session?.user?.id ?? null;
+}
+
+function getFeedScopeKey(
+    feedMode: FeedMode,
+    selectedRecceKey: string | null | undefined,
+    collectionId: string | null | undefined,
+): string {
+    return [
+        feedMode,
+        selectedRecceKey ?? "all",
+        collectionId ?? "none",
+    ]
+        .map((part) => encodeURIComponent(part))
+        .join(":");
 }
 
 function parseSlides(raw: unknown): Slide[] {
@@ -177,6 +215,7 @@ export function useFeed(
     const [loadingMore, setLoadingMore] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [hasMore, setHasMore] = useState(true);
+    const scopeKey = getFeedScopeKey(feedMode, selectedRecce?.key, collectionId);
     const offsetRef = useRef(0);
     const fetchIdRef = useRef(0);
     const userIdRef = useRef<string | null>(null);
@@ -184,6 +223,67 @@ export function useFeed(
     const seenOrderRef = useRef<string[]>([]);
     const seenIdSetRef = useRef(new Set<string>());
     const readPostIdsRef = useRef(new Set<string>());
+
+    const persistFeedSnapshot = useCallback((snapshot: {
+        items: FeedPostState[];
+        hasMore: boolean;
+        nextOffset: number;
+    }) => {
+        void (async () => {
+            try {
+                const userId = userIdRef.current ?? await getSessionUserId();
+                if (!userId) {
+                    return;
+                }
+
+                userIdRef.current = userId;
+                writeTabCache<PersistedFeedSnapshot>(
+                    `${FEED_VIEW_CACHE_PREFIX}:${scopeKey}`,
+                    {
+                        userId,
+                        scopeKey,
+                        items: snapshot.items,
+                        hasMore: snapshot.hasMore,
+                        nextOffset: snapshot.nextOffset,
+                    },
+                );
+            } catch {
+                // Ignore cache persistence failures.
+            }
+        })();
+    }, [scopeKey]);
+
+    const hydratePersistedFeed = useCallback(async (): Promise<{
+        hydrated: boolean;
+        isFresh: boolean;
+    }> => {
+        const sessionUserId = userIdRef.current ?? await getSessionUserId();
+        if (!sessionUserId) {
+            return { hydrated: false, isFresh: false };
+        }
+
+        const snapshot = readTabCache<PersistedFeedSnapshot>(
+            `${FEED_VIEW_CACHE_PREFIX}:${scopeKey}`,
+            FEED_VIEW_CACHE_TTL_MS,
+        );
+
+        if (
+            !snapshot ||
+            snapshot.value.userId !== sessionUserId ||
+            snapshot.value.scopeKey !== scopeKey
+        ) {
+            return { hydrated: false, isFresh: false };
+        }
+
+        userIdRef.current = sessionUserId;
+        setItems(snapshot.value.items);
+        setHasMore(snapshot.value.hasMore);
+        setLoading(false);
+        setError(null);
+        offsetRef.current = snapshot.value.nextOffset;
+
+        return { hydrated: true, isFresh: snapshot.isFresh };
+    }, [scopeKey]);
 
     const getUserId = useCallback(async () => {
         if (userIdRef.current) {
@@ -460,22 +560,53 @@ export function useFeed(
     }, [feedMode, fetchPage]);
 
     // ── Initial load ──
-    const loadInitial = useCallback(async () => {
+    const loadInitial = useCallback(async (force = false) => {
         const id = ++fetchIdRef.current;
-        setLoading(true);
+        let hydrated = false;
+        let isFresh = false;
+
+        if (!force) {
+            try {
+                const hydration = await hydratePersistedFeed();
+                hydrated = hydration.hydrated;
+                isFresh = hydration.isFresh;
+            } catch {
+                hydrated = false;
+                isFresh = false;
+            }
+        }
+
+        if (!hydrated) {
+            setLoading(true);
+            offsetRef.current = 0;
+        } else {
+            setLoading(false);
+        }
+
         setError(null);
-        offsetRef.current = 0;
         resetSeenCache();
 
         try {
             await hydrateSeenCache();
+
+            if (hydrated && isFresh && !force) {
+                void hydrateReadCache().catch(() => {});
+                return;
+            }
+
             await hydrateReadCache();
             const result = await fetchNovelPage(0, id, new Set<string>());
             if (!result) return;
 
             setItems(result.items);
-            setHasMore(!result.reachedEnd);
+            const nextHasMore = !result.reachedEnd;
+            setHasMore(nextHasMore);
             offsetRef.current = result.nextOffset;
+            persistFeedSnapshot({
+                items: result.items,
+                hasMore: nextHasMore,
+                nextOffset: result.nextOffset,
+            });
         } catch (err) {
             if (id === fetchIdRef.current) {
                 setError(err instanceof Error ? err.message : "Failed to load feed.");
@@ -483,7 +614,14 @@ export function useFeed(
         } finally {
             if (id === fetchIdRef.current) setLoading(false);
         }
-    }, [fetchNovelPage, hydrateReadCache, hydrateSeenCache, resetSeenCache]);
+    }, [
+        fetchNovelPage,
+        hydratePersistedFeed,
+        hydrateReadCache,
+        hydrateSeenCache,
+        persistFeedSnapshot,
+        resetSeenCache,
+    ]);
 
     useEffect(() => {
         void loadInitial();
@@ -500,12 +638,23 @@ export function useFeed(
             const result = await fetchNovelPage(offsetRef.current, id, existingIds);
             if (!result) return;
 
+            const nextHasMore = !result.reachedEnd;
+            const nextItems =
+                result.items.length > 0
+                    ? [...items, ...result.items]
+                    : items;
+
             if (result.items.length > 0) {
-                setItems((prev) => [...prev, ...result.items]);
+                setItems(nextItems);
             }
 
-            setHasMore(!result.reachedEnd);
+            setHasMore(nextHasMore);
             offsetRef.current = result.nextOffset;
+            persistFeedSnapshot({
+                items: nextItems,
+                hasMore: nextHasMore,
+                nextOffset: result.nextOffset,
+            });
         } catch (err) {
             if (id === fetchIdRef.current) {
                 setError(err instanceof Error ? err.message : "Failed to load more.");
@@ -513,7 +662,7 @@ export function useFeed(
         } finally {
             if (id === fetchIdRef.current) setLoadingMore(false);
         }
-    }, [fetchNovelPage, hasMore, items, loadingMore]);
+    }, [fetchNovelPage, hasMore, items, loadingMore, persistFeedSnapshot]);
 
     // ── Toggle like (optimistic) ──
     const toggleLike = useCallback((postId: string) => {
@@ -521,12 +670,16 @@ export function useFeed(
         if (!target) return;
 
         const optimisticLiked = !target.isLiked;
-        setItems((prev) =>
-            prev.map((item) =>
-                item.post.id === postId ? { ...item, isLiked: optimisticLiked } : item,
-            ),
+        const optimisticItems = items.map((item) =>
+            item.post.id === postId ? { ...item, isLiked: optimisticLiked } : item,
         );
+        setItems(optimisticItems);
         setError(null);
+        persistFeedSnapshot({
+            items: optimisticItems,
+            hasMore,
+            nextOffset: offsetRef.current,
+        });
 
         void (async () => {
             try {
@@ -558,18 +711,22 @@ export function useFeed(
                     },
                 });
             } catch (error) {
-                setItems((prev) =>
-                    prev.map((item) => {
-                        if (item.post.id !== postId || item.isLiked !== optimisticLiked) {
-                            return item;
-                        }
-                        return { ...item, isLiked: target.isLiked };
-                    }),
-                );
+                const revertedItems = optimisticItems.map((item) => {
+                    if (item.post.id !== postId || item.isLiked !== optimisticLiked) {
+                        return item;
+                    }
+                    return { ...item, isLiked: target.isLiked };
+                });
+                setItems(revertedItems);
                 setError(error instanceof Error ? error.message : "Failed to update like.");
+                persistFeedSnapshot({
+                    items: revertedItems,
+                    hasMore,
+                    nextOffset: offsetRef.current,
+                });
             }
         })();
-    }, [items]);
+    }, [hasMore, items, persistFeedSnapshot]);
 
     // ── Toggle save (optimistic) ──
     const toggleSave = useCallback((postId: string) => {
@@ -577,12 +734,16 @@ export function useFeed(
         if (!target) return;
 
         const optimisticSaved = !target.isSaved;
-        setItems((prev) =>
-            prev.map((item) =>
-                item.post.id === postId ? { ...item, isSaved: optimisticSaved } : item,
-            ),
+        const optimisticItems = items.map((item) =>
+            item.post.id === postId ? { ...item, isSaved: optimisticSaved } : item,
         );
+        setItems(optimisticItems);
         setError(null);
+        persistFeedSnapshot({
+            items: optimisticItems,
+            hasMore,
+            nextOffset: offsetRef.current,
+        });
 
         void (async () => {
             try {
@@ -618,18 +779,22 @@ export function useFeed(
                     },
                 });
             } catch (error) {
-                setItems((prev) =>
-                    prev.map((item) => {
-                        if (item.post.id !== postId || item.isSaved !== optimisticSaved) {
-                            return item;
-                        }
-                        return { ...item, isSaved: target.isSaved };
-                    }),
-                );
+                const revertedItems = optimisticItems.map((item) => {
+                    if (item.post.id !== postId || item.isSaved !== optimisticSaved) {
+                        return item;
+                    }
+                    return { ...item, isSaved: target.isSaved };
+                });
+                setItems(revertedItems);
                 setError(error instanceof Error ? error.message : "Failed to update saved state.");
+                persistFeedSnapshot({
+                    items: revertedItems,
+                    hasMore,
+                    nextOffset: offsetRef.current,
+                });
             }
         })();
-    }, [items]);
+    }, [hasMore, items, persistFeedSnapshot]);
 
     // ── Mark as read (fire-and-forget) ──
     const markAsSeen = useCallback((postId: string) => {
@@ -647,12 +812,16 @@ export function useFeed(
         markAsSeen(postId);
 
         const optimisticRead = true;
-        setItems((prev) =>
-            prev.map((item) =>
-                item.post.id === postId ? { ...item, isRead: optimisticRead } : item,
-            ),
+        const optimisticItems = items.map((item) =>
+            item.post.id === postId ? { ...item, isRead: optimisticRead } : item,
         );
+        setItems(optimisticItems);
         setError(null);
+        persistFeedSnapshot({
+            items: optimisticItems,
+            hasMore,
+            nextOffset: offsetRef.current,
+        });
 
         void (async () => {
             try {
@@ -674,18 +843,22 @@ export function useFeed(
                     },
                 });
             } catch (error) {
-                setItems((prev) =>
-                    prev.map((item) => {
-                        if (item.post.id !== postId || item.isRead !== optimisticRead) {
-                            return item;
-                        }
-                        return { ...item, isRead: target.isRead };
-                    }),
-                );
+                const revertedItems = optimisticItems.map((item) => {
+                    if (item.post.id !== postId || item.isRead !== optimisticRead) {
+                        return item;
+                    }
+                    return { ...item, isRead: target.isRead };
+                });
+                setItems(revertedItems);
                 setError(error instanceof Error ? error.message : "Failed to mark post as read.");
+                persistFeedSnapshot({
+                    items: revertedItems,
+                    hasMore,
+                    nextOffset: offsetRef.current,
+                });
             }
         })();
-    }, [items, markAsSeen]);
+    }, [hasMore, items, markAsSeen, persistFeedSnapshot]);
 
     return {
         items,
@@ -698,6 +871,8 @@ export function useFeed(
         toggleSave,
         markAsSeen,
         markAsRead,
-        refresh: loadInitial,
+        refresh: () => {
+            void loadInitial(true);
+        },
     };
 }

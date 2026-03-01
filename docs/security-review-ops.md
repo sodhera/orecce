@@ -28,7 +28,7 @@ When updating this file:
 | Identity and authentication | Yellow | Supabase bearer verification exists in the main API paths, but local-mode seams still exist in core code and require strict environment gating. |
 | Authorization and database policy model | Yellow | Web client RLS tables and policies are now mirrored into the canonical schema and forward migration path; web Recce follows now hit both `user_author_follows` and `user_topic_follows`, but the full route/table authorization matrix is still missing. |
 | Mobile client and session handling | Yellow | iOS arbitrary loads were removed in favor of local-only ATS exceptions, but secure-storage review and privacy logging review remain open. |
-| Web browser surface | Yellow | Authenticated flows and server routes exist, but CSP and browser security headers are not yet codified. |
+| Web browser surface | Yellow | Authenticated flows and server routes exist, and low-sensitivity feed/discover/collection snapshots now resume from sessionStorage, but CSP and browser security headers are not yet codified. |
 | Core API hardening | Yellow | CORS is now allowlisted and several costly/write-heavy routes have request budgets, but protections are still in-memory only. |
 | LLM and external fetch surfaces | Yellow | Curate chat and several mutation paths are budgeted, but outbound fetch controls, prompt-injection review, and broader cost controls still need work. |
 | Secrets and configuration | Yellow | Service-role keys remain server-side and CORS config is now explicit, but secret-rotation and least-privilege work remain open. |
@@ -61,6 +61,7 @@ When updating this file:
 - Explicit API CORS allowlist with local-development defaults
 - Canonical RLS and policy definitions for web client tables in the base schema and forward migration path
 - Browser-side follow writes for both author and topic Recces, backed by Supabase RLS on `user_author_follows` and `user_topic_follows`
+- Tab-scoped sessionStorage cache for low-sensitivity feed, Recce, and collection snapshots, with no auth tokens stored in the new cache layer
 - Request budgets on curate chat plus other costly and write-heavy web/API routes
 - Structured route logging with request IDs
 - Local-only iOS transport exceptions instead of global arbitrary-load allowance
@@ -127,3 +128,4 @@ When updating this file:
 - Tightened iOS transport security to local-only development exceptions.
 - Added agent instructions to keep security docs aligned with feature work.
 - Expanded the web Recce follow surface to include topic follows via `user_topic_follows`, making that client-exposed RLS path part of the current security inventory.
+- Added a tab-scoped web cache for feed, Recce, and collection snapshots and documented that it stores low-sensitivity UI data only, not auth tokens.

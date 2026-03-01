@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { buildRecceKey, type Recce } from "@/lib/recces";
+import { readTabCache, writeTabCache } from "@/lib/tabCache";
 
 interface AuthorRow {
     id: string;
@@ -27,12 +28,23 @@ interface UseReccesReturn {
     toggleFollow: (recce: Recce) => void;
 }
 
+interface PersistedReccesSnapshot {
+    userId: string | null;
+    recces: Recce[];
+    followedKeys: string[];
+}
+
+const RECCES_CACHE_KEY = "orecce:web:recces:v1";
+const RECCES_CACHE_TTL_MS = 15 * 60 * 1000;
+
 let cachedRecces: Recce[] = [];
 let cachedFollowedKeys = new Set<string>();
 let cachedLoading = false;
 let cachedLoaded = false;
 let cachedError: string | null = null;
 let loadPromise: Promise<void> | null = null;
+let cachedSavedAt = 0;
+let cacheHydrated = false;
 const listeners = new Set<() => void>();
 
 function notifyListeners() {
@@ -70,7 +82,74 @@ function parseErrorMessage(error: unknown, fallback: string): string {
     return error instanceof Error && error.message.trim() ? error.message : fallback;
 }
 
-async function fetchReccesSnapshot(): Promise<{ recces: Recce[]; followedKeys: Set<string> }> {
+function cacheIsFresh(): boolean {
+    return cachedSavedAt > 0 && Date.now() - cachedSavedAt <= RECCES_CACHE_TTL_MS;
+}
+
+async function getSessionUserId(): Promise<string | null> {
+    const {
+        data: { session },
+        error,
+    } = await supabase.auth.getSession();
+
+    if (error) {
+        throw new Error(error.message);
+    }
+
+    return session?.user?.id ?? null;
+}
+
+function persistSnapshot(userId: string | null): void {
+    writeTabCache<PersistedReccesSnapshot>(RECCES_CACHE_KEY, {
+        userId,
+        recces: cachedRecces,
+        followedKeys: Array.from(cachedFollowedKeys),
+    });
+    cachedSavedAt = Date.now();
+}
+
+function persistSnapshotForCurrentSession(): void {
+    void (async () => {
+        try {
+            persistSnapshot(await getSessionUserId());
+        } catch {
+            // Ignore cache persistence failures.
+        }
+    })();
+}
+
+async function hydratePersistedState(): Promise<boolean> {
+    if (cacheHydrated) {
+        return cacheIsFresh();
+    }
+
+    cacheHydrated = true;
+
+    const sessionUserId = await getSessionUserId();
+    const snapshot = readTabCache<PersistedReccesSnapshot>(
+        RECCES_CACHE_KEY,
+        RECCES_CACHE_TTL_MS,
+    );
+
+    if (!snapshot || snapshot.value.userId !== sessionUserId) {
+        return false;
+    }
+
+    cachedRecces = snapshot.value.recces;
+    cachedFollowedKeys = new Set<string>(snapshot.value.followedKeys);
+    cachedLoading = false;
+    cachedLoaded = true;
+    cachedError = null;
+    cachedSavedAt = snapshot.savedAt;
+
+    return snapshot.isFresh;
+}
+
+async function fetchReccesSnapshot(): Promise<{
+    userId: string | null;
+    recces: Recce[];
+    followedKeys: Set<string>;
+}> {
     const [
         { data: authorRows, error: authorError },
         { data: topicRows, error: topicError },
@@ -97,6 +176,8 @@ async function fetchReccesSnapshot(): Promise<{ recces: Recce[]; followedKeys: S
         throw new Error(userError.message);
     }
 
+    const userId = user?.id ?? null;
+
     const authorRecces = ((authorRows ?? []) as AuthorRow[]).map((author) => ({
         id: author.id,
         key: buildRecceKey("author", author.id),
@@ -122,7 +203,7 @@ async function fetchReccesSnapshot(): Promise<{ recces: Recce[]; followedKeys: S
     );
 
     let followedKeys = new Set<string>();
-    if (user) {
+    if (userId) {
         const [
             { data: authorFollowRows, error: authorFollowError },
             { data: topicFollowRows, error: topicFollowError },
@@ -130,11 +211,11 @@ async function fetchReccesSnapshot(): Promise<{ recces: Recce[]; followedKeys: S
             supabase
                 .from("user_author_follows")
                 .select("author_id")
-                .eq("user_id", user.id),
+                .eq("user_id", userId),
             supabase
                 .from("user_topic_follows")
                 .select("topic_id")
-                .eq("user_id", user.id),
+                .eq("user_id", userId),
         ]);
 
         if (authorFollowError) {
@@ -150,18 +231,23 @@ async function fetchReccesSnapshot(): Promise<{ recces: Recce[]; followedKeys: S
         ]);
     }
 
-    return { recces, followedKeys };
+    return { userId, recces, followedKeys };
 }
 
 function ensureLoaded(force = false): Promise<void> {
-    if (cachedLoaded && !force) {
+    if (cachedLoaded && !force && cacheIsFresh()) {
         return Promise.resolve();
     }
     if (loadPromise && !force) {
         return loadPromise;
     }
 
-    setCachedState({ loading: true, error: null });
+    const keepVisibleState = cachedLoaded && !force;
+    if (keepVisibleState) {
+        setCachedState({ error: null });
+    } else {
+        setCachedState({ loading: true, error: null });
+    }
 
     loadPromise = (async () => {
         try {
@@ -173,6 +259,7 @@ function ensureLoaded(force = false): Promise<void> {
                 loaded: true,
                 error: null,
             });
+            persistSnapshot(snapshot.userId);
         } catch (error) {
             setCachedState({
                 loading: false,
@@ -195,6 +282,8 @@ export function useRecces(): UseReccesReturn {
     const [error, setError] = useState<string | null>(cachedError);
 
     useEffect(() => {
+        let cancelled = false;
+
         const syncFromCache = () => {
             setRecces(cachedRecces);
             setFollowedKeys(new Set(cachedFollowedKeys));
@@ -203,18 +292,41 @@ export function useRecces(): UseReccesReturn {
         };
 
         listeners.add(syncFromCache);
-        syncFromCache();
-        void ensureLoaded();
+        void (async () => {
+            try {
+                const isFresh = await hydratePersistedState();
+                if (cancelled) {
+                    return;
+                }
+                syncFromCache();
+                if (!isFresh) {
+                    void ensureLoaded().catch(() => {});
+                }
+            } catch {
+                if (cancelled) {
+                    return;
+                }
+                syncFromCache();
+                void ensureLoaded().catch(() => {});
+            }
+        })();
 
         return () => {
+            cancelled = true;
             listeners.delete(syncFromCache);
         };
     }, []);
 
     useEffect(() => {
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
-            setCachedState({ loaded: false });
-            void ensureLoaded(true);
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+            cacheHydrated = false;
+            cachedSavedAt = 0;
+            setCachedState(
+                event === "SIGNED_OUT"
+                    ? { followedKeys: new Set<string>(), loaded: false }
+                    : { loaded: false },
+            );
+            void ensureLoaded(true).catch(() => {});
         });
         return () => {
             subscription.unsubscribe();
@@ -233,14 +345,12 @@ export function useRecces(): UseReccesReturn {
         }
 
         setCachedState({ followedKeys: next, error: null });
+        persistSnapshotForCurrentSession();
 
         void (async () => {
             try {
-                const { data: { user }, error: userError } = await supabase.auth.getUser();
-                if (userError) {
-                    throw new Error(userError.message);
-                }
-                if (!user) {
+                const userId = await getSessionUserId();
+                if (!userId) {
                     throw new Error("You need to sign in to follow recces.");
                 }
 
@@ -249,14 +359,14 @@ export function useRecces(): UseReccesReturn {
                         const { error: deleteError } = await supabase
                             .from("user_author_follows")
                             .delete()
-                            .match({ user_id: user.id, author_id: recce.id });
+                            .match({ user_id: userId, author_id: recce.id });
                         if (deleteError) {
                             throw new Error(deleteError.message);
                         }
                     } else {
                         const { error: insertError } = await supabase
                             .from("user_author_follows")
-                            .insert({ user_id: user.id, author_id: recce.id });
+                            .insert({ user_id: userId, author_id: recce.id });
                         if (insertError) {
                             throw new Error(insertError.message);
                         }
@@ -265,18 +375,20 @@ export function useRecces(): UseReccesReturn {
                     const { error: deleteError } = await supabase
                         .from("user_topic_follows")
                         .delete()
-                        .match({ user_id: user.id, topic_id: recce.id });
+                        .match({ user_id: userId, topic_id: recce.id });
                     if (deleteError) {
                         throw new Error(deleteError.message);
                     }
                 } else {
                     const { error: insertError } = await supabase
                         .from("user_topic_follows")
-                        .insert({ user_id: user.id, topic_id: recce.id });
+                        .insert({ user_id: userId, topic_id: recce.id });
                     if (insertError) {
                         throw new Error(insertError.message);
                     }
                 }
+
+                persistSnapshot(userId);
 
                 trackAnalyticsEvent({
                     eventName: isFollowing ? "recce_unfollowed" : "recce_followed",
@@ -293,6 +405,7 @@ export function useRecces(): UseReccesReturn {
                     followedKeys: previous,
                     error: parseErrorMessage(error, "Failed to update recce follow."),
                 });
+                persistSnapshotForCurrentSession();
             }
         })();
     }, []);

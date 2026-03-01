@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { trackAnalyticsEvent } from "@/lib/analytics";
+import { readTabCache, writeTabCache } from "@/lib/tabCache";
 
 export interface Collection {
     id: string;
@@ -23,6 +24,14 @@ interface UseCollectionsReturn {
     refresh: () => void;
 }
 
+interface PersistedCollectionsSnapshot {
+    userId: string | null;
+    collections: Collection[];
+}
+
+const COLLECTIONS_CACHE_KEY = "orecce:web:collections:v1";
+const COLLECTIONS_CACHE_TTL_MS = 15 * 60 * 1000;
+
 async function requireUserId(): Promise<string> {
     const {
         data: { user },
@@ -31,6 +40,19 @@ async function requireUserId(): Promise<string> {
     if (error) throw new Error(error.message);
     if (!user) throw new Error("Authentication required.");
     return user.id;
+}
+
+async function getSessionUserId(): Promise<string | null> {
+    const {
+        data: { session },
+        error,
+    } = await supabase.auth.getSession();
+
+    if (error) {
+        throw new Error(error.message);
+    }
+
+    return session?.user?.id ?? null;
 }
 
 export function useCollections(): UseCollectionsReturn {
@@ -42,9 +64,50 @@ export function useCollections(): UseCollectionsReturn {
     const defaultCollectionId =
         collections.find((c) => c.name === "Default Collection")?.id ?? null;
 
-    const fetchCollections = useCallback(async () => {
+    const persistCollections = useCallback((nextCollections: Collection[]) => {
+        void (async () => {
+            try {
+                const userId = await getSessionUserId();
+                if (!userId) {
+                    return;
+                }
+
+                writeTabCache<PersistedCollectionsSnapshot>(COLLECTIONS_CACHE_KEY, {
+                    userId,
+                    collections: nextCollections,
+                });
+            } catch {
+                // Ignore cache persistence failures.
+            }
+        })();
+    }, []);
+
+    const hydratePersistedCollections = useCallback(async (): Promise<{
+        hydrated: boolean;
+        isFresh: boolean;
+    }> => {
+        const userId = await getSessionUserId();
+        const snapshot = readTabCache<PersistedCollectionsSnapshot>(
+            COLLECTIONS_CACHE_KEY,
+            COLLECTIONS_CACHE_TTL_MS,
+        );
+
+        if (!snapshot || snapshot.value.userId !== userId) {
+            return { hydrated: false, isFresh: false };
+        }
+
+        setCollections(snapshot.value.collections);
+        setLoading(false);
+        setError(null);
+
+        return { hydrated: true, isFresh: snapshot.isFresh };
+    }, []);
+
+    const fetchCollections = useCallback(async ({ quiet = false }: { quiet?: boolean } = {}) => {
         const id = ++fetchIdRef.current;
-        setLoading(true);
+        if (!quiet) {
+            setLoading(true);
+        }
         setError(null);
 
         try {
@@ -64,15 +127,16 @@ export function useCollections(): UseCollectionsReturn {
                 updated_at: string;
             }>;
 
-            setCollections(
-                rows.map((row) => ({
-                    id: row.collection_id,
-                    name: row.collection_name,
-                    postCount: Number(row.post_count),
-                    createdAt: row.created_at,
-                    updatedAt: row.updated_at,
-                })),
-            );
+            const nextCollections = rows.map((row) => ({
+                id: row.collection_id,
+                name: row.collection_name,
+                postCount: Number(row.post_count),
+                createdAt: row.created_at,
+                updatedAt: row.updated_at,
+            }));
+
+            setCollections(nextCollections);
+            persistCollections(nextCollections);
         } catch (err) {
             if (id === fetchIdRef.current) {
                 setError(
@@ -80,13 +144,42 @@ export function useCollections(): UseCollectionsReturn {
                 );
             }
         } finally {
-            if (id === fetchIdRef.current) setLoading(false);
+            if (id === fetchIdRef.current && !quiet) {
+                setLoading(false);
+            }
         }
-    }, []);
+    }, [persistCollections]);
 
     useEffect(() => {
-        void fetchCollections();
-    }, [fetchCollections]);
+        let cancelled = false;
+
+        void (async () => {
+            try {
+                const { hydrated, isFresh } = await hydratePersistedCollections();
+                if (cancelled) {
+                    return;
+                }
+
+                if (!hydrated) {
+                    void fetchCollections();
+                    return;
+                }
+
+                if (!isFresh) {
+                    void fetchCollections({ quiet: true });
+                }
+            } catch {
+                if (cancelled) {
+                    return;
+                }
+                void fetchCollections();
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [fetchCollections, hydratePersistedCollections]);
 
     const createCollection = useCallback(
         async (name: string): Promise<Collection | null> => {
@@ -111,7 +204,11 @@ export function useCollections(): UseCollectionsReturn {
                     updatedAt: data.updated_at,
                 };
 
-                setCollections((prev) => [...prev, newCollection]);
+                setCollections((prev) => {
+                    const nextCollections = [...prev, newCollection];
+                    persistCollections(nextCollections);
+                    return nextCollections;
+                });
                 trackAnalyticsEvent({
                     eventName: "collection_created",
                     surface: "saved",
@@ -137,9 +234,13 @@ export function useCollections(): UseCollectionsReturn {
             if (!trimmed) return false;
 
             // Optimistic update
-            setCollections((prev) =>
-                prev.map((c) => (c.id === id ? { ...c, name: trimmed } : c)),
-            );
+            setCollections((prev) => {
+                const nextCollections = prev.map((c) =>
+                    c.id === id ? { ...c, name: trimmed } : c,
+                );
+                persistCollections(nextCollections);
+                return nextCollections;
+            });
 
             try {
                 const { error: updateError } = await supabase
@@ -159,14 +260,14 @@ export function useCollections(): UseCollectionsReturn {
                 return true;
             } catch (err) {
                 // Revert
-                void fetchCollections();
+                void fetchCollections({ quiet: true });
                 setError(
                     err instanceof Error ? err.message : "Failed to rename collection.",
                 );
                 return false;
             }
         },
-        [fetchCollections],
+        [fetchCollections, persistCollections],
     );
 
     const deleteCollection = useCallback(
@@ -176,7 +277,11 @@ export function useCollections(): UseCollectionsReturn {
             if (!target || target.name === "Default Collection") return false;
 
             // Optimistic remove
-            setCollections((prev) => prev.filter((c) => c.id !== id));
+            setCollections((prev) => {
+                const nextCollections = prev.filter((c) => c.id !== id);
+                persistCollections(nextCollections);
+                return nextCollections;
+            });
 
             try {
                 const { error: deleteError } = await supabase
@@ -196,14 +301,14 @@ export function useCollections(): UseCollectionsReturn {
                 return true;
             } catch (err) {
                 // Revert
-                void fetchCollections();
+                void fetchCollections({ quiet: true });
                 setError(
                     err instanceof Error ? err.message : "Failed to delete collection.",
                 );
                 return false;
             }
         },
-        [collections, fetchCollections],
+        [collections, fetchCollections, persistCollections],
     );
 
     return {
@@ -214,6 +319,8 @@ export function useCollections(): UseCollectionsReturn {
         createCollection,
         renameCollection,
         deleteCollection,
-        refresh: fetchCollections,
+        refresh: () => {
+            void fetchCollections();
+        },
     };
 }

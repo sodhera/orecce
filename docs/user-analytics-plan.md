@@ -340,7 +340,7 @@ Status: mostly complete
 
 - Feed impressions, seen, opens, reads, slide interactions, votes, saves, shares, and source opens are instrumented.
 - Auth success/failure is instrumented.
-- Discover Recce impressions and author/topic follows are instrumented, and the web Discover surface now exposes those Recces through a category dropdown.
+- Discover Recce impressions and author/topic follows are instrumented, and the web Discover surface now exposes those Recces through expandable categories.
 - Saved and collection actions are instrumented.
 
 ### Phase 2: Instrument secondary journeys

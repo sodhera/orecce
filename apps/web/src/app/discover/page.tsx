@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import Sidebar from "@/components/Sidebar";
 import { useRecces } from "@/hooks/useRecces";
+import { useTabState } from "@/hooks/useTabState";
 import { useAuth } from "@/context/AuthContext";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import {
@@ -22,7 +23,10 @@ interface RecceSection {
 export default function DiscoverPage() {
     const { isAuthenticated } = useAuth();
     const { recces, followedKeys, loading, error, toggleFollow } = useRecces();
-    const [expandedCategory, setExpandedCategory] = useState<RecceCategoryKey | null>(null);
+    const [expandedCategory, setExpandedCategory] = useTabState<RecceCategoryKey | null>(
+        "orecce:web:page:discover:expanded-category:v1",
+        null,
+    );
 
     const sections = useMemo<RecceSection[]>(() => {
         const grouped = new Map<RecceCategoryKey, Recce[]>();
@@ -62,6 +66,17 @@ export default function DiscoverPage() {
             });
         }
     }, [error, loading, recces]);
+
+    useEffect(() => {
+        if (!expandedCategory) {
+            return;
+        }
+
+        const categoryStillExists = sections.some((section) => section.key === expandedCategory);
+        if (!categoryStillExists) {
+            setExpandedCategory(null);
+        }
+    }, [expandedCategory, sections, setExpandedCategory]);
 
     return (
         <div className="app-layout">

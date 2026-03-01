@@ -1,15 +1,17 @@
 "use client";
 
-import { useState } from "react";
 import Sidebar from "@/components/Sidebar";
 import NotificationItem, {
     type NotificationItemData,
 } from "@/components/NotificationItem";
+import { useTabState } from "@/hooks/useTabState";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 
 export default function NotificationsPage() {
-    const [notifications, setNotifications] =
-        useState<NotificationItemData[]>([]);
+    const [notifications, setNotifications] = useTabState<NotificationItemData[]>(
+        "orecce:web:page:notifications:list:v1",
+        [],
+    );
 
     const handleMarkRead = (notificationId: string) => {
         trackAnalyticsEvent({

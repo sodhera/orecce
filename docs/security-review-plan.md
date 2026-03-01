@@ -38,7 +38,7 @@ Implemented on 2026-03-01:
 | Surface | Assets | Primary risks | Expected controls |
 | --- | --- | --- | --- |
 | Mobile (`apps/mobile`) | Supabase session state, local preferences, analytics/session identifiers, API base URL, deep-link and OAuth flows | Token theft, insecure transport, auth bypass, unsafe local storage, over-logging | Secure session-storage review, transport hardening, route and auth checks, dependency review, privacy-safe logging |
-| Web (`apps/web`) | Browser session, direct Supabase client access, Next.js API routes, low-sensitivity browser storage for tab-resume caches, user feedback and curation flows | XSS, broken access control, RLS drift, CSRF assumptions, weak browser headers, over-broad client data access | CSP/header strategy, route authz review, RLS verification, input/output handling review, low-sensitivity client storage |
+| Web (`apps/web`) | Browser session, direct Supabase client access, Next.js API routes, low-sensitivity browser storage for route state and tab-resume caches, user feedback and curation flows | XSS, broken access control, RLS drift, CSRF assumptions, weak browser headers, over-broad client data access | CSP/header strategy, route authz review, RLS verification, input/output handling review, low-sensitivity client storage |
 | API (`services/api` and `packages/api-core`) | Bearer auth, write endpoints, recommendation state, LLM and news fetch paths, request logs | Broken authz, permissive CORS, SSRF, abuse/cost amplification, unsafe logging, prompt injection | Authn/authz matrix, origin allowlist, rate limiting, payload validation, outbound fetch restrictions, structured redaction |
 | Database and Supabase | User tables, analytics, feedback, recommendation state, views, service-role access | Missing or drifting RLS, excessive service-role blast radius, migration drift, data retention issues | Canonical forward migrations, RLS/policy tests, least-privilege review, retention rules, schema ownership clarity |
 | External integrations | OpenAI, RSS/news fetches, article scraping, Google auth | Secret leakage, prompt injection, unsafe URL fetching, provider misconfiguration, third-party drift | Secret management, URL allowlists, timeout and content limits, provider-specific hardening, audit logging |
@@ -58,7 +58,7 @@ Current web client direct-write scope now includes both author and topic follow 
 
 ### 3. Client storage, browser, and transport security
 
-Review local storage, sessionStorage, AsyncStorage, deep links, browser headers, TLS assumptions, mobile transport settings, and any client-side caching of user data. The output should identify where tokens or sensitive state live, whether cached data stays low sensitivity, and whether transport or origin rules are too permissive.
+Review local storage, sessionStorage, AsyncStorage, deep links, browser headers, TLS assumptions, mobile transport settings, and any client-side caching of user data. The output should identify where tokens or sensitive state live, whether cached data stays low sensitivity, whether password fields are excluded from browser caches, and whether transport or origin rules are too permissive.
 
 ### 4. Input validation, output handling, and logging
 

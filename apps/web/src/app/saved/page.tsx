@@ -7,6 +7,7 @@ import PostCard from "@/components/PostCard";
 import { useFeed } from "@/hooks/useFeed";
 import { useCollections } from "@/hooks/useCollections";
 import type { Collection } from "@/hooks/useCollections";
+import { useTabState } from "@/hooks/useTabState";
 import {
     BsArrowLeft,
     BsFolder2,
@@ -463,10 +464,12 @@ function CollectionsList({
 /* ── Saved Page (top-level) ─────────────────────────────────── */
 
 export default function SavedPage() {
-    const [mode, setMode] = useState("ALL");
-    const [profile, setProfile] = useState("Steve Jobs");
-    const [selectedCollection, setSelectedCollection] =
-        useState<Collection | null>(null);
+    const [mode, setMode] = useTabState("orecce:web:page:saved:mode:v1", "ALL");
+    const [profile, setProfile] = useTabState("orecce:web:page:saved:profile:v1", "Steve Jobs");
+    const [selectedCollectionId, setSelectedCollectionId] = useTabState<string | null>(
+        "orecce:web:page:saved:selected-collection-id:v1",
+        null,
+    );
 
     const {
         collections,
@@ -478,10 +481,20 @@ export default function SavedPage() {
         refresh,
     } = useCollections();
 
+    const selectedCollection = selectedCollectionId
+        ? collections.find((collection) => collection.id === selectedCollectionId) ?? null
+        : null;
+
+    useEffect(() => {
+        if (!loading && selectedCollectionId && !selectedCollection) {
+            setSelectedCollectionId(null);
+        }
+    }, [loading, selectedCollection, selectedCollectionId, setSelectedCollectionId]);
+
     const handleBack = useCallback(() => {
-        setSelectedCollection(null);
+        setSelectedCollectionId(null);
         refresh();
-    }, [refresh]);
+    }, [refresh, setSelectedCollectionId]);
 
     return (
         <div className="app-layout">
@@ -500,7 +513,7 @@ export default function SavedPage() {
                     collections={collections}
                     loading={loading}
                     error={error}
-                    onSelect={setSelectedCollection}
+                    onSelect={(collection) => setSelectedCollectionId(collection.id)}
                     onCreate={createCollection}
                 />
             )}

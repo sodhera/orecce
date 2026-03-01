@@ -27,7 +27,7 @@ When updating this file:
 | Mobile auth and onboarding | Yellow | Auth, welcome-entry, verification, route tracking, and preferences are instrumented; some onboarding steps still rely on generic route-level events. |
 | Mobile feed and post details | Green | Feed view/impression/seen/open/read plus vote/save/share/source/chat events are instrumented and batched to the analytics endpoint. |
 | Web landing and auth | Green | Landing, auth modal, signup/login/password reset, OAuth, logout, and page/session lifecycle are instrumented. |
-| Web feed and recommendations | Green | Feed views, impressions, seen, load more, votes, saves, reads, shares, source opens, and carousel events are instrumented, and feed/resume state now hydrates from a tab-scoped cache after focus-triggered remounts. |
+| Web feed and recommendations | Green | Feed views, impressions, seen, load more, votes, saves, reads, shares, source opens, and carousel events are instrumented, and web route/feed state now hydrates from a tab-scoped cache after focus-triggered remounts. |
 | Web discover/search | Green | Discover views plus generic Recce impressions and follow/unfollow events now cover both author and topic Recces; search-specific analytics are still sparse on web. |
 | Web collections | Green | Collection create/open/rename/delete flows are instrumented. |
 | Web notifications | Yellow | View/open/mark-read/clear events are instrumented, but the product surface is still fairly thin. |
@@ -76,7 +76,7 @@ When updating this file:
 - web feed: `feed_viewed`, `feed_load_more_requested`, `feed_post_impression`, `feed_post_seen`, `feed_post_read`, votes, saves, shares, source opens, carousel events
 - web discover: `discover_viewed`, `discover_recce_impression`, `recce_followed`, `recce_unfollowed` across an accordion-style Recce browser
 - web collections/saved: `saved_viewed`, `collection_create_started`, `collection_created`, `collection_renamed`, `collection_deleted`, `collection_opened`
-- web feed/discover/collections: tab-scoped cache hydration restores the last loaded client snapshot after browser discards or focus-triggered remounts; no new analytics event names were added for this resume path
+- web page resume: tab-scoped cache hydration restores low-sensitivity route state plus feed, discover, collection, notification, feedback-draft, and post-detail snapshots after browser discards or focus-triggered remounts; no new analytics event names were added for this resume path
 - web notifications: `notifications_viewed`, `notification_opened`, `notification_marked_read`, `notifications_cleared`
 - web curation/feedback: panel, prompt, send/reply, session lifecycle, feedback submitted/failed
 - mobile lifecycle/auth: `app_opened`, `app_backgrounded`, route views, signup/login/OAuth/password reset/logout, welcome entry selection, verification actions
@@ -142,4 +142,4 @@ When updating this file:
 - Created and aligned the recurring analytics audit automation.
 - Expanded web Recce analytics from author-only events to generic author/topic Recce discovery and follow events.
 - Grouped Discover Recces into expandable category buckets while keeping the same discover/follow analytics events.
-- Added tab-scoped cache hydration for the web feed, Recce discovery, and collections surfaces so browser focus/remount churn resumes the last client snapshot without changing the analytics taxonomy.
+- Expanded tab-scoped cache hydration across the main web pages so browser focus/remount churn resumes low-sensitivity route state and client snapshots without changing the analytics taxonomy.

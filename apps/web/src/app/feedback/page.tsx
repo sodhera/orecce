@@ -6,6 +6,7 @@ import RightSidebar from "@/components/RightSidebar";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/context/AuthContext";
 import { trackAnalyticsEvent } from "@/lib/analytics";
+import { useTabState } from "@/hooks/useTabState";
 
 type FeedbackCategory = "Bug" | "Feature Request" | "Feedback" | "Other";
 
@@ -18,11 +19,14 @@ const CATEGORIES: { value: FeedbackCategory; label: string; emoji: string; desc:
 
 export default function FeedbackPage() {
     const { user } = useAuth();
-    const [mode, setMode] = useState("ALL");
-    const [profile, setProfile] = useState("Steve Jobs");
+    const [mode, setMode] = useTabState("orecce:web:page:feedback:mode:v1", "ALL");
+    const [profile, setProfile] = useTabState("orecce:web:page:feedback:profile:v1", "Steve Jobs");
 
-    const [category, setCategory] = useState<FeedbackCategory>("Feedback");
-    const [message, setMessage] = useState("");
+    const [category, setCategory] = useTabState<FeedbackCategory>(
+        "orecce:web:page:feedback:category:v1",
+        "Feedback",
+    );
+    const [message, setMessage] = useTabState("orecce:web:page:feedback:message:v1", "");
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitStatus, setSubmitStatus] = useState<"success" | "error" | null>(null);
     const [errorMsg, setErrorMsg] = useState("");

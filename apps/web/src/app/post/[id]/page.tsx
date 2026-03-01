@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/context/AuthContext";
@@ -9,6 +9,7 @@ import Sidebar from "@/components/Sidebar";
 import PostCard, { type Post, type Slide } from "@/components/PostCard";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { buildRecceKey, type Recce } from "@/lib/recces";
+import { readTabCache, writeTabCache } from "@/lib/tabCache";
 
 interface PostRow {
     id: string;
@@ -21,6 +22,16 @@ interface PostRow {
     topics: string[] | null;
     authors: { name: string; avatar_url: string | null } | null;
 }
+
+interface PersistedPostPageSnapshot {
+    post: Post;
+    authorId: string | null;
+    authorName: string;
+    authorAvatar: string | null;
+    authorBio: string | null;
+}
+
+const POST_PAGE_CACHE_TTL_MS = 10 * 60 * 1000;
 
 function parseSlides(raw: unknown): Slide[] {
     if (!Array.isArray(raw)) return [];
@@ -45,6 +56,10 @@ export default function PublicPostPage() {
     const [authorBio, setAuthorBio] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const trackedPostIdRef = useRef<string | null>(null);
+    const cacheKey = postId
+        ? `orecce:web:page:post:${encodeURIComponent(postId)}:v1`
+        : null;
 
     const authorRecce = useMemo<Recce | null>(() => {
         if (!authorId) {
@@ -68,8 +83,31 @@ export default function PublicPostPage() {
             return;
         }
 
+        let cachedSnapshotLoaded = false;
+        if (cacheKey) {
+            const cachedSnapshot = readTabCache<PersistedPostPageSnapshot>(
+                cacheKey,
+                POST_PAGE_CACHE_TTL_MS,
+            );
+
+            if (cachedSnapshot) {
+                cachedSnapshotLoaded = true;
+                setPost(cachedSnapshot.value.post);
+                setAuthorId(cachedSnapshot.value.authorId);
+                setAuthorName(cachedSnapshot.value.authorName);
+                setAuthorAvatar(cachedSnapshot.value.authorAvatar);
+                setAuthorBio(cachedSnapshot.value.authorBio);
+                setError(null);
+                setLoading(false);
+            }
+        }
+
         (async () => {
             try {
+                if (!cachedSnapshotLoaded) {
+                    setLoading(true);
+                }
+
                 const { data, error: fetchError } = await supabase
                     .from("posts")
                     .select("id, theme, slides, post_type, source_url, source_title, author_id, topics, authors(name, avatar_url, bio)")
@@ -95,23 +133,49 @@ export default function PublicPostPage() {
 
                 setAuthorId(row.author_id);
                 const author = row.authors;
-                if (author) {
-                    setAuthorName(author.name ?? "Unknown");
-                    setAuthorAvatar(author.avatar_url ?? null);
-                    setAuthorBio(author.bio ?? null);
+                const nextAuthorName = author?.name ?? "Unknown";
+                const nextAuthorAvatar = author?.avatar_url ?? null;
+                const nextAuthorBio = author?.bio ?? null;
+                setAuthorName(nextAuthorName);
+                setAuthorAvatar(nextAuthorAvatar);
+                setAuthorBio(nextAuthorBio);
+
+                if (cacheKey) {
+                    writeTabCache<PersistedPostPageSnapshot>(cacheKey, {
+                        post: {
+                            id: row.id,
+                            post_type: (row.post_type as Post["post_type"]) ?? "carousel",
+                            topic: row.topics?.[0] ?? "",
+                            title: row.theme ?? "Untitled",
+                            sourceUrl: row.source_url ?? undefined,
+                            sourceTitle: row.source_title ?? undefined,
+                            slides,
+                            date: "",
+                        },
+                        authorId: row.author_id,
+                        authorName: nextAuthorName,
+                        authorAvatar: nextAuthorAvatar,
+                        authorBio: nextAuthorBio,
+                    });
                 }
             } catch (err) {
-                setError(err instanceof Error ? err.message : "Failed to load post.");
+                if (!cachedSnapshotLoaded) {
+                    setError(err instanceof Error ? err.message : "Failed to load post.");
+                }
             } finally {
                 setLoading(false);
             }
         })();
-    }, [postId]);
+    }, [cacheKey, postId]);
 
     useEffect(() => {
         if (!post) {
             return;
         }
+        if (trackedPostIdRef.current === post.id) {
+            return;
+        }
+        trackedPostIdRef.current = post.id;
         trackAnalyticsEvent({
             eventName: "post_detail_viewed",
             surface: "post_detail",

@@ -4,6 +4,7 @@ import { useEffect, useMemo } from "react";
 import Sidebar from "@/components/Sidebar";
 import { useRecces } from "@/hooks/useRecces";
 import { useTabState } from "@/hooks/useTabState";
+import { BsChevronDown } from "react-icons/bs";
 import { useAuth } from "@/context/AuthContext";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import {
@@ -109,73 +110,73 @@ export default function DiscoverPage() {
                                 {sections.map((section) => {
                                     const isExpanded = expandedCategory === section.key;
                                     return (
-                                    <section key={section.key} className="discover-recces-section">
-                                        <button
-                                            type="button"
-                                            className={`discover-recces-section-toggle ${isExpanded ? "is-expanded" : ""}`}
-                                            aria-expanded={isExpanded}
-                                            onClick={() =>
-                                                setExpandedCategory((current) =>
-                                                    current === section.key ? null : section.key,
-                                                )
-                                            }
-                                        >
-                                            <span className="discover-recces-section-title">
-                                                {section.label}
-                                            </span>
-                                            <span className="discover-recces-section-meta">
-                                                <span className="discover-recces-section-chevron">
-                                                    ↓
+                                        <section key={section.key} className="discover-recces-section">
+                                            <button
+                                                type="button"
+                                                className={`discover-recces-section-toggle ${isExpanded ? "is-expanded" : ""}`}
+                                                aria-expanded={isExpanded}
+                                                onClick={() =>
+                                                    setExpandedCategory((current) =>
+                                                        current === section.key ? null : section.key,
+                                                    )
+                                                }
+                                            >
+                                                <span className="discover-recces-section-title">
+                                                    {section.label}
                                                 </span>
-                                            </span>
-                                        </button>
-                                        {isExpanded && (
-                                            <div className="authors-grid">
-                                                {section.items.map((recce) => {
-                                                    const isFollowed = followedKeys.has(
-                                                        recce.key,
-                                                    );
-                                                    return (
-                                                        <article
-                                                            key={recce.key}
-                                                            className="author-card"
-                                                        >
-                                                            <div className="author-card-info">
-                                                                <h3 className="author-card-name">
-                                                                    {recce.name}
-                                                                </h3>
-                                                                {recce.bio && (
-                                                                    <p className="author-card-bio">
-                                                                        {recce.bio}
-                                                                    </p>
+                                                <span className="discover-recces-section-meta">
+                                                    <span className="discover-recces-section-chevron">
+                                                        <BsChevronDown />
+                                                    </span>
+                                                </span>
+                                            </button>
+                                            {isExpanded && (
+                                                <div className="authors-grid">
+                                                    {section.items.map((recce) => {
+                                                        const isFollowed = followedKeys.has(
+                                                            recce.key,
+                                                        );
+                                                        return (
+                                                            <article
+                                                                key={recce.key}
+                                                                className="author-card"
+                                                            >
+                                                                <div className="author-card-info">
+                                                                    <h3 className="author-card-name">
+                                                                        {recce.name}
+                                                                    </h3>
+                                                                    {recce.bio && (
+                                                                        <p className="author-card-bio">
+                                                                            {recce.bio}
+                                                                        </p>
+                                                                    )}
+                                                                    {!recce.bio && (
+                                                                        <p className="author-card-bio">
+                                                                            {recce.kind === "topic"
+                                                                                ? "Topic Recce"
+                                                                                : "Author Recce"}
+                                                                        </p>
+                                                                    )}
+                                                                </div>
+                                                                {isAuthenticated && (
+                                                                    <button
+                                                                        type="button"
+                                                                        className={`author-follow-btn ${isFollowed ? "following" : ""}`}
+                                                                        onClick={() =>
+                                                                            toggleFollow(recce)
+                                                                        }
+                                                                    >
+                                                                        {isFollowed
+                                                                            ? "Following"
+                                                                            : "Follow"}
+                                                                    </button>
                                                                 )}
-                                                                {!recce.bio && (
-                                                                    <p className="author-card-bio">
-                                                                        {recce.kind === "topic"
-                                                                            ? "Topic Recce"
-                                                                            : "Author Recce"}
-                                                                    </p>
-                                                                )}
-                                                            </div>
-                                                            {isAuthenticated && (
-                                                                <button
-                                                                    type="button"
-                                                                    className={`author-follow-btn ${isFollowed ? "following" : ""}`}
-                                                                    onClick={() =>
-                                                                        toggleFollow(recce)
-                                                                    }
-                                                                >
-                                                                    {isFollowed
-                                                                        ? "Following"
-                                                                        : "Follow"}
-                                                                </button>
-                                                            )}
-                                                        </article>
-                                                    );
-                                                })}
-                                            </div>
-                                        )}
-                                    </section>
+                                                            </article>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+                                        </section>
                                     );
                                 })}
                             </div>

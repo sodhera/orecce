@@ -17,6 +17,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/RootNavigator';
 import { useToast } from '../context/ToastContext';
 import { listAllPostFeedback, PostFeedbackType, sendPostFeedback, StoredPostFeedback } from '../services/api';
+import { trackMobileAnalyticsEvent } from '../services/analytics';
 
 const FEED_DATA: FeedPostData[] = [
     {
@@ -183,6 +184,9 @@ export function HomeScreen() {
     const [topicInteractionCounts, setTopicInteractionCounts] = React.useState<Record<string, number>>({});
     const skeletonPulse = React.useRef(new Animated.Value(0.5)).current;
     const flatListRef = React.useRef<FlatList<FeedPostData>>(null);
+    const impressedPostIdsRef = React.useRef(new Set<string>());
+    const seenPostIdsRef = React.useRef(new Set<string>());
+    const seenTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
     const { showToast } = useToast();
 
     const recommendedPosts = React.useMemo(
@@ -258,6 +262,59 @@ export function HomeScreen() {
         }
     }, [activeIndex, recommendedPosts.length]);
 
+    React.useEffect(() => {
+        if (recommendedPosts.length === 0) {
+            return;
+        }
+
+        const activePost = recommendedPosts[activeIndex];
+        if (!activePost) {
+            return;
+        }
+
+        if (!impressedPostIdsRef.current.has(activePost.id)) {
+            impressedPostIdsRef.current.add(activePost.id);
+            trackMobileAnalyticsEvent({
+                eventName: 'feed_post_impression',
+                surface: 'feed',
+                properties: {
+                    post_id: activePost.id,
+                    topic: activePost.topic ?? null,
+                    feed_position: activeIndex,
+                    post_type: activePost.type,
+                },
+            });
+        }
+
+        if (seenTimerRef.current) {
+            clearTimeout(seenTimerRef.current);
+        }
+
+        if (!seenPostIdsRef.current.has(activePost.id)) {
+            seenTimerRef.current = setTimeout(() => {
+                seenPostIdsRef.current.add(activePost.id);
+                trackMobileAnalyticsEvent({
+                    eventName: 'feed_post_seen',
+                    surface: 'feed',
+                    properties: {
+                        post_id: activePost.id,
+                        topic: activePost.topic ?? null,
+                        feed_position: activeIndex,
+                        post_type: activePost.type,
+                        dwell_ms: 2500,
+                    },
+                });
+            }, 2500);
+        }
+
+        return () => {
+            if (seenTimerRef.current) {
+                clearTimeout(seenTimerRef.current);
+                seenTimerRef.current = null;
+            }
+        };
+    }, [activeIndex, recommendedPosts]);
+
     const handleFeedLayout = React.useCallback((event: LayoutChangeEvent) => {
         const nextHeight = Math.round(event.nativeEvent.layout.height);
         if (nextHeight > 0 && nextHeight !== feedHeight) {
@@ -289,6 +346,8 @@ export function HomeScreen() {
         setInteractedPostIds([]);
         setTopicInteractionCounts({});
         setActiveIndex(0);
+        impressedPostIdsRef.current.clear();
+        seenPostIdsRef.current.clear();
         requestAnimationFrame(() => {
             flatListRef.current?.scrollToOffset({ offset: 0, animated: false });
         });
@@ -296,6 +355,13 @@ export function HomeScreen() {
 
     const onRefresh = React.useCallback(() => {
         setRefreshing(true);
+        trackMobileAnalyticsEvent({
+            eventName: 'feed_refreshed',
+            surface: 'feed',
+            properties: {
+                visible_posts: recommendedPosts.length,
+            },
+        });
         setTimeout(() => {
             if (recommendedPosts.length === 0) {
                 handleResetRecommendations();
@@ -323,6 +389,14 @@ export function HomeScreen() {
         }
 
         trackInteraction(postId);
+        trackMobileAnalyticsEvent({
+            eventName: 'feed_post_opened',
+            surface: 'feed',
+            properties: {
+                post_id: postId,
+                topic: post.topic ?? null,
+            },
+        });
         navigation.navigate('PostDetails', { post });
     };
 
@@ -359,6 +433,14 @@ export function HomeScreen() {
         );
 
         void persistPostFeedback(postId, toVoteFeedbackType(newVote));
+        trackMobileAnalyticsEvent({
+            eventName: newVote === 1 ? 'post_upvoted' : 'post_vote_cleared',
+            surface: 'feed',
+            properties: {
+                post_id: postId,
+                topic: post.topic ?? null,
+            },
+        });
     };
 
     const handleLike = (postId: string) => {
@@ -386,6 +468,15 @@ export function HomeScreen() {
         );
 
         void persistPostFeedback(postId, 'upvote');
+        trackMobileAnalyticsEvent({
+            eventName: 'post_upvoted',
+            surface: 'feed',
+            properties: {
+                post_id: postId,
+                topic: post.topic ?? null,
+                interaction_type: 'double_tap_like',
+            },
+        });
     };
 
     const handleDownvote = (postId: string) => {
@@ -421,6 +512,14 @@ export function HomeScreen() {
         );
 
         void persistPostFeedback(postId, toVoteFeedbackType(newVote));
+        trackMobileAnalyticsEvent({
+            eventName: newVote === -1 ? 'post_downvoted' : 'post_vote_cleared',
+            surface: 'feed',
+            properties: {
+                post_id: postId,
+                topic: post.topic ?? null,
+            },
+        });
     };
 
     const handleSave = (postId: string) => {
@@ -455,11 +554,28 @@ export function HomeScreen() {
         }
 
         void persistPostFeedback(postId, newIsSaved ? 'save' : 'unsave');
+        trackMobileAnalyticsEvent({
+            eventName: newIsSaved ? 'post_saved' : 'post_unsaved',
+            surface: 'feed',
+            properties: {
+                post_id: postId,
+                topic: post.topic ?? null,
+            },
+        });
     };
 
     const handleShare = (postId: string) => {
         trackInteraction(postId);
         console.log('Share post:', postId);
+        const post = posts.find((candidate) => candidate.id === postId);
+        trackMobileAnalyticsEvent({
+            eventName: 'post_shared',
+            surface: 'feed',
+            properties: {
+                post_id: postId,
+                topic: post?.topic ?? null,
+            },
+        });
     };
 
     const renderSkeleton = () => (

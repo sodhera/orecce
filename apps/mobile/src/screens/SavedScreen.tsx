@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { colors } from '../styles/colors';
 import { CollectionCard, CollectionData } from '../components';
 import { FeedPostCard, FeedPostData } from '../components';
+import { trackMobileAnalyticsEvent } from '../services/analytics';
 
 // Mock data for development
 const MOCK_COLLECTIONS: CollectionData[] = [
@@ -18,6 +19,15 @@ export function SavedScreen() {
     const navigation = useNavigation<any>();
 
     const handleCollectionPress = (collection: CollectionData) => {
+        trackMobileAnalyticsEvent({
+            eventName: 'collection_opened',
+            surface: 'saved',
+            properties: {
+                collection_id: collection.id,
+                collection_name: collection.name,
+                post_count: collection.postCount,
+            },
+        });
         navigation.navigate('CollectionDetail', {
             collectionId: collection.id,
             collectionName: collection.name,

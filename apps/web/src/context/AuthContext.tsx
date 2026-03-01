@@ -6,10 +6,12 @@ import {
     useCallback,
     useState,
     useEffect,
+    useRef,
     ReactNode,
 } from "react";
 import { Session, User as SupabaseUser } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
+import { trackAnalyticsEvent } from "@/lib/analytics";
 
 const API_BASE = "/api/v1";
 const PUBLIC_APP_URL = process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/+$/, "");
@@ -89,6 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [session, setSession] = useState<Session | null>(null);
     const [loading, setLoading] = useState(true);
     const [showAuthModal, setShowAuthModal] = useState(false);
+    const trackedOauthUserIdRef = useRef<string | null>(null);
 
     // Listen for Supabase auth state changes
     useEffect(() => {
@@ -144,15 +147,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, [session]);
 
     const login = useCallback(async (email: string, password: string) => {
+        trackAnalyticsEvent({
+            eventName: "login_started",
+            surface: "auth",
+            properties: { method: "password" },
+        });
         const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,
         });
-        if (error) throw error;
+        if (error) {
+            trackAnalyticsEvent({
+                eventName: "login_failed",
+                surface: "auth",
+                properties: { method: "password", error_code: error.message },
+            });
+            throw error;
+        }
         if (data.user && !canTreatAsAuthenticated(data.user)) {
             await supabase.auth.signOut();
+            trackAnalyticsEvent({
+                eventName: "login_failed",
+                surface: "auth",
+                properties: {
+                    method: "password",
+                    error_code: "email_not_verified",
+                },
+            });
             throw new Error("Please verify your email before signing in.");
         }
+        trackAnalyticsEvent({
+            eventName: "login_completed",
+            surface: "auth",
+            properties: { method: "password" },
+        });
         setShowAuthModal(false);
     }, []);
 
@@ -162,6 +190,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             email: string,
             password: string,
         ): Promise<SignupResult> => {
+            trackAnalyticsEvent({
+                eventName: "signup_started",
+                surface: "auth",
+                properties: { method: "password" },
+            });
             const { data, error } = await supabase.auth.signUp({
                 email,
                 password,
@@ -170,10 +203,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     emailRedirectTo: getAuthRedirectUrl(),
                 },
             });
-            if (error) throw error;
+            if (error) {
+                trackAnalyticsEvent({
+                    eventName: "signup_failed",
+                    surface: "auth",
+                    properties: { method: "password", error_code: error.message },
+                });
+                throw error;
+            }
 
             const signedInUser = data.session?.user;
             if (signedInUser && canTreatAsAuthenticated(signedInUser)) {
+                trackAnalyticsEvent({
+                    eventName: "signup_completed",
+                    surface: "auth",
+                    properties: { method: "password" },
+                });
                 setShowAuthModal(false);
                 return "signed_in";
             }
@@ -181,12 +226,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await supabase.auth.signOut();
             setSession(null);
             setUser(null);
+            trackAnalyticsEvent({
+                eventName: "signup_completed",
+                surface: "auth",
+                properties: {
+                    method: "password",
+                    verification_required: true,
+                },
+            });
             return "verification_required";
         },
         [],
     );
 
     const loginWithGoogle = useCallback(async () => {
+        trackAnalyticsEvent({
+            eventName: "oauth_started",
+            surface: "auth",
+            properties: { provider: "google" },
+        });
         const { error } = await supabase.auth.signInWithOAuth({
             provider: "google",
             options: {
@@ -194,7 +252,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 redirectTo: getAuthRedirectUrl(),
             },
         });
-        if (error) throw error;
+        if (error) {
+            trackAnalyticsEvent({
+                eventName: "login_failed",
+                surface: "auth",
+                properties: { method: "google", error_code: error.message },
+            });
+            throw error;
+        }
         setShowAuthModal(false);
     }, []);
 
@@ -203,11 +268,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             redirectTo: getAuthRedirectUrl(),
         });
         if (error) throw error;
+        trackAnalyticsEvent({
+            eventName: "password_reset_requested",
+            surface: "auth",
+            properties: { has_email: Boolean(email.trim()) },
+        });
     }, []);
 
     const logout = useCallback(async () => {
         await supabase.auth.signOut();
+        trackAnalyticsEvent({
+            eventName: "logout_completed",
+            surface: "settings",
+        });
     }, []);
+
+    useEffect(() => {
+        if (!session?.user) {
+            trackedOauthUserIdRef.current = null;
+            return;
+        }
+        if (trackedOauthUserIdRef.current === session.user.id) {
+            return;
+        }
+        const provider = Array.isArray((session.user.app_metadata as { providers?: string[] } | undefined)?.providers)
+            ? ((session.user.app_metadata as { providers?: string[] }).providers?.[0] ?? "unknown")
+            : ((session.user.app_metadata as { provider?: string } | undefined)?.provider ?? "unknown");
+        if (provider === "email") {
+            return;
+        }
+        trackedOauthUserIdRef.current = session.user.id;
+        trackAnalyticsEvent({
+            eventName: "oauth_completed",
+            surface: "auth",
+            properties: { provider },
+        });
+    }, [session?.user?.id]);
 
     const getIdToken = useCallback(async (): Promise<string | null> => {
         if (!session) return null;

@@ -5,12 +5,18 @@ import Sidebar from "@/components/Sidebar";
 import NotificationItem, {
     type NotificationItemData,
 } from "@/components/NotificationItem";
+import { trackAnalyticsEvent } from "@/lib/analytics";
 
 export default function NotificationsPage() {
     const [notifications, setNotifications] =
         useState<NotificationItemData[]>([]);
 
     const handleMarkRead = (notificationId: string) => {
+        trackAnalyticsEvent({
+            eventName: "notification_marked_read",
+            surface: "notifications",
+            properties: { notification_id: notificationId },
+        });
         setNotifications((currentNotifications) =>
             currentNotifications.map((notification) =>
                 notification.id === notificationId
@@ -21,6 +27,11 @@ export default function NotificationsPage() {
     };
 
     const handleClearAll = () => {
+        trackAnalyticsEvent({
+            eventName: "notifications_cleared",
+            surface: "notifications",
+            properties: { cleared_count: notifications.length },
+        });
         setNotifications([]);
     };
 

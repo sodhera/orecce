@@ -2,12 +2,21 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { colors } from '../styles/colors';
 import { SearchBar } from '../components';
+import { trackMobileAnalyticsEvent } from '../services/analytics';
 
 export function ExploreScreen() {
     const [searchQuery, setSearchQuery] = useState('');
 
     const handleSearch = () => {
         console.log('Searching for:', searchQuery);
+        trackMobileAnalyticsEvent({
+            eventName: searchQuery.trim() ? 'search_submitted' : 'search_started',
+            surface: 'discover',
+            properties: {
+                query: searchQuery.trim(),
+                query_length: searchQuery.trim().length,
+            },
+        });
     };
 
     return (

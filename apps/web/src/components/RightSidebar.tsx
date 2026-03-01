@@ -10,6 +10,7 @@ import {
     type CurationChatSessionSummary,
 } from "@/lib/api";
 import { useAuthors } from "@/hooks/useAuthors";
+import { trackAnalyticsEvent } from "@/lib/analytics";
 
 interface RightSidebarProps {
     mode: string;
@@ -326,12 +327,32 @@ export default function RightSidebar({ mode, profile }: RightSidebarProps) {
         setMessages(nextMessages);
         setInputValue("");
         setIsSending(true);
+        trackAnalyticsEvent({
+            eventName: "curation_message_sent",
+            surface: "curation",
+            properties: {
+                session_id: sessionId,
+                message_length: trimmed.length,
+                mode,
+                profile,
+            },
+        });
 
         try {
             const response = await sendCurationChat({
                 messages: toInputMessages(nextMessages),
                 mode,
                 profile,
+            });
+            trackAnalyticsEvent({
+                eventName: "curation_reply_received",
+                surface: "curation",
+                properties: {
+                    session_id: sessionId,
+                    reply_length: response.reply.length,
+                    mode,
+                    profile,
+                },
             });
             setMessages((prev) => [...prev, createMessage("assistant", response.reply)]);
         } catch (error) {
@@ -354,6 +375,11 @@ export default function RightSidebar({ mode, profile }: RightSidebarProps) {
         startNewChatSession();
         setSessionNotice(null);
         setIsPanelOpen(true);
+        trackAnalyticsEvent({
+            eventName: "curation_panel_opened",
+            surface: "curation",
+            properties: { mode, profile },
+        });
     };
 
     const handleClosePanel = () => {
@@ -364,6 +390,11 @@ export default function RightSidebar({ mode, profile }: RightSidebarProps) {
 
     const handleBackToSessions = () => {
         setPanelView("sessions");
+        trackAnalyticsEvent({
+            eventName: "curation_session_list_viewed",
+            surface: "curation",
+            properties: { session_id: sessionId },
+        });
         void (async () => {
             await persistSessionIfNeeded(sessionId, messages);
             await loadSessionItems();
@@ -375,6 +406,14 @@ export default function RightSidebar({ mode, profile }: RightSidebarProps) {
         setMessages(item.messages.length ? toCurateMessages(item.messages) : [getDefaultAssistantMessage()]);
         setInputValue("");
         setPanelView("chat");
+        trackAnalyticsEvent({
+            eventName: "curation_session_resumed",
+            surface: "curation",
+            properties: {
+                session_id: item.sessionId,
+                message_count: item.messages.length,
+            },
+        });
     };
 
     const deleteSessionItem = async (targetSessionId: string) => {
@@ -382,6 +421,11 @@ export default function RightSidebar({ mode, profile }: RightSidebarProps) {
         setSessionItemsError(null);
         try {
             await deleteCurationChatSession(targetSessionId);
+            trackAnalyticsEvent({
+                eventName: "curation_session_deleted",
+                surface: "curation",
+                properties: { session_id: targetSessionId },
+            });
             setSessionItems((previous) =>
                 previous.filter((item) => item.sessionId !== targetSessionId),
             );
@@ -508,6 +552,11 @@ export default function RightSidebar({ mode, profile }: RightSidebarProps) {
                                             type="button"
                                             className="curation-chat-starter"
                                             onClick={() => {
+                                                trackAnalyticsEvent({
+                                                    eventName: "curation_prompt_clicked",
+                                                    surface: "curation",
+                                                    properties: { prompt },
+                                                });
                                                 void submitMessage(prompt);
                                             }}
                                             disabled={isSending}

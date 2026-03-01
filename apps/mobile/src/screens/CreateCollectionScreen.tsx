@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { colors } from '../styles/colors';
 import { ScreenHeader } from '../components';
+import { trackMobileAnalyticsEvent } from '../services/analytics';
 
 export function CreateCollectionScreen() {
     const navigation = useNavigation();
@@ -17,6 +18,13 @@ export function CreateCollectionScreen() {
         if (collectionName.trim()) {
             // TODO: Handle collection creation
             console.log('Creating collection:', collectionName);
+            trackMobileAnalyticsEvent({
+                eventName: 'collection_created',
+                surface: 'saved',
+                properties: {
+                    collection_name: collectionName.trim(),
+                },
+            });
             navigation.goBack();
         }
     };

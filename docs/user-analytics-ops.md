@@ -11,40 +11,52 @@ When updating this file:
 3. Record which events are implemented, missing, broken, or inconsistent.
 4. Update the coverage table, open gaps, and next actions.
 5. Keep the section headings stable so this file stays machine-updatable.
+6. Keep the recurring audit automation in `/Users/sirishjoshi/.codex/automations/analytics-audit/automation.toml` aligned if the review workflow changes.
 
 ## Last review
 
 - Reviewed on: 2026-03-01
 - Reviewer: Codex
-- Scope: repo-wide audit for mobile, web, API, docs, and schema ownership
+- Scope: repo-wide implementation pass across mobile, web, API, docs, schema, and automation
 
 ## Coverage snapshot
 
 | Area | Coverage | Notes |
 | --- | --- | --- |
-| Identity and sessions | Red | No shared anonymous/session analytics identity across mobile and web. |
-| Mobile auth and onboarding | Red | Flows exist, but no analytics instrumentation. |
-| Mobile feed and post details | Red | Feedback persists, but impressions, dwell, opens, share, chat, and source usage are not tracked as analytics events. |
-| Web landing and auth | Red | No raw event stream for view, signup, login, or password reset funnels. |
-| Web feed and recommendations | Yellow | Likes, saves, follows, and read state exist as product writes, but not as unified analytics events. Seen state is partly local-only. |
-| Web discover/search | Red | Follow state exists, but discover/search analytics are largely absent. |
-| Web collections | Yellow | Collections exist, but collection behavior is not tracked as analytics events. |
-| Web notifications | Red | Notifications page exists, but behavior is not instrumented and appears mostly placeholder. |
-| Curation and feedback | Yellow | Curate chat sessions and feedback submission exist, but operational analytics are missing. |
-| API analytics ingestion | Red | No append-only analytics endpoint or raw event table. |
-| Derived reporting | Red | No warehouse-style marts, funnels, retention facts, or content outcome reporting. |
+| Identity and sessions | Yellow | Web and mobile now emit anonymous/device/session IDs, but anonymous-to-auth aliasing is still client-side only. |
+| Mobile auth and onboarding | Yellow | Auth, welcome-entry, verification, route tracking, and preferences are instrumented; some onboarding steps still rely on generic route-level events. |
+| Mobile feed and post details | Green | Feed view/impression/seen/open/read plus vote/save/share/source/chat events are instrumented and batched to the analytics endpoint. |
+| Web landing and auth | Green | Landing, auth modal, signup/login/password reset, OAuth, logout, and page/session lifecycle are instrumented. |
+| Web feed and recommendations | Green | Feed views, impressions, seen, load more, votes, saves, reads, shares, source opens, and carousel events are instrumented. |
+| Web discover/search | Yellow | Discover views and author impressions are instrumented; search-specific analytics are still sparse on web. |
+| Web collections | Green | Collection create/open/rename/delete flows are instrumented. |
+| Web notifications | Yellow | View/open/mark-read/clear events are instrumented, but the product surface is still fairly thin. |
+| Curation and feedback | Green | Curation panel, prompts, send/reply, session lifecycle, and feedback submission outcomes are instrumented. |
+| API analytics ingestion | Green | Shared validation, optional-auth ingestion, repository persistence, raw event storage, and forward migrations are in place. |
+| Derived reporting | Yellow | Session, daily user/content, funnel, and recommendation-outcome views exist, but dashboards and quality monitors do not yet. |
 
 ## Current blockers
 
-1. There is no canonical `analytics_events` table or ingestion endpoint.
-2. Event naming is not unified across mobile, web, and API.
-3. Core API schema ownership and web SQL ownership are split.
-4. The recommendation interaction endpoint exists, but the main web feed does not appear to use it.
-5. Mobile still relies heavily on mock feed and collection data, so event completeness there will lag until the product data path is real.
+1. Anonymous-to-auth identity stitching is not durable on the backend yet.
+2. Mobile still relies partly on mock feed data, which limits data quality for some feed metrics.
+3. Some secondary surfaces still emit generic `page_viewed` or `screen_viewed` instead of more intent-specific events.
+4. There are no analytics dashboards, freshness checks, or anomaly alerts yet.
+5. The analytics pipeline does not yet have dedicated integration tests that exercise end-to-end ingestion.
 
 ## Current instrumentation inventory
 
-### Product-state signals that already exist
+### Analytics pipeline now in place
+
+- shared event envelope in `packages/api-core/src/analytics/types.ts`
+- shared request validation for analytics batches
+- `POST /v1/analytics/events/batch` in the core API app
+- mirrored `POST /api/v1/analytics/events/batch` route in the web app
+- append-only `analytics_events_raw` table
+- derived views for sessions, daily user facts, daily content facts, funnels, and recommendation outcomes
+- web batching client with lifecycle flush support
+- mobile batching client with AsyncStorage-backed identity/session state
+
+### Product-state signals that still exist alongside analytics
 
 - `feedback` table for `upvote`, `downvote`, `skip`, `save`, `unsave`
 - `user_recommendation_profiles`
@@ -57,43 +69,48 @@ When updating this file:
 - web `save_collections`
 - `user_feedback`
 
-### Missing analytics signals
+### Implemented surface coverage
 
-- session start/end
-- anonymous to authenticated identity merge
-- landing page views
-- onboarding funnel
-- auth funnel timing
-- feed impressions
-- dwell time
-- discover impressions
-- search usage
-- notification usage
-- share outcomes
-- source-open outcomes
-- collection funnel analytics
-- settings/profile analytics
-- error-rate and latency analytics by user journey
+- web landing/auth: `landing_viewed`, `auth_modal_opened`, signup/login/OAuth/password reset/logout lifecycle events
+- web feed: `feed_viewed`, `feed_load_more_requested`, `feed_post_impression`, `feed_post_seen`, `feed_post_read`, votes, saves, shares, source opens, carousel events
+- web discover: `discover_viewed`, `discover_author_impression`, follow/unfollow
+- web collections/saved: `saved_viewed`, `collection_create_started`, `collection_created`, `collection_renamed`, `collection_deleted`, `collection_opened`
+- web notifications: `notifications_viewed`, `notification_opened`, `notification_marked_read`, `notifications_cleared`
+- web curation/feedback: panel, prompt, send/reply, session lifecycle, feedback submitted/failed
+- mobile lifecycle/auth: `app_opened`, `app_backgrounded`, route views, signup/login/OAuth/password reset/logout, welcome entry selection, verification actions
+- mobile preferences/feed: `interest_added`, `interest_removed`, `preferences_saved`, `feed_viewed`, `feed_refreshed`, impressions, seen, opens, reads, votes, saves, shares
+- mobile post detail: `post_detail_viewed`, `post_source_opened`, `sources_expanded`, `sources_collapsed`, curation send/reply
+
+### Missing or weak analytics signals
+
+- durable anonymous-to-auth identity merge
+- explicit onboarding-step events across every mobile signup screen
+- richer web search analytics
+- settings/profile mutation analytics
+- latency/error analytics by journey
+- dashboards, alerts, and freshness monitoring
 
 ## Gaps to fix first
 
 ### P0
 
-- Add a raw event stream and batch ingestion API.
-- Normalize identity and session fields.
-- Instrument `feed_post_impression`, `feed_post_opened`, `feed_post_read`, `post_saved`, `post_upvoted`, `post_downvoted`, `post_shared`, `post_source_opened`.
-- Instrument `signup_completed`, `login_completed`, `author_followed`, `collection_created`, and `feedback_submitted`.
+- Done.
+- Raw event stream and batch ingestion API exist.
+- Identity and session fields exist on both clients.
+- High-value feed/auth/collection/feedback instrumentation is live.
 
 ### P1
 
-- Instrument onboarding, interests, search, settings, and notifications.
-- Record dwell and carousel completion consistently across mobile and web.
-- Add recommendation outcome facts by author, topic, and match reason.
+- Add durable identity stitching between anonymous and authenticated usage.
+- Instrument remaining onboarding and settings/profile surfaces with intent-specific events.
+- Expand web search analytics.
+- Start consuming derived views in reporting queries or dashboards.
 
 ### P2
 
 - Add latency/error analytics around curation chat and recommendation endpoints.
 - Add experiment assignment fields for future ranking tests.
+- Add anomaly detection, freshness checks, and dedupe audits.
 
 ## Questions this system should answer once implemented
 
@@ -106,11 +123,11 @@ When updating this file:
 
 ## Next actions
 
-1. Create the analytics ingestion endpoint and raw event tables.
-2. Add shared client tracking wrappers and use one taxonomy from the plan doc.
-3. Move analytics-relevant web SQL objects into forward migrations under `packages/api-core/src/db/migrations/`.
-4. Wire the web feed to emit impression, open, read, slide, and source-open events.
-5. Wire the mobile feed, onboarding, and post details screens to the same event names.
+1. Add analytics-specific integration tests for batch ingestion and repository persistence.
+2. Add durable anonymous-to-auth identity stitching if cross-auth attribution becomes a product requirement.
+3. Upgrade remaining generic route events to specific onboarding, settings, and search events.
+4. Build first-pass dashboards or SQL notebooks from `analytics_daily_user_facts`, `analytics_daily_content_facts`, and `analytics_funnel_facts`.
+5. Add recurring quality checks for event volume, freshness, and duplicate sessions.
 
 ## Change log
 
@@ -118,4 +135,6 @@ When updating this file:
 
 - Created the initial repo-wide analytics plan.
 - Established this operations log as the structured file for recurring updates.
-- Recorded the current baseline as mostly red/yellow coverage with no canonical analytics event stream.
+- Added the shared analytics event contract, batching clients, ingestion endpoint, raw storage, and derived views.
+- Instrumented major mobile and web user-behavior flows with a shared taxonomy.
+- Created and aligned the recurring analytics audit automation.

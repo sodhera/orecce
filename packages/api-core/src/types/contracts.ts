@@ -1,3 +1,4 @@
+import { AnalyticsEventInput } from "../analytics/types";
 import {
   AppUser,
   FeedMode,
@@ -91,6 +92,11 @@ export interface ReplaceUserPrefillPostsInput {
   posts: StoredPost[];
 }
 
+export interface SaveAnalyticsEventsInput {
+  userId?: string | null;
+  events: AnalyticsEventInput[];
+}
+
 export interface Repository {
   getUser(userId: string): Promise<AppUser | null>;
   getOrCreateUser(input: EnsureUserInput): Promise<AppUser>;
@@ -108,6 +114,7 @@ export interface Repository {
   listPosts(query: ListPostsQuery): Promise<ListPostsResult>;
   saveFeedback(input: SaveFeedbackInput): Promise<StoredFeedback>;
   listFeedback(query: ListFeedbackQuery): Promise<ListFeedbackResult>;
+  saveAnalyticsEvents(input: SaveAnalyticsEventsInput): Promise<void>;
   listSeenRecommendationPostIds(query: ListSeenRecommendationPostsQuery): Promise<string[]>;
   markRecommendationPostsSeen(input: MarkSeenRecommendationPostsInput): Promise<void>;
   getPromptPreferences(userId: string): Promise<PromptPreferences>;

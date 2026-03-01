@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { trackAnalyticsEvent } from "@/lib/analytics";
 
 export interface Collection {
     id: string;
@@ -111,6 +112,14 @@ export function useCollections(): UseCollectionsReturn {
                 };
 
                 setCollections((prev) => [...prev, newCollection]);
+                trackAnalyticsEvent({
+                    eventName: "collection_created",
+                    surface: "saved",
+                    properties: {
+                        collection_id: newCollection.id,
+                        collection_name: newCollection.name,
+                    },
+                });
                 return newCollection;
             } catch (err) {
                 setError(
@@ -139,6 +148,14 @@ export function useCollections(): UseCollectionsReturn {
                     .eq("id", id);
 
                 if (updateError) throw new Error(updateError.message);
+                trackAnalyticsEvent({
+                    eventName: "collection_renamed",
+                    surface: "saved",
+                    properties: {
+                        collection_id: id,
+                        collection_name: trimmed,
+                    },
+                });
                 return true;
             } catch (err) {
                 // Revert
@@ -168,6 +185,14 @@ export function useCollections(): UseCollectionsReturn {
                     .eq("id", id);
 
                 if (deleteError) throw new Error(deleteError.message);
+                trackAnalyticsEvent({
+                    eventName: "collection_deleted",
+                    surface: "saved",
+                    properties: {
+                        collection_id: id,
+                        collection_name: target.name,
+                    },
+                });
                 return true;
             } catch (err) {
                 // Revert

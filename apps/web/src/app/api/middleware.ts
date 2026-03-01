@@ -32,6 +32,24 @@ export async function authenticate(req: NextRequest): Promise<AuthIdentity> {
     }
 }
 
+export async function authenticateOptional(req: NextRequest): Promise<AuthIdentity | null> {
+    const raw = (req.headers.get("authorization") ?? "").trim();
+    if (!raw.toLowerCase().startsWith("bearer ")) {
+        return null;
+    }
+    const token = raw.slice(7).trim();
+    if (!token) {
+        return null;
+    }
+
+    const { authVerifier } = getDeps();
+    try {
+        return await authVerifier.verifyBearerToken(token);
+    } catch {
+        return null;
+    }
+}
+
 /**
  * Wraps a handler with standard error handling, returning JSON `{ ok, error }`.
  */
@@ -61,4 +79,3 @@ export function withErrorHandler(
 export function ok(data: unknown, headers?: Record<string, string>) {
     return NextResponse.json({ ok: true, data }, { status: 200, headers });
 }
-

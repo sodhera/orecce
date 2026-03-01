@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { trackAnalyticsEvent } from "@/lib/analytics";
 
 export interface Author {
     id: string;
@@ -166,6 +167,7 @@ export function useAuthors(): UseAuthorsReturn {
         const previous = new Set(cachedFollowedIds);
         const next = new Set(previous);
         const isFollowing = next.has(authorId);
+        const author = cachedAuthors.find((candidate) => candidate.id === authorId);
 
         if (isFollowing) {
             next.delete(authorId);
@@ -193,6 +195,14 @@ export function useAuthors(): UseAuthorsReturn {
                     if (deleteError) {
                         throw new Error(deleteError.message);
                     }
+                    trackAnalyticsEvent({
+                        eventName: "author_unfollowed",
+                        surface: "discover",
+                        properties: {
+                            author_id: authorId,
+                            author_name: author?.name ?? null,
+                        },
+                    });
                 } else {
                     const { error: insertError } = await supabase
                         .from("user_author_follows")
@@ -200,6 +210,14 @@ export function useAuthors(): UseAuthorsReturn {
                     if (insertError) {
                         throw new Error(insertError.message);
                     }
+                    trackAnalyticsEvent({
+                        eventName: "author_followed",
+                        surface: "discover",
+                        properties: {
+                            author_id: authorId,
+                            author_name: author?.name ?? null,
+                        },
+                    });
                 }
             } catch (error) {
                 setCachedState({

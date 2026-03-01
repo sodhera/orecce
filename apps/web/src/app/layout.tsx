@@ -5,6 +5,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import AuthModal from "@/components/AuthModal";
 import AuthGate from "@/components/AuthGate";
+import AnalyticsBootstrap from "@/components/AnalyticsBootstrap";
 
 export const metadata: Metadata = {
   title: "Orecce",
@@ -21,6 +22,7 @@ export default function RootLayout({
       <body>
         <ThemeProvider>
           <AuthProvider>
+            <AnalyticsBootstrap />
             <AuthGate>{children}</AuthGate>
             <AuthModal />
           </AuthProvider>

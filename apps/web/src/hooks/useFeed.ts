@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import type { Post, Slide } from "@/components/PostCard";
 import { sendPostFeedback } from "@/lib/api";
+import { trackAnalyticsEvent } from "@/lib/analytics";
 
 // ── Types ────────────────────────────────────────────────────────
 
@@ -421,6 +422,15 @@ export function useFeed(authorId?: string | null, feedMode: FeedMode = "feed", c
                     }
                 }
                 await sendPostFeedback(postId, optimisticLiked ? "upvote" : "skip");
+                trackAnalyticsEvent({
+                    eventName: optimisticLiked ? "post_upvoted" : "post_vote_cleared",
+                    surface: feedMode,
+                    properties: {
+                        post_id: postId,
+                        topic: target.post.topic,
+                        author_name: target.authorName,
+                    },
+                });
             } catch (error) {
                 setItems((prev) =>
                     prev.map((item) => {
@@ -471,6 +481,16 @@ export function useFeed(authorId?: string | null, feedMode: FeedMode = "feed", c
                         throw new Error(deleteError.message);
                     }
                 }
+                await sendPostFeedback(postId, optimisticSaved ? "save" : "unsave");
+                trackAnalyticsEvent({
+                    eventName: optimisticSaved ? "post_saved" : "post_unsaved",
+                    surface: feedMode,
+                    properties: {
+                        post_id: postId,
+                        topic: target.post.topic,
+                        author_name: target.authorName,
+                    },
+                });
             } catch (error) {
                 setItems((prev) =>
                     prev.map((item) => {
@@ -517,6 +537,15 @@ export function useFeed(authorId?: string | null, feedMode: FeedMode = "feed", c
                 if (error) {
                     throw new Error(error.message);
                 }
+                trackAnalyticsEvent({
+                    eventName: "feed_post_read",
+                    surface: feedMode,
+                    properties: {
+                        post_id: postId,
+                        topic: target.post.topic,
+                        author_name: target.authorName,
+                    },
+                });
             } catch (error) {
                 setItems((prev) =>
                     prev.map((item) => {

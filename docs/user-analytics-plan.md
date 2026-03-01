@@ -8,48 +8,59 @@ Build a single user-behavior analytics system across mobile, web, and API so Ore
 - Which actions actually improve feed quality and personalization.
 - Where users drop off in onboarding, auth, discovery, saves, collections, curation, and feedback.
 
-This plan is intentionally broader than the current recommendation feedback layer. `upvote`, `downvote`, `save`, and `slide_flip_count` are useful personalization signals, but they are not a full analytics system.
+This plan is broader than the recommendation feedback layer. `upvote`, `downvote`, `save`, and `unsave` are useful personalization signals, but the analytics system also needs sessions, impressions, opens, funnels, and derived facts.
+
+## Implementation status
+
+Implemented on 2026-03-01:
+
+- Shared event envelope in `packages/api-core/src/analytics/types.ts`
+- Shared validation schema in `packages/api-core/src/validation/requestValidation.ts`
+- Analytics batch ingestion at `POST /v1/analytics/events/batch` in both the core API app and the Next.js app route
+- Append-only `analytics_events_raw` storage plus derived SQL views in the base schema and a forward migration
+- Batched client analytics wrappers in `apps/web/src/lib/analytics.ts` and `apps/mobile/src/services/analytics.ts`
+- Broad instrumentation across auth, feed, discover, saves, collections, notifications, curation, and feedback flows
+- Living documentation in [`docs/user-analytics-ops.md`](./user-analytics-ops.md) plus agent instructions in `AGENTS.md`
 
 ## Current state audit
 
 | Surface | What exists now | Main gaps |
 | --- | --- | --- |
-| Mobile (`apps/mobile`) | Auth, onboarding, home feed, explore, saved, inbox, profile, post details. Feedback persists through `/v1/posts/feedback`. | No common analytics client. Most screens are not instrumented. Feed is still mostly mock data. Search, share, onboarding, collections, and post-detail chat are not measured. |
-| Web (`apps/web`) | Landing/auth, discover, feed, liked, saved, collections, notifications, feedback, curation sidebar. Likes, saves, read state, follows, feedback, and collections write directly to Supabase. `markAsSeen` uses local storage. | No raw event stream. No unified session tracking. Recommendation interaction endpoint exists but is not wired into the main feed flow. Seen/impression/dwell data is incomplete. |
-| API (`services/api` + `packages/api-core`) | Feedback table, recommendation profile table, seen-post state, curate chat sessions, recommendation interaction endpoint. | No general analytics ingestion endpoint, no warehouse-style event table, no derived marts, no funnel/reporting layer. |
-| Data model | Specialized product tables exist for feedback and recommendation state. | User IDs and schema ownership are split. Core SQL uses `text` IDs in `app_users`-style tables, while web SQL scripts use `uuid` references to `auth.users`. That needs to be normalized before analytics becomes trustworthy. |
+| Mobile (`apps/mobile`) | Shared batching client, anonymous/device/session IDs, route tracking, auth events, onboarding/preferences events, feed impressions/seen/open/read, vote/save/share, post-detail source/chat events, collection and saved events. | Some screens still fall back to generic `screen_viewed`. Feed data is still partly mock, so analytics quality depends on real content rollout. |
+| Web (`apps/web`) | Shared batching client, anonymous/device/session IDs, page views, auth lifecycle events, feed impressions/seen/load-more, votes/saves/read, discover author impressions, collection events, notifications, feedback, curation, and post-detail analytics. | Some secondary UI flows still emit generic `page_viewed` or route-only context. No server-side dashboards yet. |
+| API (`services/api` + `packages/api-core`) | Shared event contract, request validation, optional-auth batch ingestion, repository persistence, raw event storage, and derived views for sessions, daily user facts, daily content facts, funnels, and recommendation outcomes. | No dedicated reporting jobs, alerting, or analytics-specific endpoint tests yet. |
+| Data model | Analytics storage now lives in the core migration path with a forward migration for provisioned environments. | Canonical `user_id` is still split across existing product tables in some areas, and anonymous-to-auth identity aliasing is still client-side only. |
 
-## High-priority blind spots
+## Remaining blind spots
 
-1. There is no canonical event stream for user behavior.
-2. Mobile and web do not share one event taxonomy.
-3. Impression, dwell, scroll depth, and content-open signals are either missing or only local.
-4. Search, onboarding, notifications, settings, and feedback flows are largely invisible.
-5. Some important feed tables and RPCs live in `apps/web/*.sql` instead of the core migration path, which makes cross-surface analytics drift likely.
-6. The system stores recommendation outcomes, but not enough context to explain why users converted, bounced, or churned.
+1. Anonymous-to-auth identity merge is not yet modeled as a durable server-side alias table.
+2. Mobile still contains mock content paths, so some event properties will stay synthetic until the live feed path is fully wired.
+3. Some secondary routes only emit `page_viewed` or `screen_viewed` and could be upgraded to more specific intent events.
+4. There are no analytics dashboards, freshness checks, or anomaly alerts yet.
+5. The new analytics path has validation coverage, but not dedicated end-to-end analytics ingestion tests.
 
 ## Target architecture
 
 ### 1. One event contract
-Introduce one shared event envelope for both clients and the API.
+Implemented.
 
-Required fields:
+The shared event envelope now covers:
 
 - `event_id`
 - `event_name`
-- `occurred_at`
 - `platform` (`mobile`, `web`, `api`)
-- `surface` (`landing`, `auth`, `feed`, `discover`, `saved`, `collections`, `post_detail`, `notifications`, `settings`, `curation`, `feedback`)
+- `surface`
+- `occurred_at_ms`
 - `session_id`
 - `anonymous_id`
-- `user_id`
+- `user_id` via top-level auth context and/or properties
 - `device_id`
 - `app_version`
 - `route_name`
 - `request_id`
 - `properties` (`jsonb`)
 
-Recommended properties for content events:
+Recommended content properties:
 
 - `post_id`
 - `author_id`
@@ -71,17 +82,17 @@ Example:
 {
   "event_id": "evt_01",
   "event_name": "feed_post_impression",
-  "occurred_at": "2026-03-01T09:00:00.000Z",
   "platform": "web",
   "surface": "feed",
-  "session_id": "sess_01",
-  "anonymous_id": "anon_01",
-  "user_id": "auth_uid",
-  "device_id": "device_01",
+  "occurred_at_ms": 1772355600000,
+  "session_id": "session:01",
+  "anonymous_id": "anon:01",
+  "device_id": "device:01",
   "app_version": "web@0.1.0",
   "route_name": "/feed",
   "request_id": "req_01",
   "properties": {
+    "user_id": "auth_uid",
     "post_id": "post_123",
     "author_id": "author_456",
     "feed_position": 3,
@@ -92,17 +103,24 @@ Example:
 ```
 
 ### 2. One ingestion path
-Add a backend endpoint such as `POST /v1/analytics/events/batch`.
+Implemented.
 
-Rules:
+Active ingestion path:
+
+- Core API: `packages/api-core/src/http/createApp.ts`
+- Web app route mirror: `apps/web/src/app/api/v1/analytics/events/batch/route.ts`
+
+Current rules:
 
 - Clients batch and retry.
-- API adds server timestamps and auth context.
+- Auth is optional; bearer context is attached when present.
 - Events are append-only.
-- Specialized tables like `feedback`, `user_history`, and recommendation profiles remain product state, not the analytics source of truth.
+- Product-state tables such as feedback, saves, follows, and recommendation state remain operational state, not the analytics source of truth.
 
 ### 3. One warehouse layer
-Add these tables or equivalents:
+Implemented as a schema foundation.
+
+Current analytics storage:
 
 - `analytics_events_raw`
 - `analytics_sessions`
@@ -111,34 +129,28 @@ Add these tables or equivalents:
 - `analytics_funnel_facts`
 - `analytics_recommendation_outcomes`
 
-Derived models should answer:
-
-- activation by platform
-- onboarding completion rate
-- signup to first-feed-view time
-- impression to open rate
-- open to like/save/share rate
-- follow to first-return rate
-- curation usage to retention lift
-- feedback submission rate
-- recommendation quality by author, topic, and match reason
+These views are now present in both the base schema and the forward migration so fresh setups and provisioned databases converge.
 
 ### 4. Identity and session normalization
-Normalize IDs before broad rollout.
+Partially implemented.
 
-Required decisions:
+Current decisions:
 
-- Use Supabase auth UID as canonical `user_id`.
-- Keep `app_users` as profile state only, not a second user identity.
-- Generate `anonymous_id` before auth and alias it to `user_id` after signup/login.
-- Use one session definition across web and mobile.
+- Supabase auth UID should remain the canonical `user_id`.
+- `app_users` should stay profile state, not a second identity source.
+- `anonymous_id`, `device_id`, and `session_id` now exist on both web and mobile clients.
+- Anonymous-to-auth aliasing still needs a durable backend model if long-term attribution across auth boundaries becomes a requirement.
 
 ## Event taxonomy
 
 ### Acquisition and auth
 
 - `landing_viewed`
+- `page_viewed`
+- `screen_viewed`
 - `auth_modal_opened`
+- `signup_entry_selected`
+- `login_entry_selected`
 - `signup_started`
 - `signup_completed`
 - `signup_failed`
@@ -148,10 +160,13 @@ Required decisions:
 - `oauth_started`
 - `oauth_completed`
 - `password_reset_requested`
+- `verification_email_opened`
+- `verification_deferred`
 
 Key properties:
 
 - `method`
+- `provider`
 - `error_code`
 - `from_surface`
 - `time_to_complete_ms`
@@ -201,6 +216,7 @@ Key properties:
 
 ### Post interaction
 
+- `post_detail_viewed`
 - `post_upvoted`
 - `post_downvoted`
 - `post_vote_cleared`
@@ -208,9 +224,8 @@ Key properties:
 - `post_unsaved`
 - `post_shared`
 - `post_source_opened`
-- `post_double_tap_liked`
-- `post_expand_opened`
-- `post_expand_closed`
+- `sources_expanded`
+- `sources_collapsed`
 - `carousel_slide_advanced`
 - `carousel_completed`
 
@@ -245,6 +260,7 @@ Key properties:
 
 - `liked_viewed`
 - `saved_viewed`
+- `collection_create_started`
 - `collection_created`
 - `collection_renamed`
 - `collection_deleted`
@@ -277,6 +293,7 @@ Key properties:
 - `curation_prompt_clicked`
 - `curation_message_sent`
 - `curation_reply_received`
+- `curation_session_list_viewed`
 - `curation_session_resumed`
 - `curation_session_deleted`
 - `feedback_viewed`
@@ -305,57 +322,61 @@ Key properties:
 
 ### Phase 0: Normalize the foundation
 
-- Define the event taxonomy in code and docs.
-- Normalize `user_id`, `anonymous_id`, and `session_id`.
-- Move web-only SQL objects needed for feed analytics into the core migration path.
-- Create the analytics event tables and ingestion endpoint.
+Status: complete
+
+- Defined the shared event contract in code and docs.
+- Added client batching wrappers on web and mobile.
+- Added the analytics event table, derived views, and forward migration.
+- Added `POST /v1/analytics/events/batch`.
 
 ### Phase 1: Instrument the main behavior loop
 
-- Feed impressions, opens, dwell, slide flips, likes, downvotes, saves, shares, source opens.
-- Auth success/failure.
-- Discover follows/unfollows.
-- Saved and collection actions.
+Status: mostly complete
 
-This phase gives the fastest value.
+- Feed impressions, seen, opens, reads, slide interactions, votes, saves, shares, and source opens are instrumented.
+- Auth success/failure is instrumented.
+- Discover follows/unfollows are instrumented.
+- Saved and collection actions are instrumented.
 
 ### Phase 2: Instrument secondary journeys
 
-- Onboarding and interests.
-- Search.
-- Notifications.
-- Profile and settings.
-- Feedback page.
-- Mobile post detail assistant/chat behavior.
+Status: partially complete
+
+- Interests, notifications, feedback, and curation are instrumented.
+- Search is instrumented on mobile explore.
+- Some onboarding and secondary route flows still rely on generic route-level events.
 
 ### Phase 3: Derived analytics and reporting
 
-- Build daily user/content facts.
-- Add retention and funnel reporting.
-- Add recommendation outcome reporting by author/topic/match reason.
-- Segment by platform, acquisition method, and user maturity.
+Status: schema foundation complete
+
+- Daily user/content facts, funnel facts, and recommendation outcome views exist.
+- Dashboards, recurring reports, and quality monitoring still need to be built on top.
 
 ### Phase 4: Quality controls
 
-- Event schema validation tests.
-- Event volume anomaly alerts.
-- Dashboard freshness checks.
-- Duplicate-event and missing-session audits.
+Status: pending
+
+- Add analytics-specific endpoint tests.
+- Add volume anomaly alerts.
+- Add dashboard freshness checks.
+- Add duplicate-event and missing-session audits.
 
 ## Immediate implementation checklist
 
-1. Add shared tracking wrappers in `apps/mobile` and `apps/web`.
-2. Add `POST /v1/analytics/events/batch` in the API.
-3. Create append-only analytics tables plus forward migrations.
-4. Wire web feed impressions and slide interactions into the new event stream.
-5. Wire mobile onboarding, home feed, post detail, and auth flows.
-6. Start updating the living operations file in [`docs/user-analytics-ops.md`](./user-analytics-ops.md).
+1. [x] Add shared tracking wrappers in `apps/mobile` and `apps/web`.
+2. [x] Add `POST /v1/analytics/events/batch` in the API.
+3. [x] Create append-only analytics tables plus forward migrations.
+4. [x] Wire web feed impressions and slide interactions into the new event stream.
+5. [x] Wire mobile auth, home feed, post detail, and preference flows.
+6. [x] Start updating the living operations file in [`docs/user-analytics-ops.md`](./user-analytics-ops.md).
+7. [ ] Add dashboards, alerts, and analytics-specific integration tests.
 
 ## Baseline assessment on 2026-03-01
 
-- Mobile analytics coverage: low
-- Web analytics coverage: low to medium
-- API analytics coverage: medium for personalization, low for product analytics
-- Overall confidence in behavior measurement: low
+- Mobile analytics coverage: medium
+- Web analytics coverage: medium to high
+- API analytics coverage: medium to high
+- Overall confidence in behavior measurement: medium
 
-The repo has enough building blocks to start quickly, but not enough consistency to claim full user analytics yet.
+The repo now has a real end-to-end analytics foundation. The next step is not more basic instrumentation; it is tightening identity fidelity, building reporting, and adding quality controls so the captured data stays trustworthy.

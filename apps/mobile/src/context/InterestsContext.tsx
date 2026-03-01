@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { trackMobileAnalyticsEvent } from '../services/analytics';
 
 const STORAGE_KEY = '@user_interests_v2';
 
@@ -64,17 +65,40 @@ export const InterestsProvider = ({ children }: { children: ReactNode }) => {
         const newInterests = [...interests, normalizedInterest];
         setInterests(newInterests);
         await saveInterests(newInterests);
+        trackMobileAnalyticsEvent({
+            eventName: 'interest_added',
+            surface: 'preferences',
+            properties: {
+                interest: normalizedInterest,
+                interest_count: newInterests.length,
+            },
+        });
     };
 
     const removeInterest = async (interest: string) => {
         const newInterests = interests.filter(i => i !== interest);
         setInterests(newInterests);
         await saveInterests(newInterests);
+        trackMobileAnalyticsEvent({
+            eventName: 'interest_removed',
+            surface: 'preferences',
+            properties: {
+                interest,
+                interest_count: newInterests.length,
+            },
+        });
     };
 
     const resetInterests = async () => {
         setInterests(DEFAULT_INTERESTS);
         await saveInterests(DEFAULT_INTERESTS);
+        trackMobileAnalyticsEvent({
+            eventName: 'preferences_saved',
+            surface: 'preferences',
+            properties: {
+                interest_count: DEFAULT_INTERESTS.length,
+            },
+        });
     };
 
     return (

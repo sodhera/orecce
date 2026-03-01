@@ -1,5 +1,6 @@
 import {
   EnsureUserInput,
+  SaveAnalyticsEventsInput,
   ListFeedbackQuery,
   ListFeedbackResult,
   ListSeenRecommendationPostsQuery,
@@ -20,6 +21,7 @@ import { normalizeProfileKey } from "@orecce/api-core/src/utils/text";
 export class InMemoryRepository implements Repository {
   public posts: StoredPost[] = [];
   public feedback: StoredFeedback[] = [];
+  public analyticsEvents: SaveAnalyticsEventsInput["events"] = [];
   private readonly seenRecommendationPostIds = new Map<string, string[]>();
   private readonly users = new Map<string, AppUser>();
   private readonly preferences = new Map<string, PromptPreferences>();
@@ -227,6 +229,10 @@ export class InMemoryRepository implements Repository {
       items,
       nextCursor: hasMore ? String(items[items.length - 1].createdAtMs) : null
     };
+  }
+
+  async saveAnalyticsEvents(input: SaveAnalyticsEventsInput): Promise<void> {
+    this.analyticsEvents.push(...input.events);
   }
 
   async listSeenRecommendationPostIds(query: ListSeenRecommendationPostsQuery): Promise<string[]> {

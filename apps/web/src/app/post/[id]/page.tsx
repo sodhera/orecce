@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useAuthors } from "@/hooks/useAuthors";
 import Sidebar from "@/components/Sidebar";
 import PostCard, { type Post, type Slide } from "@/components/PostCard";
+import { trackAnalyticsEvent } from "@/lib/analytics";
 
 interface PostRow {
     id: string;
@@ -89,6 +90,23 @@ export default function PublicPostPage() {
             }
         })();
     }, [postId]);
+
+    useEffect(() => {
+        if (!post) {
+            return;
+        }
+        trackAnalyticsEvent({
+            eventName: "post_detail_viewed",
+            surface: "post_detail",
+            properties: {
+                post_id: post.id,
+                author_id: authorId,
+                author_name: authorName,
+                topic: post.topic,
+                source_url: post.sourceUrl ?? null,
+            },
+        });
+    }, [authorId, authorName, post]);
 
     const isFollowing = authorId ? followedIds.has(authorId) : false;
 

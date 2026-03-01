@@ -4358,29 +4358,20 @@ body[data-theme="light"] .ig-post-dot.active {
 .discover-recces-section-meta {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-}
-
-.discover-recces-section-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 28px;
-  height: 28px;
-  padding: 0 10px;
-  border-radius: 999px;
-  background: var(--bg-secondary);
-  color: var(--text-secondary);
-  font-size: 12px;
-  font-weight: 700;
 }
 
 .discover-recces-section-chevron {
   width: 18px;
+  display: inline-block;
   text-align: center;
   color: var(--text-secondary);
   font-size: 18px;
   line-height: 1;
+  transition: transform 0.15s;
+}
+
+.discover-recces-section-toggle.is-expanded .discover-recces-section-chevron {
+  transform: rotate(180deg);
 }
 
 .authors-grid {

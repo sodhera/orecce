@@ -109,11 +109,8 @@ export default function DiscoverPage() {
                                                 {section.label}
                                             </span>
                                             <span className="discover-recces-section-meta">
-                                                <span className="discover-recces-section-count">
-                                                    {section.items.length}
-                                                </span>
                                                 <span className="discover-recces-section-chevron">
-                                                    {isExpanded ? "−" : "+"}
+                                                    ↓
                                                 </span>
                                             </span>
                                         </button>

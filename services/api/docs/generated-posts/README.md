@@ -9,6 +9,8 @@ This folder is the in-repo staging area for spec-driven carousel drafts that may
 - The curated library generator writes a review doc at `services/api/docs/generated-posts/curated-title-libraries/curated-topic-library-review.md` and raw per-category JSON library files beside it.
 - To keep only Tier 1 topics in the curated library output: `npm --prefix services/api/functions run titles:trim -- --tiers tier_1`
 - To generate one Tier 1 sample post from each category: `npm --prefix services/api/functions run posts:tier1-samples -- --model gpt-5.2-2025-12-11`
+- To generate the full Tier 1 corpus with `gpt-5-mini`: `npm --prefix services/api/functions run posts:tier1-corpus -- --model gpt-5-mini`
+- To import the full Tier 1 corpus into Supabase feed tables and `recces_essays`: `npm --prefix services/api/functions run posts:tier1-import`
 - Cheapest title-only pass: `npm --prefix services/api/functions run titles:generate -- --target-per-category 200 --model gpt-5.2-2025-12-11`
 - The title-only generator writes a review doc at `services/api/docs/generated-posts/title-lists/topic-titles-review.md` with only the titles, grouped by category.
 - Large corpus runs now work in two stages:

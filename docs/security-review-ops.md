@@ -30,7 +30,7 @@ When updating this file:
 | Mobile client and session handling | Yellow | iOS arbitrary loads were removed in favor of local-only ATS exceptions, but secure-storage review and privacy logging review remain open. |
 | Web browser surface | Yellow | Authenticated flows and server routes exist, low-sensitivity route state plus feed/discover/collection/post snapshots now resume from sessionStorage, and the `/admin` nav/page is hidden client-side unless the server confirms allowlisted access, but CSP and browser security headers are not yet codified. |
 | Core API hardening | Yellow | CORS is now allowlisted and several costly/write-heavy routes have request budgets, but protections are still in-memory only. |
-| LLM and external fetch surfaces | Yellow | Curate chat and several mutation paths are budgeted, but outbound fetch controls, prompt-injection review, and broader cost controls still need work. |
+| LLM and external fetch surfaces | Yellow | Curate chat and several mutation paths are budgeted, the Tier 1 library pipeline now generates and imports curated feed content through local operator scripts, but outbound fetch controls, prompt-injection review, and broader cost controls still need work. |
 | Secrets and configuration | Yellow | Service-role keys remain server-side and CORS config is now explicit, but secret-rotation and least-privilege work remain open. |
 | Monitoring and incident readiness | Red | No dedicated security monitoring, response playbook, or recurring audit automation is in place yet. |
 
@@ -69,6 +69,7 @@ When updating this file:
 - Local-only iOS transport exceptions instead of global arbitrary-load allowance
 - Server-side segregation of privileged keys from browser/mobile clients
 - Server-side admin allowlist checks on `/api/v1/admin/me` and `/api/v1/admin/user-analytics`, backed by a repo-defined email baseline plus optional env extensions, and mirrored by client-side nav visibility for `/admin`
+- Local operator scripts for Tier 1 content generation and import, with explicit runbook documentation and deterministic upsert ids for `authors`, `posts`, `post_topics`, and `recces_essays`
 
 ### Controls missing or not yet standardized
 
@@ -79,6 +80,7 @@ When updating this file:
 - Dependency-audit and secrets-rotation workflow
 - Dedicated security monitoring and incident-response guidance
 - Centralized admin-role management beyond repo and environment-based allowlists
+- Canonical schema ownership for the deployed feed tables used by manual Tier 1 imports still needs review because the live `authors`/`post_topics` feed shape is not fully represented in the repo's base migration file
 
 ## Gaps to fix first
 
@@ -128,6 +130,8 @@ When updating this file:
 - Added an admin-only `/admin` web surface with a matching protected reporting route at `/api/v1/admin/user-analytics`.
 - Gated admin access through a server-side repo allowlist with optional `ADMIN_USER_EMAILS` and `ADMIN_USER_IDS` extensions, with the client only using the protected status response to decide whether to show the sidebar entry.
 - Recorded the configuration-drift risk introduced by repo-managed and environment-managed admin access.
+- Added a documented Tier 1 library generation/import workflow that uses the Supabase service-role key to seed curated content into live `authors`, `posts`, `post_topics`, and `recces_essays`.
+- Recorded the remaining schema-ownership gap around the deployed feed tables that these import scripts target.
 
 ### 2026-03-01
 

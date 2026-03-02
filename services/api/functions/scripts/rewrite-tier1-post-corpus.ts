@@ -39,7 +39,7 @@ const rewriteSchema = z.object({
   slides: z.array(
     z.object({
       slide_number: z.number().int().min(1),
-      text: z.string().trim().min(12).max(220)
+      text: z.string().trim().min(18).max(420)
     })
   )
 });
@@ -256,11 +256,11 @@ function buildRewritePrompts(post: StoredTier1Post): { systemPrompt: string; use
 
   return {
     systemPrompt: [
-      "You are tightening an existing Orecce carousel for a square feed card.",
-      "Keep the same meaning, structure, and factual claims, but compress aggressively.",
-      "Every slide must be easy to scan in 2 to 4 short lines.",
-      "Use markdown-friendly formatting: a short lead line, bullets, or numbered points when useful.",
-      "Avoid wall-of-text paragraphs, semicolon chains, overloaded parentheses, and stacked examples.",
+      "You are lightly polishing an existing Orecce carousel for a square feed card.",
+      "Keep the same meaning, structure, factual claims, and overall voice.",
+      "Trim only what feels padded, repetitive, or harder to scan on mobile.",
+      "Preserve natural sentence flow. Do not force every slide into bullets or list formatting.",
+      "Avoid wall-of-text paragraphs, but also avoid robotic fragment stacks.",
       "Use ASCII only.",
       ...categorySpecific
     ].join("\n\n"),
@@ -274,14 +274,15 @@ function buildRewritePrompts(post: StoredTier1Post): { systemPrompt: string; use
       "Rewrite rules:",
       "- Keep the same number of slides.",
       "- Keep the same slide numbers and roles.",
-      "- Make the title shorter and cleaner if needed, but preserve the idea.",
-      "- Hook slide: 1 to 2 short sentences max.",
-      "- Body slides: either 2 to 3 bullets or 2 short sentences max.",
-      "- Closer slide: 1 short payoff or takeaway, max 2 lines.",
+      "- Keep the current voice unless a sentence is clearly bloated.",
+      "- Make the title cleaner if needed, but do not oversimplify it.",
+      "- Hook slide: 1 to 2 sentences with some shape, not a clipped slogan.",
+      "- Body slides: 1 to 3 sentences, or bullets only when they genuinely improve clarity.",
+      "- Closer slide: keep the payoff concise, but let it sound like a human conclusion.",
       "- Each slide should hold one idea only.",
-      "- Target 18 to 42 words per slide.",
-      "- Each slide text must stay under 220 characters.",
-      "- Prefer line breaks over long commas and clause chains.",
+      "- Target roughly 24 to 60 words per slide.",
+      "- Trim by about 10 to 20 percent when possible, not by half.",
+      "- Prefer cleaner phrasing over artificial line breaks.",
       "",
       "Current slides:",
       ...post.slides.flatMap((slide) => [
@@ -342,7 +343,7 @@ async function rewritePost(gateway: OpenAiGateway, post: StoredTier1Post): Promi
               `Expected slide_number ${expected.slide_number} but received ${slide.slide_number} for ${post.canonical_topic}`
             );
           }
-          if (wordCount(slide.text) > 42) {
+          if (wordCount(slide.text) > 60) {
             throw new Error(`Slide ${slide.slide_number} is too verbose for ${post.canonical_topic}`);
           }
           return {

@@ -12,6 +12,7 @@
     "corpus:posts": "tsx scripts/generate-spec-corpus.ts --stage posts",
     "corpus:titles": "tsx scripts/generate-spec-corpus.ts --stage briefs",
     "posts:tier1-corpus": "tsx scripts/generate-tier1-post-corpus.ts",
+    "posts:tier1-delete": "tsx scripts/delete-tier1-post-corpus.ts",
     "posts:tier1-import": "tsx scripts/import-tier1-post-corpus.ts",
     "posts:tier1-rewrite": "tsx scripts/rewrite-tier1-post-corpus.ts",
     "posts:tier1-samples": "tsx scripts/generate-tier1-post-samples.ts",

@@ -56,10 +56,10 @@ Output:
 
 - `services/api/docs/generated-posts/curated-title-libraries/tier1-post-samples.md`
 
-4. Generate the full Tier 1 corpus with `gpt-5-mini`.
+4. Generate the full Tier 1 corpus with the full model in parallel.
 
 ```bash
-npm --prefix services/api/functions run posts:tier1-corpus -- --model gpt-5-mini
+npm --prefix services/api/functions run posts:tier1-corpus -- --model gpt-5.2-2025-12-11 --concurrency 4
 ```
 
 Output:
@@ -74,8 +74,27 @@ Notes:
 - generation checkpoints by canonical Tier 1 topic
 - reruns skip already-generated topics
 - each post is generated from one canonical topic plus its approved variants
+- prompts are tuned for Instagram-style square carousels, not essay slides
+- slide formatting is markdown-first: short paragraphs, short bullet lists, numbered steps, and stronger hooks
+- if a small set fails upstream, rerun the same command or target one category with `--category historical_nerd` or `--category mental_model_library`
 
-5. Optional: lightly polish the existing Tier 1 corpus for better line economy.
+5. Optional: generate a targeted resume instead of re-running the whole corpus.
+
+```bash
+npm --prefix services/api/functions run posts:tier1-corpus -- --model gpt-5.2-2025-12-11 --category mental_model_library --concurrency 1
+```
+
+Use this when one or two topics failed and the rest of the checkpointed corpus is already complete.
+
+6. Replace the live Orecce corpus before re-importing.
+
+```bash
+npm --prefix services/api/functions run posts:tier1-delete
+```
+
+This removes only the generated Orecce Tier 1 feed posts and their mirrored `recces_essays` rows. It does not delete the Orecce author rows.
+
+7. Optional legacy cleanup pass for an already-generated corpus.
 
 ```bash
 npm --prefix services/api/functions run posts:tier1-rewrite -- --model gpt-5-mini
@@ -97,7 +116,7 @@ Formatting guidance used in the rewrite:
 - target roughly 24 to 60 words per slide
 - prefer cleaner phrasing over aggressive compression
 
-6. Import the generated Tier 1 corpus into Supabase.
+8. Import the generated Tier 1 corpus into Supabase.
 
 ```bash
 npm --prefix services/api/functions run posts:tier1-import
@@ -142,6 +161,7 @@ Reruns are intended to be idempotent:
 - feed post ids are derived from `category + canonical_topic`
 - `recces_essays` rows are upserted by `author_id + essay_id`
 - `post_topics` links are deleted and rebuilt for the imported post ids
+- corpus generation checkpoints after each successful topic, so restarts only need to fill the missing topics
 
 If you change the canonical topic names, the stable ids will change too. That will create new feed posts unless you migrate the ids intentionally.
 

@@ -1,7 +1,7 @@
 {
   "generated_at": "2026-03-02T12:50:40.721Z",
-  "updated_at": "2026-03-02T13:18:41.938Z",
-  "model": "gpt-5-mini",
+  "updated_at": "2026-03-02T14:43:21.386Z",
+  "model": "gpt-5.2-2025-12-11",
   "config": {
     "out_dir": "/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/docs/generated-posts/tier1-corpus"
   },

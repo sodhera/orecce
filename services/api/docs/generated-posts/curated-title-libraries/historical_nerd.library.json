@@ -1,0 +1,1710 @@
+{
+  "category": "historical_nerd",
+  "pillars": [
+    {
+      "pillar": "state_capacity_and_governance",
+      "core_topics": [
+        {
+          "canonical_title": "The Census as State Power",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Census Categories and Who Counts",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Census Takers, Coercion, and Trust",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "From Hearth Tax to Headcount",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Writing the Law into Bureaucracy",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "From Custom to Code",
+              "publishability": "user_facing_content_topic",
+              "disposition": "alternate"
+            },
+            {
+              "title": "Forms, Files, and the Paper State",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Merit Exams and the Administrative Class",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Exam Curricula and Ideological Uniformity",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Buying Office vs Earning Office",
+              "publishability": "user_facing_content_topic",
+              "disposition": "alternate"
+            },
+            {
+              "title": "The Exam Cheating Arms Race",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Local Notables as Tax Farmers",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Tax Farming and Rural Violence",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "When the State Replaces the Farmer",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            },
+            {
+              "title": "Revenue Leases as Patronage",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Standard Weights, Measures, and Trust",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Metrology as Market Integration",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Inspectors, Seals, and Fraud",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Passports and Internal Borders",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Who Gets to Travel",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Passes, Permits, and Labor Control",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Police, Patrol, and Routine Order",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Street Lighting and Night Policing",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "The Beat as Information Network",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Land Registers and Property Rule",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Cadastral Surveys and Tax Capacity",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Title, Mortgage, and Credit Expansion",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            },
+            {
+              "title": "Boundary Disputes and State Courts",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Courts that Enforce Contracts",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Commercial Courts and Fast Justice",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Enforcement Over Legislation",
+              "publishability": "user_facing_content_topic",
+              "disposition": "alternate"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Centralization via Postal Routes",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Postmasters as Local Power Brokers",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Postal Surveillance and State Security",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Corruption as a Governance System",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Informal Fees as Hidden Tax",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Anti-Corruption as Elite Purge",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Disaster Relief and Legitimacy",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Granaries, Floods, and Revolt Risk",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Relief Logistics as State Test",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Insurance, Charity, and the Public Sector",
+              "publishability": "needs_reframing_before_publication",
+              "disposition": "future_variant"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Provincial Governors and Imperial Reach",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Rotation, Hostages, and Loyalty",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Governor Autonomy and Local Armies",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "City Charters and Self-Government",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Municipal Courts and Local Taxation",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Charters as Political Bargains",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Public Health as Governance",
+          "tier": "tier_3",
+          "publishability": "needs_reframing_before_publication",
+          "variants": [
+            {
+              "title": "Sanitation Boards and Urban Rule",
+              "publishability": "user_facing_content_topic",
+              "disposition": "rewrite"
+            },
+            {
+              "title": "Vaccination Campaigns and Compliance",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "State Mapping and Territorial Claims",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Border Surveys and Treaty Lines",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Maps That Create Property",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Cartography as Bureaucratic Reform",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Prison Systems and Social Control",
+          "tier": "tier_3",
+          "publishability": "needs_reframing_before_publication",
+          "variants": [
+            {
+              "title": "From Fines to Incarceration",
+              "publishability": "needs_reframing_before_publication",
+              "disposition": "rewrite"
+            },
+            {
+              "title": "Penal Labor and State Projects",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Succession Rules and Political Stability",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Regencies and Power Vacuums",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Civil War as Succession Failure",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "pillar": "trade_infrastructure_and_commerce",
+      "core_topics": [
+        {
+          "canonical_title": "The Port as a Customs Machine",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Harbor Fees and State Revenue",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Quarantine Stations and Trade Flow",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Port Records as Commercial Intelligence",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            }
+          ]
+        },
+        {
+          "canonical_title": "River Control and Inland Trade",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Dredging, Dikes, and Navigation Rights",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Tolls, Locks, and River Monopolies",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Road Maintenance and Market Radius",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Corvée Labor and Public Works",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Turnpikes and Private Roads",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Caravanserais and Desert Commerce",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Water Rights and Route Control",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Protection Rackets on Trade Roads",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Maritime Insurance and Risk Pooling",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Underwriters and Information Advantage",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Insuring War Risk at Sea",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            },
+            {
+              "title": "Insurance as Credit Substitute",
+              "publishability": "needs_reframing_before_publication",
+              "disposition": "merge"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Bills of Exchange and Long Trade",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Notaries and Enforceable Paper",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Clearing Networks Before Banks",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Staple Ports and Forced Trade",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Compulsory Markets and Price Control",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Smuggling as Response to Staple Laws",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Warehousing and the Grain Trade",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Warehouse Receipts and Finance",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Spoilage, Theft, and Inspection",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Canals as Cost Revolution",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Canal Tolls and Political Fights",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Canal Town Booms and Busts",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Canals vs Railways as Regime Change",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Containerization’s Hidden Shock",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Ports That Lost the Future",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "How Boxes Rewired Supply Chains",
+              "publishability": "user_facing_content_topic",
+              "disposition": "alternate"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Lighthouses and Safe Coasts",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Who Pays for Public Goods at Sea",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Pilotage, Charts, and Coastal Expertise",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Monopoly Charters and Company Rule",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Chartered Companies as States-in-State",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Monopoly Profits and Military Force",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Revoking Charters and Market Chaos",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Standardized Coinage for Trade",
+          "tier": "tier_3",
+          "publishability": "internal_operating_concept",
+          "variants": [
+            {
+              "title": "Trade Coins vs Local Coins",
+              "publishability": "internal_operating_concept",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Assay Offices and Trust in Metal",
+              "publishability": "user_facing_content_topic",
+              "disposition": "merge"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Guilds as Quality Control",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Apprenticeship as Labor Regulation",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Guild Politics and City Government",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Market Days and Rural Integration",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Measuring the Week by the Fair",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Market Courts and Debt Collection",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Cold Chains and Perishable Markets",
+          "tier": "tier_3",
+          "publishability": "needs_reframing_before_publication",
+          "variants": [
+            {
+              "title": "Ice, Refrigeration, and Urban Diets",
+              "publishability": "user_facing_content_topic",
+              "disposition": "rewrite"
+            },
+            {
+              "title": "Cold Storage and Price Stability",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Telegraph Pricing and Arbitrage Collapse",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "National Grain Prices in Real Time",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "The End of the Local Price World",
+              "publishability": "user_facing_content_topic",
+              "disposition": "alternate"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Smuggling Networks and Border Economies",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Smuggling as Community Employment",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Customs Enforcement and Corruption",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "When Smuggling Becomes Diplomacy",
+              "publishability": "needs_reframing_before_publication",
+              "disposition": "future_variant"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "pillar": "fiscal_systems_and_money",
+      "core_topics": [
+        {
+          "canonical_title": "Coin Debasement and Fiscal Panic",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Debasement as Stealth Tax",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Price Spikes and Urban Unrest",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Tax in Kind to Tax in Cash",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Monetization and Peasant Debt",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Cash Taxes and Market Dependence",
+              "publishability": "user_facing_content_topic",
+              "disposition": "alternate"
+            },
+            {
+              "title": "Measuring Harvests vs Counting Coins",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Public Debt and State Survival",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Bond Markets and Credibility",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Default as Political Reset",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Debt Management Offices and Capacity",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Central Banks as War Finance",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Discount Windows and Emergency Liquidity",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Monetary Independence as Political Deal",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Inflation and the Social Contract",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Wage Lag and Political Rage",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Price Controls and Black Markets",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Fiscal Registers and Compliance",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Ledgers, Audits, and State Memory",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Household Lists as Tax Technology",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Tariffs as Revenue Engine",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Tariff Schedules and Smuggling Incentives",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Customs Houses and Administrative Reach",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Protectionism vs Fiscal Need",
+              "publishability": "user_facing_content_topic",
+              "disposition": "alternate"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Tax Farming Contracts",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Auctioning Revenue Rights",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Tax Farmers as Creditors to the State",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Progressive Taxation’s Political Bargain",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Income Tax and New Paper Trails",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Withholding as Compliance Hack",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Silver Flows and Global Prices",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Mining Booms and Monetary Shock",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Bullion Drain and Fiscal Anxiety",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Trade Deficits Before Modern Economics",
+              "publishability": "needs_reframing_before_publication",
+              "disposition": "rewrite"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Bimetallism and Monetary Politics",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Gold vs Silver Coalitions",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Gresham’s Law in Practice",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "War Indemnities and Reconstruction",
+          "tier": "tier_3",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Indemnities as Forced Industrial Policy",
+              "publishability": "needs_reframing_before_publication",
+              "disposition": "rewrite"
+            },
+            {
+              "title": "Occupation Costs and Fiscal Collapse",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Land Tax as Backbone",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Assessments, Appeals, and Local Politics",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Land Tax Revolts and Reform",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Sin Taxes and Behavioral Revenue",
+          "tier": "tier_3",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Salt, Alcohol, and Regressive Burdens",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Tax Stamps and Enforcement",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Seigniorage and Sovereign Power",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Mint Monopolies and Counterfeiting",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "When Money Printing Beats Taxation",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Financial Crises and Policy Learning",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Bank Runs and Information Cascades",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Deposit Insurance as Political Choice",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Payment Arrears and Soldier Mutiny",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Back Pay as Security Threat",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Army Payroll Systems and Fraud",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "The Politics of Paying Veterans",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Currency Reform after Regime Change",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Exchange Rates and Winners and Losers",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Stamping Old Notes Overnight",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Dollarization as Emergency Exit",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "pillar": "military_logistics_and_war",
+      "core_topics": [
+        {
+          "canonical_title": "The Magazine System and Sustained War",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Magazines vs Foraging Armies",
+              "publishability": "user_facing_content_topic",
+              "disposition": "alternate"
+            },
+            {
+              "title": "Supply Depots as Strategic Targets",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Bureaucrats Who Won Campaigns",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Conscription and Mass Armies",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Draft Resistance and State Coercion",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Reserve Systems and Rapid Expansion",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Gunpowder Supply Chains",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Saltpeter as Strategic Resource",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Powder Mills and Industrial Bottlenecks",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Naval Dockyards and Sea Power",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Timber, Tar, and Naval Materials",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Dockyard Labor and Skilled Trades",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Refit Cycles and Operational Reach",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Horses, Fodder, and Operational Tempo",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Fodder Maps and March Routes",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Remount Systems and Cavalry Longevity",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            },
+            {
+              "title": "Veterinary Care as Military Advantage",
+              "publishability": "needs_reframing_before_publication",
+              "disposition": "rewrite"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Fortresses as Logistics Nodes",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Garrisons as Supply Consumers",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Fortress Chains and Border Control",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Railways and Mobilization Timetables",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Rail Schedules as War Plans",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Rail Gauge Politics and Strategy",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Blowing Bridges to Slow Armies",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Field Hospitals and Survival Rates",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Triage as Organizational Innovation",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Sanitation, Infection, and Combat Power",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Standardized Drill and Unit Cohesion",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Manuals, Cadence, and Control",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Training Time as Hidden Constraint",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Military Contracts and Corruption",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Contractors, Kickbacks, and Short Rations",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Quality Failures in War Materials",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Amphibious Logistics and Coastal Raids",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Beachheads and Port Seizure",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Ship-to-Shore Supply Improvisation",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Winter Quarters and Campaign Limits",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Forage Seasons and Strategic Pauses",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Quartering Troops and Civilian Backlash",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Siege Artillery and City Survival",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Powder Consumption in Sieges",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Food Stocks and Surrender Timing",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Engineering Corps and Breach Science",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Intelligence Networks and Surprise",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Scouts, Guides, and Local Knowledge",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Intercepts and Signal Security",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Mercenaries and Control Problems",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Payment, Plunder, and Discipline",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Mercenary Captains as Political Actors",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Armies Eating the Countryside",
+          "tier": "tier_3",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Foraging as Strategy and Crime",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Scorched Earth and Supply Denial",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Demobilization and Political Shock",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Unpaid Veterans and Coup Risk",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Weapons Flooding Civil Society",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Pensions as Postwar Pacification",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Military Mapping and Reconnaissance",
+          "tier": "tier_3",
+          "publishability": "internal_operating_concept",
+          "variants": [
+            {
+              "title": "Survey Corps and Battlefield Accuracy",
+              "publishability": "user_facing_content_topic",
+              "disposition": "merge"
+            },
+            {
+              "title": "Aerial Photography and Target Lists",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "pillar": "mobility_information_and_control",
+      "core_topics": [
+        {
+          "canonical_title": "The Postal System as Nervous System",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Relay Stations and Speed of Rule",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Postal Monopolies and State Revenue",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Mail Routes That Made Empires",
+              "publishability": "user_facing_content_topic",
+              "disposition": "alternate"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Telegraphs and Central Command",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Telegraph Offices as Power Nodes",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Cutting Wires as Modern Siegecraft",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            },
+            {
+              "title": "The First Information Arms Race",
+              "publishability": "user_facing_content_topic",
+              "disposition": "alternate"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Print Culture and Mass Politics",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Pamphlets, Petitions, and Mobilization",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Cheap Paper and Big Movements",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Time Zones and Coordinated Life",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Railway Time and National Time",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Standard Time as Administrative Tool",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Surveillance via Household Registration",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Residence Permits and Urban Control",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Registration as Tax and Draft Tool",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "When Registration Breaks Down",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Censorship and the Information Bottleneck",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Licensing Printers and Publishers",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Samizdat and the Underground Public",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Newspapers and Financial Bubbles",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Market Tips, Hype, and Herding",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Press Freedom and Investor Protection",
+              "publishability": "needs_reframing_before_publication",
+              "disposition": "rewrite"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Migration Controls and Labor Supply",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Guest Workers and Political Backlash",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            },
+            {
+              "title": "Border Regimes and Wage Levels",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Internal Migration Bans and Black Markets",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Quarantine Lines and Movement",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Health Passes and Travel Permission",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Ports, Lazarettos, and Waiting Time",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Quarantine as Trade Weapon",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Roads as State Visibility",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Road Patrols and Tax Collection",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Why States Pave the Periphery",
+              "publishability": "user_facing_content_topic",
+              "disposition": "alternate"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Signal Fires to Semaphore Networks",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Line-of-Sight Networks and Territory",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "False Signals and Strategic Deception",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Spies, Codes, and Cryptography",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Codebooks and Bureaucratic Secrecy",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Breaking Codes and Strategic Turns",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Encryption Laws and State Power",
+              "publishability": "needs_reframing_before_publication",
+              "disposition": "future_variant"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Education Systems and National Identity",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Textbooks as Political Technology",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "School Attendance as Compliance Test",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Maps for Ordinary People",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Tourist Maps and Mass Mobility",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Paper Maps and Disaster Response",
+              "publishability": "needs_reframing_before_publication",
+              "disposition": "future_variant"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Money Transfer Networks",
+          "tier": "tier_3",
+          "publishability": "needs_reframing_before_publication",
+          "variants": [
+            {
+              "title": "Remittances and Shadow Banking",
+              "publishability": "user_facing_content_topic",
+              "disposition": "rewrite"
+            },
+            {
+              "title": "Trust Brokers and Informal Settlement",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Radio and Total War Messaging",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Radio as Real-Time Propaganda",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Jamming, Counterbroadcasts, and Control",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Identity Papers and Social Sorting",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Paperwork That Creates Categories",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Checkpoints and Everyday State Power",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Rumors, Panics, and Crowd Control",
+          "tier": "tier_3",
+          "publishability": "needs_reframing_before_publication",
+          "variants": [
+            {
+              "title": "Information Vacuums and Mass Fear",
+              "publishability": "user_facing_content_topic",
+              "disposition": "rewrite"
+            },
+            {
+              "title": "Markets, Runs, and Street Psychology",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Authority Messages That Backfire",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

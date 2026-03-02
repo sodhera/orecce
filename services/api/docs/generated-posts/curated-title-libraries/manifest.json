@@ -1,0 +1,21 @@
+{
+  "generated_at": "2026-03-02T12:10:45.843Z",
+  "updated_at": "2026-03-02T12:16:24.480Z",
+  "model": "gpt-5.2-2025-12-11",
+  "config": {
+    "target_per_category": 300,
+    "out_dir": "/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/docs/generated-posts/curated-title-libraries"
+  },
+  "categories": {
+    "historical_nerd": {
+      "total_titles": 300,
+      "core_topics": 90,
+      "variants": 210
+    },
+    "mental_model_library": {
+      "total_titles": 300,
+      "core_topics": 90,
+      "variants": 210
+    }
+  }
+}

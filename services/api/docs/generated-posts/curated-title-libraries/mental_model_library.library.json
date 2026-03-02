@@ -1,0 +1,1710 @@
+{
+  "category": "mental_model_library",
+  "pillars": [
+    {
+      "pillar": "decision_making_and_judgment",
+      "core_topics": [
+        {
+          "canonical_title": "Expected value thinking",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Value of information",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Expected value vs expected utility",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "When EV fails: fat tails and ruin",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Opportunity cost",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Shadow pricing your time",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Cost of delay",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Second-order effects",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Third-order consequences",
+              "publishability": "user_facing_content_topic",
+              "disposition": "merge"
+            },
+            {
+              "title": "Incentive side-effects",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Unintended consequences checklist",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Regret minimization",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Future-self perspective",
+              "publishability": "user_facing_content_topic",
+              "disposition": "alternate"
+            },
+            {
+              "title": "One-way door decisions and regret",
+              "publishability": "user_facing_content_topic",
+              "disposition": "merge"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Premortem planning",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Failure modes and effects thinking",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Kill criteria and stop-losses",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Red-team the plan",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Reversible vs irreversible decisions",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Two-way door decisions",
+              "publishability": "user_facing_content_topic",
+              "disposition": "alternate"
+            },
+            {
+              "title": "Reversibility budget",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Escalation paths before commitment",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Decision hygiene",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Separate judgment from execution",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Document assumptions upfront",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Steelmanning",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Adversarial collaboration",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            },
+            {
+              "title": "Strongest-opponent summary",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Reference class forecasting",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Outside view vs inside view",
+              "publishability": "user_facing_content_topic",
+              "disposition": "alternate"
+            },
+            {
+              "title": "Similarity filters for analogies",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Satisficing vs optimizing",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Stopping rules",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Search costs and diminishing returns",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Bayesian updating",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Base rates as priors",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Prior sensitivity analysis",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Updating with weak evidence",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Calibration and confidence",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "90% intervals and prediction ranges",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Overconfidence audits",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Decision trees",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Rolling decisions and staged bets",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Sensitivity analysis on branches",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Multi-criteria tradeoffs",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Weighted scoring vs veto criteria",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Pareto front thinking",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Tradeoff triangles",
+              "publishability": "user_facing_content_topic",
+              "disposition": "merge"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Default bias and status quo",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Defaults as a design lever",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Inertia vs switching costs",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Counterfactual thinking",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Near-miss lessons",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Counterfactuals without self-blame",
+              "publishability": "needs_reframing_before_publication",
+              "disposition": "rewrite"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Narrative fallacy",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Story-first vs data-first decisions",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Post-hoc rationalization",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Decision journals",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Track predictions vs outcomes",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Decision review without outcome bias",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "pillar": "risk_uncertainty_and_resilience",
+      "core_topics": [
+        {
+          "canonical_title": "Fat tails and power laws",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Why averages mislead",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Tail dominance in portfolios",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Extreme value thinking",
+              "publishability": "user_facing_content_topic",
+              "disposition": "alternate"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Margin of safety",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Safety factors in engineering",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Conservative assumptions",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Buffer sizing rules of thumb",
+              "publishability": "needs_reframing_before_publication",
+              "disposition": "rewrite"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Antifragility vs robustness",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Barbell strategies",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Stressors as training data",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Risk layering",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Prevent–detect–respond stack",
+              "publishability": "user_facing_content_topic",
+              "disposition": "alternate"
+            },
+            {
+              "title": "Defense in depth",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Optionality",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Small bets with upside",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Keep doors open vs commit",
+              "publishability": "user_facing_content_topic",
+              "disposition": "merge"
+            },
+            {
+              "title": "Option value of learning",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Black swans and unknown unknowns",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Preparedness without prediction",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Avoiding narrative comfort",
+              "publishability": "user_facing_content_topic",
+              "disposition": "merge"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Fragility detection",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Leverage, concentration, and tight coupling",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Stress testing assumptions",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Redundancy and slack",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Slack as speed, not waste",
+              "publishability": "user_facing_content_topic",
+              "disposition": "alternate"
+            },
+            {
+              "title": "N+1 design",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Backup plans vs backup systems",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Survivorship bias in risk",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Cemetery of failed strategies",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Visible winners vs invisible failures",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Correlated failures",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Hidden common-mode dependencies",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Diversification that actually diversifies",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Hedging and convexity",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Nonlinear payoffs",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "When hedges become bets",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Scenario planning",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Plausible worlds, not forecasts",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Signposts and trigger points",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Wind-tunneling a strategy",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Tail risk budgeting",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Cap downside per bet",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Risk contributions, not positions",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Resilience engineering",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Graceful degradation",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Recovery time objective thinking",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Risk appetite vs risk capacity",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Board-level risk limits",
+              "publishability": "internal_operating_concept",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Personal risk budget",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Circuit breakers and tripwires",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Stop-losses vs stop-thinking",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Escalation triggers",
+              "publishability": "user_facing_content_topic",
+              "disposition": "merge"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Time horizon and risk",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Short-term volatility vs long-term ruin",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Liquidity and time-to-recover",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Risk of ruin",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Kelly criterion intuition",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Avoiding negative compounding",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Position sizing as survival",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "pillar": "incentives_power_and_coordination",
+      "core_topics": [
+        {
+          "canonical_title": "Principal–agent problem",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Monitoring vs trust",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Skin in the game",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Delegation contracts",
+              "publishability": "internal_operating_concept",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Goodhart’s law",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "When metrics become targets",
+              "publishability": "user_facing_content_topic",
+              "disposition": "alternate"
+            },
+            {
+              "title": "Gaming and proxy drift",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Guardrail metrics",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Moral hazard",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Hidden risk-taking under protection",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Insurance and incentives",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Adverse selection",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Lemons markets",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Screening costs",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Prisoner’s dilemma dynamics",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Tit-for-tat strategies",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Repeated games change outcomes",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Coordination games and focal points",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Schelling points",
+              "publishability": "user_facing_content_topic",
+              "disposition": "alternate"
+            },
+            {
+              "title": "Standards and winner-take-most",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Coordination tax in groups",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Mechanism design basics",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Designing rules, not people",
+              "publishability": "user_facing_content_topic",
+              "disposition": "alternate"
+            },
+            {
+              "title": "Incentives for truth-telling",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Incentive compatibility",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Aligning local and global optima",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Payoff matrices for org design",
+              "publishability": "internal_operating_concept",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "BATNA and bargaining power",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Reservation value and walk-away point",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Leverage from alternatives",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Asymmetric information in negotiation",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Credible commitments",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Burning the boats",
+              "publishability": "user_facing_content_topic",
+              "disposition": "alternate"
+            },
+            {
+              "title": "Hostages, bonds, and escrow",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Signaling and screening",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Costly signals vs cheap talk",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Education as signal",
+              "publishability": "user_facing_content_topic",
+              "disposition": "merge"
+            },
+            {
+              "title": "Screening funnels",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Collective action problem",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Free riders and enforcement",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Small group vs large group dynamics",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Selective incentives",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Tragedy of the commons",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Shared resource governance",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Overuse vs underinvestment",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Alignment vs capture",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Regulatory capture patterns",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Vendor lock-in incentives",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Politics as information",
+          "tier": "tier_2",
+          "publishability": "needs_reframing_before_publication",
+          "variants": [
+            {
+              "title": "Reading incentives, not personalities",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Coalition mapping",
+              "publishability": "internal_operating_concept",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Transaction costs",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Make vs buy decisions",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Coordination overhead as a cost",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Trust and reciprocity",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Reciprocity norms",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Trust but verify",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Culture as enforcement",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Norms beat rules until they don’t",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Cultural drift and subcultures",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "pillar": "systems_operations_and_constraints",
+      "core_topics": [
+        {
+          "canonical_title": "Bottlenecks and constraints",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "TOC drum-buffer-rope",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Local optimization traps",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Constraint hopping",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Little’s law",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Lead time = WIP / throughput",
+              "publishability": "user_facing_content_topic",
+              "disposition": "alternate"
+            },
+            {
+              "title": "WIP as hidden inventory",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "When Little’s law breaks",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Queueing and variability",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Utilization drives delays",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Variability buffering",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Feedback loops",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Reinforcing vs balancing loops",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Delays create oscillations",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Fixes that backfire",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Stock-and-flow thinking",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Accumulation vs rate of change",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Inventory dynamics",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Leverage points",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Changing rules vs parameters",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Information flows as leverage",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Service levels and buffers",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Safety stock intuition",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Buffer placement",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Single points of failure",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "SPOF mapping",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Failover design",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Modularity and coupling",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Loose coupling for resilience",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Interface contracts",
+              "publishability": "internal_operating_concept",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Monolith vs modular architecture",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Standardization vs flexibility",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Standards enable scale",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Exception handling without chaos",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Process capability and variation",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Stable process vs special causes",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Control charts intuition",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Batch size tradeoffs",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Small batches reduce risk",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Setup costs and batching pressure",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Continuous flow vs batch flow",
+              "publishability": "user_facing_content_topic",
+              "disposition": "alternate"
+            }
+          ]
+        },
+        {
+          "canonical_title": "WIP limits",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Kanban pull systems",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Swarming vs multitasking",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Economies of scale vs diseconomies",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Minimum efficient scale",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Coordination costs at scale",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Maintenance debt",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Preventive vs reactive maintenance",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Technical debt interest rate",
+              "publishability": "user_facing_content_topic",
+              "disposition": "alternate"
+            },
+            {
+              "title": "Refactoring windows",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Error-proofing (poka-yoke)",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Designing for misclicks",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Checklists vs automation",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Operating cadence",
+          "tier": "tier_3",
+          "publishability": "internal_operating_concept",
+          "variants": [
+            {
+              "title": "Weekly business rhythm",
+              "publishability": "internal_operating_concept",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Meeting load as a bottleneck",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Scaling laws and coordination overhead",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Brooks’s law intuition",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Communication paths grow ~n²",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "pillar": "causality_measurement_and_learning",
+      "core_topics": [
+        {
+          "canonical_title": "Correlation vs causation",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Spurious correlations",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Reverse causality checks",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Causal vs predictive models",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Confounding and omitted variables",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Common-cause traps",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Selection bias",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Causal diagrams (DAGs)",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Backdoor paths and adjustment sets",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Colliders and why controlling hurts",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Mediation vs moderation",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Natural experiments",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Difference-in-differences intuition",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Instrumental variables in plain English",
+              "publishability": "needs_reframing_before_publication",
+              "disposition": "rewrite"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Randomized controlled trials",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Randomization checks",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Intent-to-treat vs per-protocol",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Ethical limits of experiments",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Regression to the mean",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Why extreme outcomes revert",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "The “sophomore slump” effect",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Measurement error and noise",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Signal-to-noise thinking",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Repeatability vs reproducibility",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "When “better data” makes worse decisions",
+              "publishability": "user_facing_content_topic",
+              "disposition": "future_variant"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Leading vs lagging indicators",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Input metrics vs outcome metrics",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Indicator decay over time",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Proxy metrics and metric validity",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Construct validity",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Metric triangulation",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Experimental design basics",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Power and sample size intuition",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Blocking and stratification",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "A/B testing pitfalls",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Peeking and p-hacking",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Novelty and seasonality effects",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Multiple comparisons",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Postmortems and retrospectives",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Blameless postmortems",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Action items that stick",
+              "publishability": "internal_operating_concept",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Feedback quality",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Fast feedback loops",
+              "publishability": "user_facing_content_topic",
+              "disposition": "merge"
+            },
+            {
+              "title": "Separating signal from criticism",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Learning curves",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Experience curves in cost",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Plateau diagnosis",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Out-of-sample validation",
+          "tier": "tier_1",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Train/test split intuition",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Overfitting and leakage",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Pre-registration for analyses",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Likelihood thinking",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Likelihood ratios over p-values",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Evidence scales",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Forecast evaluation",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Brier scores and calibration curves",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Proper scoring rules",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        },
+        {
+          "canonical_title": "Triangulation and sensemaking",
+          "tier": "tier_2",
+          "publishability": "user_facing_content_topic",
+          "variants": [
+            {
+              "title": "Multiple weak signals beat one strong story",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            },
+            {
+              "title": "Competing hypotheses",
+              "publishability": "user_facing_content_topic",
+              "disposition": "sub_angle"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

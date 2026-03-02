@@ -5,6 +5,8 @@ This folder is the in-repo staging area for spec-driven carousel drafts that may
 - Store each batch as a dated markdown file for easy review.
 - Keep the visible copy human-readable, with enough metadata to map into the app's `recces_essays.posts` shape later.
 - For the current web feed shape, map spec `title` to feed `theme` during import.
+- Preferred curated library pass: `npm --prefix services/api/functions run titles:curate -- --target-per-category 300 --model gpt-5.2-2025-12-11`
+- The curated library generator writes a review doc at `services/api/docs/generated-posts/curated-title-libraries/curated-topic-library-review.md` and raw per-category JSON library files beside it.
 - Cheapest title-only pass: `npm --prefix services/api/functions run titles:generate -- --target-per-category 200 --model gpt-5.2-2025-12-11`
 - The title-only generator writes a review doc at `services/api/docs/generated-posts/title-lists/topic-titles-review.md` with only the titles, grouped by category.
 - Large corpus runs now work in two stages:

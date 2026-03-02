@@ -341,10 +341,13 @@ export default function Feed({ mode, onModeChange }: FeedProps) {
                                 void feed.loadMore();
                             }
                         }}
+                        style={{ display: "flex", justifyContent: "center", alignItems: "center", borderBottom: feed.loadingMore ? "none" : undefined }}
                     >
-                        {feed.loadingMore
-                            ? "Loading more posts..."
-                            : "Scroll to load more posts..."}
+                        {feed.loadingMore ? (
+                            <span className="fb-submit-spinner" style={{ borderColor: 'var(--text-secondary)', borderTopColor: 'transparent', width: '20px', height: '20px', borderWidth: '2px' }} />
+                        ) : (
+                            "Scroll to load more posts..."
+                        )}
                     </div>
                 )}
             </div>

@@ -21,10 +21,16 @@ import { getOpenAiModel } from "@orecce/api-core/src/config/runtimeConfig";
 import { loadDotEnv } from "./loadDotEnv";
 
 type Args = Record<string, string | boolean>;
+type CorpusStage = "briefs" | "posts" | "all";
+
+export interface StoredSpecCarouselPost extends SpecCarouselPost {
+  brief_id?: string | null;
+  source_working_title?: string | null;
+}
 
 interface CategoryState {
   briefs: SpecTopicBrief[];
-  posts: SpecCarouselPost[];
+  posts: StoredSpecCarouselPost[];
 }
 
 interface Manifest {
@@ -32,13 +38,14 @@ interface Manifest {
   updated_at: string;
   model: string;
   config: {
+    stage: CorpusStage;
     target_per_category: number;
     seed_batch_size: number;
     max_attempts_per_post: number;
     shard_size: number;
     author_id: string;
   };
-  categories: Record<string, { briefs: number; posts: number }>;
+  categories: Record<string, { briefs: number; approved_briefs: number; posts: number }>;
 }
 
 const DEFAULT_OUT_DIR = path.resolve(__dirname, "../../docs/generated-posts/corpus");
@@ -107,9 +114,10 @@ function printHelp(): void {
   console.log(
     [
       "Usage:",
-      "  npm --prefix services/api/functions run corpus:generate -- --target-per-category 1000",
+      "  npm --prefix services/api/functions run corpus:generate -- --stage briefs --target-per-category 1000",
       "",
       "Options:",
+      "  --stage <briefs|posts|all>  (default: briefs)",
       `  --target-per-category <n>   (default: ${DEFAULT_TARGET})`,
       `  --seed-batch-size <n>       (default: ${DEFAULT_SEED_BATCH_SIZE})`,
       `  --max-attempts-per-post <n> (default: ${DEFAULT_MAX_ATTEMPTS_PER_POST})`,
@@ -127,6 +135,14 @@ function asPositiveInt(value: string | boolean | undefined, fallback: number): n
     return fallback;
   }
   return Math.floor(parsed);
+}
+
+function asStage(value: string | boolean | undefined): CorpusStage {
+  const normalized = typeof value === "string" ? value.trim().toLowerCase() : "briefs";
+  if (normalized === "briefs" || normalized === "posts" || normalized === "all") {
+    return normalized;
+  }
+  throw new Error(`Invalid --stage: ${String(value ?? "")}`);
 }
 
 function parseCategories(value: string | boolean | undefined): SpecPostCategory[] {
@@ -164,6 +180,10 @@ function reccesEssayPath(outDir: string): string {
   return path.join(outDir, "recces-essays.json");
 }
 
+function reviewDocPath(outDir: string): string {
+  return path.join(outDir, "briefs-review.md");
+}
+
 function readNdjson<T>(filePath: string): T[] {
   if (!fs.existsSync(filePath)) {
     return [];
@@ -181,10 +201,18 @@ function writeNdjson<T>(filePath: string, items: T[]): void {
   fs.writeFileSync(filePath, content);
 }
 
+function readExistingManifest(outDir: string): Manifest | null {
+  const filePath = manifestPath(outDir);
+  if (!fs.existsSync(filePath)) {
+    return null;
+  }
+  return JSON.parse(fs.readFileSync(filePath, "utf8")) as Manifest;
+}
+
 function loadCategoryState(outDir: string, category: SpecPostCategory): CategoryState {
   return {
     briefs: readNdjson<SpecTopicBrief>(ndjsonPath(outDir, category, "briefs")),
-    posts: readNdjson<SpecCarouselPost>(ndjsonPath(outDir, category, "posts"))
+    posts: readNdjson<StoredSpecCarouselPost>(ndjsonPath(outDir, category, "posts"))
   };
 }
 
@@ -198,6 +226,98 @@ function slugify(value: string): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 80);
+}
+
+function hashString(value: string): string {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0).toString(36);
+}
+
+export function buildBriefId(brief: SpecTopicBrief): string {
+  const base = [
+    brief.category,
+    brief.template_used,
+    brief.working_title,
+    brief.primary_topic,
+    brief.angle
+  ].join("|");
+  return `${slugify(`${brief.category}-${brief.working_title}`)}-${hashString(base)}`;
+}
+
+export function parseApprovedBriefIds(markdown: string): Set<string> {
+  const approved = new Set<string>();
+  let currentId: string | null = null;
+  for (const rawLine of String(markdown ?? "").split(/\r?\n/)) {
+    const line = rawLine.trim();
+    const idMatch = line.match(/^- Brief ID: `([^`]+)`$/);
+    if (idMatch) {
+      currentId = idMatch[1];
+      continue;
+    }
+    const approvalMatch = line.match(/^- Approval: \[([ xX])\]\s+Approve for rendering$/);
+    if (approvalMatch && currentId) {
+      if (approvalMatch[1].toLowerCase() === "x") {
+        approved.add(currentId);
+      }
+      currentId = null;
+    }
+  }
+  return approved;
+}
+
+function loadApprovedBriefIds(outDir: string): Set<string> {
+  const filePath = reviewDocPath(outDir);
+  if (!fs.existsSync(filePath)) {
+    return new Set<string>();
+  }
+  return parseApprovedBriefIds(fs.readFileSync(filePath, "utf8"));
+}
+
+export function renderBriefReviewDoc(states: Record<SpecPostCategory, CategoryState>, approvedIds: Set<string>): string {
+  const lines: string[] = [
+    "# Corpus Brief Review",
+    "",
+    "Review the proposed titles and topic briefs here before full post generation.",
+    "",
+    "Instructions:",
+    "- Change `- Approval: [ ] Approve for rendering` to `- Approval: [x] Approve for rendering` for briefs you want rendered into full posts.",
+    "- Leave the checkbox empty for anything you do not want rendered yet.",
+    "- Do not edit the `Brief ID` line; the posts stage uses it to find the selected brief.",
+    "- After review, run `npm --prefix services/api/functions run corpus:posts` or the equivalent `corpus:generate -- --stage posts` command.",
+    ""
+  ];
+
+  for (const category of SPEC_POST_CATEGORIES) {
+    const label = category === "historical_nerd" ? "Historical Nerd" : "Mental Model Library";
+    const approvedCount = states[category].briefs.filter((brief) => approvedIds.has(buildBriefId(brief))).length;
+    lines.push(`## ${label}`);
+    lines.push("");
+    lines.push(`Summary: ${states[category].briefs.length} briefs, ${approvedCount} approved, ${states[category].posts.length} rendered posts.`);
+    lines.push("");
+
+    states[category].briefs.forEach((brief, index) => {
+      const briefId = buildBriefId(brief);
+      const isApproved = approvedIds.has(briefId);
+      const isRendered = states[category].posts.some((post) => post.brief_id === briefId);
+      lines.push(`### ${index + 1}. ${brief.working_title}`);
+      lines.push(`- Brief ID: \`${briefId}\``);
+      lines.push(`- Approval: [${isApproved ? "x" : " "}] Approve for rendering`);
+      lines.push(`- Render status: \`${isRendered ? "rendered" : "pending"}\``);
+      lines.push(`- Primary topic: \`${brief.primary_topic}\``);
+      lines.push(`- Template: \`${brief.template_used}\``);
+      lines.push(`- Source kind: \`${brief.source_kind}\``);
+      lines.push(`- Subtopics: ${brief.subtopics.map((item) => `\`${item}\``).join(", ")}`);
+      lines.push(`- Example anchors: ${brief.example_anchors.map((item) => `\`${item}\``).join(", ")}`);
+      lines.push(`- Angle: ${brief.angle}`);
+      lines.push("");
+    });
+  }
+
+  return `${lines.join("\n").trim()}\n`;
 }
 
 function buildEssayDocuments(
@@ -243,6 +363,7 @@ function saveCorpus(
   config: Manifest["config"]
 ): void {
   ensureDir(outDir);
+  const approvedIds = loadApprovedBriefIds(outDir);
   for (const category of SPEC_POST_CATEGORIES) {
     writeNdjson(ndjsonPath(outDir, category, "briefs"), states[category].briefs);
     writeNdjson(ndjsonPath(outDir, category, "posts"), states[category].posts);
@@ -260,6 +381,7 @@ function saveCorpus(
         category,
         {
           briefs: states[category].briefs.length,
+          approved_briefs: states[category].briefs.filter((brief) => approvedIds.has(buildBriefId(brief))).length,
           posts: states[category].posts.length
         }
       ])
@@ -283,6 +405,8 @@ function saveCorpus(
       2
     )
   );
+
+  fs.writeFileSync(reviewDocPath(outDir), renderBriefReviewDoc(states, approvedIds));
 }
 
 function templateMixForBatch(
@@ -480,7 +604,7 @@ function buildBriefPrompts(
 
 function buildPostPrompts(
   brief: SpecTopicBrief,
-  acceptedPosts: SpecCarouselPost[],
+  acceptedPosts: StoredSpecCarouselPost[],
   correctiveInstruction?: string
 ): { systemPrompt: string; userPrompt: string } {
   const categoryInstructions =
@@ -548,7 +672,7 @@ async function generateBriefBatch(
 async function generatePostFromBrief(
   gateway: OpenAiGateway,
   brief: SpecTopicBrief,
-  acceptedPosts: SpecCarouselPost[],
+  acceptedPosts: StoredSpecCarouselPost[],
   correctiveInstruction?: string
 ): Promise<SpecCarouselPost> {
   const prompts = buildPostPrompts(brief, acceptedPosts, correctiveInstruction);
@@ -569,22 +693,21 @@ async function generatePostFromBrief(
   });
 }
 
-async function fillCategory(
+async function fillCategoryBriefs(
   gateway: OpenAiGateway,
   category: SpecPostCategory,
   state: CategoryState,
   targetPerCategory: number,
   seedBatchSize: number,
-  maxAttemptsPerPost: number,
   save: () => void
 ): Promise<void> {
-  while (state.posts.length < targetPerCategory) {
-    console.log(`[${category}] ${state.posts.length}/${targetPerCategory} posts accepted. Generating briefs...`);
+  while (state.briefs.length < targetPerCategory) {
+    console.log(`[${category}] ${state.briefs.length}/${targetPerCategory} briefs accepted. Generating briefs...`);
     const candidateBriefs = await generateBriefBatch(gateway, category, state, seedBatchSize, targetPerCategory);
     let acceptedBriefs = 0;
 
     for (const brief of candidateBriefs) {
-      if (state.posts.length >= targetPerCategory) {
+      if (state.briefs.length >= targetPerCategory) {
         break;
       }
 
@@ -596,30 +719,8 @@ async function fillCategory(
 
       state.briefs.push(brief);
       acceptedBriefs += 1;
-
-      let correctiveInstruction = "";
-      let accepted = false;
-      for (let attempt = 1; attempt <= maxAttemptsPerPost; attempt += 1) {
-        const post = await generatePostFromBrief(gateway, brief, state.posts, correctiveInstruction);
-        const postMatch = findClosestPostMatch(post, state.posts);
-        if (isPostNovel(post, state.posts)) {
-          state.posts.push(post);
-          accepted = true;
-          console.log(`[${category}] accepted post ${state.posts.length}/${targetPerCategory}: ${post.title}`);
-          save();
-          break;
-        }
-
-        correctiveInstruction = [
-          "Previous draft was too similar to an accepted post.",
-          `Closest match: ${describePostMatch(postMatch)}`,
-          "Change the angle, examples, structure, and title materially. Keep the same core brief but make the reader experience clearly different."
-        ].join("\n");
-      }
-
-      if (!accepted) {
-        console.log(`[${category}] exhausted retries for brief: ${brief.working_title}`);
-      }
+      console.log(`[${category}] accepted brief ${state.briefs.length}/${targetPerCategory}: ${brief.working_title}`);
+      save();
     }
 
     if (acceptedBriefs === 0) {
@@ -629,7 +730,58 @@ async function fillCategory(
   }
 }
 
-async function main(): Promise<void> {
+async function renderApprovedBriefsForCategory(
+  gateway: OpenAiGateway,
+  category: SpecPostCategory,
+  state: CategoryState,
+  approvedIds: Set<string>,
+  maxAttemptsPerPost: number,
+  outDir: string,
+  save: () => void
+): Promise<void> {
+  const approvedBriefs = state.briefs.filter((brief) => approvedIds.has(buildBriefId(brief)));
+  if (!approvedBriefs.length) {
+    console.log(`[${category}] no approved briefs found in ${reviewDocPath(outDir)}.`);
+    return;
+  }
+
+  for (const brief of approvedBriefs) {
+    const briefId = buildBriefId(brief);
+    if (state.posts.some((post) => post.brief_id === briefId)) {
+      continue;
+    }
+
+    let correctiveInstruction = "";
+    let accepted = false;
+    for (let attempt = 1; attempt <= maxAttemptsPerPost; attempt += 1) {
+      const post = await generatePostFromBrief(gateway, brief, state.posts, correctiveInstruction);
+      const postMatch = findClosestPostMatch(post, state.posts);
+      if (isPostNovel(post, state.posts)) {
+        state.posts.push({
+          ...post,
+          brief_id: briefId,
+          source_working_title: brief.working_title
+        });
+        accepted = true;
+        console.log(`[${category}] rendered approved brief ${brief.working_title} -> ${post.title}`);
+        save();
+        break;
+      }
+
+      correctiveInstruction = [
+        "Previous draft was too similar to an accepted post.",
+        `Closest match: ${describePostMatch(postMatch)}`,
+        "Change the angle, examples, structure, and title materially. Keep the same core brief but make the reader experience clearly different."
+      ].join("\n");
+    }
+
+    if (!accepted) {
+      console.log(`[${category}] exhausted retries for approved brief: ${brief.working_title}`);
+    }
+  }
+}
+
+export async function main(): Promise<void> {
   loadDotEnv();
 
   const args = parseArgs(process.argv.slice(2));
@@ -639,11 +791,25 @@ async function main(): Promise<void> {
   }
 
   const outDir = typeof args.out === "string" ? path.resolve(args.out) : DEFAULT_OUT_DIR;
-  const targetPerCategory = asPositiveInt(args["target-per-category"], DEFAULT_TARGET);
-  const seedBatchSize = asPositiveInt(args["seed-batch-size"], DEFAULT_SEED_BATCH_SIZE);
-  const maxAttemptsPerPost = asPositiveInt(args["max-attempts-per-post"], DEFAULT_MAX_ATTEMPTS_PER_POST);
-  const shardSize = asPositiveInt(args["shard-size"], DEFAULT_SHARD_SIZE);
-  const authorId = typeof args["author-id"] === "string" ? args["author-id"] : DEFAULT_AUTHOR_ID;
+  const existingManifest = readExistingManifest(outDir);
+  const stage = asStage(args.stage);
+  const targetPerCategory = asPositiveInt(
+    args["target-per-category"],
+    existingManifest?.config.target_per_category ?? DEFAULT_TARGET
+  );
+  const seedBatchSize = asPositiveInt(
+    args["seed-batch-size"],
+    existingManifest?.config.seed_batch_size ?? DEFAULT_SEED_BATCH_SIZE
+  );
+  const maxAttemptsPerPost = asPositiveInt(
+    args["max-attempts-per-post"],
+    existingManifest?.config.max_attempts_per_post ?? DEFAULT_MAX_ATTEMPTS_PER_POST
+  );
+  const shardSize = asPositiveInt(args["shard-size"], existingManifest?.config.shard_size ?? DEFAULT_SHARD_SIZE);
+  const authorId =
+    typeof args["author-id"] === "string"
+      ? args["author-id"]
+      : existingManifest?.config.author_id ?? DEFAULT_AUTHOR_ID;
   const categories = parseCategories(args.categories);
 
   ensureDir(outDir);
@@ -655,6 +821,7 @@ async function main(): Promise<void> {
 
   const save = () =>
     saveCorpus(outDir, states, {
+      stage,
       target_per_category: targetPerCategory,
       seed_batch_size: seedBatchSize,
       max_attempts_per_post: maxAttemptsPerPost,
@@ -664,15 +831,46 @@ async function main(): Promise<void> {
 
   save();
 
-  for (const category of categories) {
-    await fillCategory(gateway, category, states[category], targetPerCategory, seedBatchSize, maxAttemptsPerPost, save);
+  if (stage === "briefs" || stage === "all") {
+    for (const category of categories) {
+      await fillCategoryBriefs(gateway, category, states[category], targetPerCategory, seedBatchSize, save);
+    }
+  }
+
+  if (stage === "posts" || stage === "all") {
+    const approvedIds =
+      stage === "all"
+        ? new Set(
+            categories.flatMap((category) => states[category].briefs.map((brief) => buildBriefId(brief)))
+          )
+        : loadApprovedBriefIds(outDir);
+
+    if (stage === "posts" && approvedIds.size === 0) {
+      throw new Error(
+        `No approved briefs found in ${reviewDocPath(outDir)}. Mark briefs with [x] first, then rerun with --stage posts.`
+      );
+    }
+
+    for (const category of categories) {
+      await renderApprovedBriefsForCategory(
+        gateway,
+        category,
+        states[category],
+        approvedIds,
+        maxAttemptsPerPost,
+        outDir,
+        save
+      );
+    }
   }
 
   save();
-  console.log(`Corpus generation complete. Output written to ${outDir}`);
+  console.log(`Corpus ${stage} stage complete. Output written to ${outDir}`);
 }
 
-main().catch((error: unknown) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+if (require.main === module) {
+  void main().catch((error: unknown) => {
+    console.error(error);
+    process.exitCode = 1;
+  });
+}

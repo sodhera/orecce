@@ -15,7 +15,7 @@ When updating this file:
 
 ## Last review
 
-- Reviewed on: 2026-03-01
+- Reviewed on: 2026-03-02
 - Reviewer: Codex
 - Scope: repo-wide implementation pass across mobile, web, API, docs, schema, and automation
 
@@ -28,20 +28,21 @@ When updating this file:
 | Mobile feed and post details | Green | Feed view/impression/seen/open/read plus vote/save/share/source/chat events are instrumented and batched to the analytics endpoint. |
 | Web landing and auth | Green | Landing, auth modal, signup/login/password reset, OAuth, logout, and page/session lifecycle are instrumented. |
 | Web feed and recommendations | Green | Feed views, impressions, seen, load more, votes, saves, reads, shares, source opens, and carousel events are instrumented, and web route/feed state now hydrates from a tab-scoped cache after focus-triggered remounts. |
-| Web discover/search | Green | Discover views plus generic Recce impressions and follow/unfollow events now cover both author and topic Recces; search-specific analytics are still sparse on web. |
+| Web discover/search | Yellow | Discover views plus generic Recce impressions and follow/unfollow events cover both author and topic Recces, but web search analytics are still sparse and the derived SQL views still aggregate legacy `author_followed`. |
 | Web collections | Green | Collection create/open/rename/delete flows are instrumented. |
 | Web notifications | Yellow | View/open/mark-read/clear events are instrumented, but the product surface is still fairly thin. |
 | Curation and feedback | Green | Curation panel, prompts, send/reply, session lifecycle, and feedback submission outcomes are instrumented. |
 | API analytics ingestion | Green | Shared validation, optional-auth ingestion, repository persistence, raw event storage, and forward migrations are in place. |
-| Derived reporting | Yellow | Session, daily user/content, funnel, and recommendation-outcome views exist, but dashboards and quality monitors do not yet. |
+| Derived reporting | Yellow | Session, daily user/content, funnel, and recommendation-outcome views exist, but dashboards and quality monitors do not yet, and follow-driven aggregates still lag the live `recce_followed` taxonomy. |
 
 ## Current blockers
 
-1. Anonymous-to-auth identity stitching is not durable on the backend yet.
-2. Mobile still relies partly on mock feed data, which limits data quality for some feed metrics.
-3. Some secondary surfaces still emit generic `page_viewed` or `screen_viewed` instead of more intent-specific events.
-4. There are no analytics dashboards, freshness checks, or anomaly alerts yet.
-5. The analytics pipeline does not yet have dedicated integration tests that exercise end-to-end ingestion.
+1. The active web Discover flow emits `recce_followed` / `recce_unfollowed`, but `analytics_daily_user_facts` and `analytics_funnel_facts` still aggregate legacy `author_followed`, so follow and activation metrics undercount current behavior.
+2. Anonymous-to-auth identity stitching is not durable on the backend yet.
+3. Mobile still relies partly on mock feed data, which limits data quality for some feed metrics.
+4. Some secondary surfaces still emit generic `page_viewed` or `screen_viewed` instead of more intent-specific events.
+5. There are no analytics dashboards, freshness checks, or anomaly alerts yet.
+6. The analytics pipeline does not yet have dedicated integration tests that exercise end-to-end ingestion.
 
 ## Current instrumentation inventory
 
@@ -55,6 +56,7 @@ When updating this file:
 - derived views for sessions, daily user facts, daily content facts, funnels, and recommendation outcomes
 - web batching client with lifecycle flush support
 - mobile batching client with AsyncStorage-backed identity/session state
+- tab-scoped cache hydration helpers used by web route/feed/discover/collection/post state without adding new analytics event names
 
 ### Product-state signals that still exist alongside analytics
 
@@ -80,12 +82,13 @@ When updating this file:
 - web notifications: `notifications_viewed`, `notification_opened`, `notification_marked_read`, `notifications_cleared`
 - web curation/feedback: panel, prompt, send/reply, session lifecycle, feedback submitted/failed
 - mobile lifecycle/auth: `app_opened`, `app_backgrounded`, route views, signup/login/OAuth/password reset/logout, welcome entry selection, verification actions
-- mobile preferences/feed: `interest_added`, `interest_removed`, `preferences_saved`, `feed_viewed`, `feed_refreshed`, impressions, seen, opens, reads, votes, saves, shares
+- mobile preferences/feed/search: `interest_added`, `interest_removed`, `preferences_saved`, `feed_viewed`, `feed_refreshed`, impressions, seen, opens, reads, votes, saves, shares, `search_started`, `search_submitted`
 - mobile post detail: `post_detail_viewed`, `post_source_opened`, `sources_expanded`, `sources_collapsed`, curation send/reply
 
 ### Missing or weak analytics signals
 
 - durable anonymous-to-auth identity merge
+- derived follow metrics aligned to `recce_followed`
 - explicit onboarding-step events across every mobile signup screen
 - richer web search analytics
 - settings/profile mutation analytics
@@ -104,6 +107,7 @@ When updating this file:
 ### P1
 
 - Add durable identity stitching between anonymous and authenticated usage.
+- Update derived SQL views and downstream reporting queries to treat `recce_followed` as the canonical follow activation event.
 - Instrument remaining onboarding and settings/profile surfaces with intent-specific events.
 - Expand web search analytics.
 - Start consuming derived views in reporting queries or dashboards.
@@ -125,13 +129,21 @@ When updating this file:
 
 ## Next actions
 
-1. Add analytics-specific integration tests for batch ingestion and repository persistence.
-2. Add durable anonymous-to-auth identity stitching if cross-auth attribution becomes a product requirement.
-3. Upgrade remaining generic route events to specific onboarding, settings, and search events.
-4. Build first-pass dashboards or SQL notebooks from `analytics_daily_user_facts`, `analytics_daily_content_facts`, and `analytics_funnel_facts`.
-5. Add recurring quality checks for event volume, freshness, and duplicate sessions.
+1. Align `analytics_daily_user_facts` and `analytics_funnel_facts` with the live `recce_followed` taxonomy before using follow-driven activation metrics.
+2. Add analytics-specific integration tests for batch ingestion and repository persistence.
+3. Add durable anonymous-to-auth identity stitching if cross-auth attribution becomes a product requirement.
+4. Upgrade remaining generic route events to specific onboarding, settings, and search events.
+5. Build first-pass dashboards or SQL notebooks from `analytics_daily_user_facts`, `analytics_daily_content_facts`, and `analytics_funnel_facts`.
+6. Add recurring quality checks for event volume, freshness, and duplicate sessions.
 
 ## Change log
+
+### 2026-03-02
+
+- Refreshed the repo-wide audit against the current mobile, web, API, and schema implementation.
+- Documented mobile search instrumentation and the web tab-cache hydration coverage in the ops inventory.
+- Reclassified web discover/search and derived reporting coverage to yellow because the warehouse layer still aggregates `author_followed` while the live Discover flow emits `recce_followed`.
+- Elevated the follow-event taxonomy drift to the top blocker and next action so follow/activation reporting does not undercount current Discover behavior.
 
 ### 2026-03-01
 

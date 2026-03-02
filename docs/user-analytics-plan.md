@@ -12,32 +12,33 @@ This plan is broader than the recommendation feedback layer. `upvote`, `downvote
 
 ## Implementation status
 
-Implemented on 2026-03-01:
+Implemented through 2026-03-02:
 
 - Shared event envelope in `packages/api-core/src/analytics/types.ts`
 - Shared validation schema in `packages/api-core/src/validation/requestValidation.ts`
 - Analytics batch ingestion at `POST /v1/analytics/events/batch` in both the core API app and the Next.js app route
 - Append-only `analytics_events_raw` storage plus derived SQL views in the base schema and a forward migration
 - Batched client analytics wrappers in `apps/web/src/lib/analytics.ts` and `apps/mobile/src/services/analytics.ts`
-- Broad instrumentation across auth, feed, discover, saves, collections, notifications, curation, and feedback flows
+- Broad instrumentation across auth, feed, discover, saves, collections, notifications, curation, feedback, and mobile search flows
 - Living documentation in [`docs/user-analytics-ops.md`](./user-analytics-ops.md) plus agent instructions in `AGENTS.md`
 
 ## Current state audit
 
 | Surface | What exists now | Main gaps |
 | --- | --- | --- |
-| Mobile (`apps/mobile`) | Shared batching client, anonymous/device/session IDs, route tracking, auth events, onboarding/preferences events, feed impressions/seen/open/read, vote/save/share, post-detail source/chat events, collection and saved events. | Some screens still fall back to generic `screen_viewed`. Feed data is still partly mock, so analytics quality depends on real content rollout. |
-| Web (`apps/web`) | Shared batching client, anonymous/device/session IDs, page views, auth lifecycle events, feed impressions/seen/load-more, votes/saves/read, discover author impressions, collection events, notifications, feedback, curation, post-detail analytics, and tab-resume cache hydration for top-level page state plus feed/discover/collection/post snapshots. | Some secondary UI flows still emit generic `page_viewed` or route-only context. No server-side dashboards yet. |
-| API (`services/api` + `packages/api-core`) | Shared event contract, request validation, optional-auth batch ingestion, repository persistence, raw event storage, and derived views for sessions, daily user facts, daily content facts, funnels, and recommendation outcomes. | No dedicated reporting jobs, alerting, or analytics-specific endpoint tests yet. |
+| Mobile (`apps/mobile`) | Shared batching client, anonymous/device/session IDs, route tracking, auth events, landing entry events, verification actions, preferences, feed impressions/seen/open/read, vote/save/share, post-detail source/chat events, collection and saved events, and mobile search submit/start events. | Most signup/onboarding screens still fall back to generic `screen_viewed`. Feed data is still partly mock, so analytics quality depends on real content rollout. |
+| Web (`apps/web`) | Shared batching client, anonymous/device/session IDs, page views, auth lifecycle events, feed impressions/seen/load-more, votes/saves/read, discover Recce impressions, Recce follow/unfollow events, collection events, notifications, feedback, curation, post-detail analytics, and tab-scoped cache hydration for route/feed/discover/collection/post state. | Some secondary UI flows still emit generic `page_viewed` or route-only context. Web search/profile/settings analytics remain sparse. No server-side dashboards yet. |
+| API (`services/api` + `packages/api-core`) | Shared event contract, request validation, optional-auth batch ingestion, repository persistence, raw event storage, and derived views for sessions, daily user facts, daily content facts, funnels, and recommendation outcomes. | Derived follow/activation views still aggregate legacy `author_followed` while the active Discover flow emits `recce_followed`. No dedicated reporting jobs, alerting, or analytics-specific endpoint tests yet. |
 | Data model | Analytics storage now lives in the core migration path with a forward migration for provisioned environments. | Canonical `user_id` is still split across existing product tables in some areas, and anonymous-to-auth identity aliasing is still client-side only. |
 
 ## Remaining blind spots
 
 1. Anonymous-to-auth identity merge is not yet modeled as a durable server-side alias table.
-2. Mobile still contains mock content paths, so some event properties will stay synthetic until the live feed path is fully wired.
-3. Some secondary routes only emit `page_viewed` or `screen_viewed` and could be upgraded to more specific intent events.
-4. There are no analytics dashboards, freshness checks, or anomaly alerts yet.
-5. The new analytics path has validation coverage, but not dedicated end-to-end analytics ingestion tests.
+2. Derived views still count `author_followed`, but the active web Discover flow emits `recce_followed` / `recce_unfollowed`, so follow-driven metrics are currently understated.
+3. Mobile still contains mock content paths, so some event properties will stay synthetic until the live feed path is fully wired.
+4. Some secondary routes only emit `page_viewed` or `screen_viewed` and could be upgraded to more specific intent events.
+5. There are no analytics dashboards, freshness checks, or anomaly alerts yet.
+6. The new analytics path has validation coverage, but not dedicated end-to-end analytics ingestion tests.
 
 ## Target architecture
 
@@ -175,13 +176,20 @@ Key properties:
 
 ### Onboarding and preferences
 
+Currently implemented:
+
+- `interest_added`
+- `interest_removed`
+- `preferences_saved`
+- `verification_email_opened`
+- `verification_deferred`
+
+Planned taxonomy extensions:
+
 - `onboarding_started`
 - `onboarding_slide_viewed`
 - `onboarding_skipped`
 - `onboarding_completed`
-- `interest_added`
-- `interest_removed`
-- `preferences_saved`
 
 Key properties:
 
@@ -242,12 +250,19 @@ Key properties:
 
 ### Discover, follows, and search
 
+Currently implemented:
+
 - `discover_viewed`
 - `discover_recce_impression`
 - `recce_followed`
 - `recce_unfollowed`
 - `search_started`
 - `search_submitted`
+
+Legacy or planned taxonomy:
+
+- `author_followed`
+- `author_unfollowed`
 - `search_result_opened`
 - `search_zero_results`
 
@@ -263,6 +278,8 @@ Key properties:
 
 ### Saved, liked, and collections
 
+Currently implemented:
+
 - `liked_viewed`
 - `saved_viewed`
 - `collection_create_started`
@@ -270,6 +287,9 @@ Key properties:
 - `collection_renamed`
 - `collection_deleted`
 - `collection_opened`
+
+Planned taxonomy extensions:
+
 - `post_saved_to_collection`
 - `post_removed_from_collection`
 
@@ -281,10 +301,15 @@ Key properties:
 
 ### Notifications and inbox
 
+Currently implemented:
+
 - `notifications_viewed`
 - `notification_opened`
 - `notification_marked_read`
 - `notifications_cleared`
+
+Planned taxonomy extensions:
+
 - `notification_preferences_updated`
 
 Key properties:
@@ -313,15 +338,20 @@ Key properties:
 
 ### Profile, settings, and lifecycle
 
+Currently implemented:
+
 - `profile_viewed`
-- `profile_updated`
-- `password_updated`
-- `theme_changed`
-- `notification_channel_changed`
 - `logout_completed`
 - `app_opened`
 - `app_backgrounded`
 - `app_closed`
+
+Planned taxonomy extensions:
+
+- `profile_updated`
+- `password_updated`
+- `theme_changed`
+- `notification_channel_changed`
 
 ## Implementation phases
 
@@ -340,7 +370,7 @@ Status: mostly complete
 
 - Feed impressions, seen, opens, reads, slide interactions, votes, saves, shares, and source opens are instrumented.
 - Auth success/failure is instrumented.
-- Discover Recce impressions and author/topic follows are instrumented, and the web Discover surface now exposes those Recces through expandable categories.
+- Discover Recce impressions and `recce_followed` / `recce_unfollowed` events are instrumented, and the web Discover surface now exposes those Recces through expandable categories.
 - Saved and collection actions are instrumented.
 - Web page state, feed, Recce discovery, collection views, feedback drafts, notifications, and post-detail snapshots now resume from tab-scoped cache after focus-triggered remounts without introducing new analytics event names.
 
@@ -350,13 +380,14 @@ Status: partially complete
 
 - Interests, notifications, feedback, and curation are instrumented.
 - Search is instrumented on mobile explore.
-- Some onboarding and secondary route flows still rely on generic route-level events.
+- Most onboarding/signup screens and settings/profile mutations still rely on generic route-level events or have no dedicated intent events.
 
 ### Phase 3: Derived analytics and reporting
 
 Status: schema foundation complete
 
 - Daily user/content facts, funnel facts, and recommendation outcome views exist.
+- The follow/activation slices still need to be updated for `recce_followed` so derived reporting matches the current Discover taxonomy.
 - Dashboards, recurring reports, and quality monitoring still need to be built on top.
 
 ### Phase 4: Quality controls
@@ -376,7 +407,8 @@ Status: pending
 4. [x] Wire web feed impressions and slide interactions into the new event stream.
 5. [x] Wire mobile auth, home feed, post detail, and preference flows.
 6. [x] Start updating the living operations file in [`docs/user-analytics-ops.md`](./user-analytics-ops.md).
-7. [ ] Add dashboards, alerts, and analytics-specific integration tests.
+7. [ ] Align derived SQL views with the live `recce_followed` taxonomy.
+8. [ ] Add dashboards, alerts, and analytics-specific integration tests.
 
 ## Baseline assessment on 2026-03-01
 
@@ -385,4 +417,4 @@ Status: pending
 - API analytics coverage: medium to high
 - Overall confidence in behavior measurement: medium
 
-The repo now has a real end-to-end analytics foundation. The next step is not more basic instrumentation; it is tightening identity fidelity, building reporting, and adding quality controls so the captured data stays trustworthy.
+The repo now has a real end-to-end analytics foundation. The next step is not more basic instrumentation; it is aligning derived reporting with the live event taxonomy, tightening identity fidelity, building reporting, and adding quality controls so the captured data stays trustworthy.

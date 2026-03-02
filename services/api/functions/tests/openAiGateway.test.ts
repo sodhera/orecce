@@ -70,4 +70,55 @@ describe("OpenAiGateway", () => {
     const headers = requestInit?.headers as Record<string, string>;
     expect(headers.Authorization).toBe("Bearer sk-test-normalized");
   });
+
+  it("parses structured JSON responses", async () => {
+    process.env.OPENAI_API_KEY = "sk-test";
+    process.env.MOCK_LLM = "false";
+    process.env.OPENAI_MODEL = "gpt-5-mini";
+
+    const responsePayload = {
+      output_text: JSON.stringify({
+        briefs: [
+          {
+            category: "mental_model_library",
+            template_used: "model_breakdown",
+            working_title: "Goodhart as a product metric trap",
+            primary_topic: "Goodhart's Law",
+            subtopics: ["metrics", "incentives", "optimization"],
+            source_kind: "research_paper",
+            angle: "Why product teams break their own KPIs when one number becomes sovereign.",
+            example_anchors: ["click-through rate", "retention dashboards"]
+          }
+        ]
+      })
+    };
+
+    const fetchMock = vi.fn();
+    fetchMock.mockResolvedValue(new Response(JSON.stringify(responsePayload), { status: 200 }));
+    global.fetch = fetchMock as unknown as typeof fetch;
+
+    const gateway = new OpenAiGateway();
+    const result = await gateway.generateStructuredJson({
+      systemPrompt: "Return one object.",
+      userPrompt: "Generate a brief batch.",
+      schemaName: "brief_batch",
+      schema: {
+        type: "object",
+        additionalProperties: false,
+        required: ["briefs"],
+        properties: {
+          briefs: {
+            type: "array",
+            items: {
+              type: "object"
+            }
+          }
+        }
+      },
+      maxOutputTokens: 800,
+      parser: (data) => data as { briefs: Array<{ primary_topic: string }> }
+    });
+
+    expect(result.briefs[0]?.primary_topic).toBe("Goodhart's Law");
+  });
 });

@@ -26,9 +26,29 @@ interface OpenAiChatResponse {
 }
 
 interface UpstreamContext {
-  input: LlmGenerationInput;
+  mode?: string;
+  profile?: string;
+  length?: string;
+  recentTitlesCount?: number;
   stream: boolean;
   retriesLeft: number;
+}
+
+export interface StructuredGenerationInput<T> {
+  systemPrompt: string;
+  userPrompt: string;
+  schemaName: string;
+  schema: Record<string, unknown>;
+  maxOutputTokens: number;
+  parser: (data: unknown) => T;
+  correctiveInstruction?: string;
+  reasoningEffort?: "minimal" | "low" | "medium";
+  logLabel?: {
+    mode?: string;
+    profile?: string;
+    length?: string;
+    recentTitlesCount?: number;
+  };
 }
 
 export class OpenAiGateway implements LlmGateway {
@@ -38,6 +58,10 @@ export class OpenAiGateway implements LlmGateway {
 
   public async generatePostStream(input: LlmGenerationInput, onChunk: StreamChunkHandler): Promise<GeneratedPost> {
     return this.generateStreamWithRetry(input, onChunk, 2);
+  }
+
+  public async generateStructuredJson<T>(input: StructuredGenerationInput<T>): Promise<T> {
+    return this.generateStructuredWithRetry(input, 2);
   }
 
   private createRequestBody(input: LlmGenerationInput, stream: boolean): Record<string, unknown> {
@@ -125,14 +149,14 @@ export class OpenAiGateway implements LlmGateway {
 
     const upstreamStartedAtMs = Date.now();
     logInfo("llm.upstream.start", {
-      mode: context.input.mode,
-      profile: context.input.profile,
-      length: context.input.length,
+      mode: context.mode ?? "structured",
+      profile: context.profile ?? "structured",
+      length: context.length ?? "structured",
       stream: context.stream,
       retries_left: context.retriesLeft,
       model: getOpenAiModel(),
       base_url: getOpenAiBaseUrl(),
-      recent_titles_count: context.input.recentTitles.length
+      recent_titles_count: context.recentTitlesCount ?? 0
     });
 
     const response = await fetch(`${getOpenAiBaseUrl()}/responses`, {
@@ -149,9 +173,9 @@ export class OpenAiGateway implements LlmGateway {
       logError("llm.upstream.error", {
         status: response.status,
         duration_ms: Date.now() - upstreamStartedAtMs,
-        mode: context.input.mode,
-        profile: context.input.profile,
-        length: context.input.length,
+        mode: context.mode ?? "structured",
+        profile: context.profile ?? "structured",
+        length: context.length ?? "structured",
         stream: context.stream,
         retries_left: context.retriesLeft,
         upstream_body: text.slice(0, 800)
@@ -162,9 +186,9 @@ export class OpenAiGateway implements LlmGateway {
     logInfo("llm.upstream.success", {
       status: response.status,
       duration_ms: Date.now() - upstreamStartedAtMs,
-      mode: context.input.mode,
-      profile: context.input.profile,
-      length: context.input.length,
+      mode: context.mode ?? "structured",
+      profile: context.profile ?? "structured",
+      length: context.length ?? "structured",
       stream: context.stream,
       retries_left: context.retriesLeft
     });
@@ -263,8 +287,11 @@ export class OpenAiGateway implements LlmGateway {
     }
 
     const response = await this.postResponses(this.createRequestBody(input, false), {
-      input,
       stream: false,
+      mode: input.mode,
+      profile: input.profile,
+      length: input.length,
+      recentTitlesCount: input.recentTitles.length,
       retriesLeft
     });
 
@@ -338,8 +365,11 @@ export class OpenAiGateway implements LlmGateway {
     }
 
     const response = await this.postResponses(this.createRequestBody(input, true), {
-      input,
       stream: true,
+      mode: input.mode,
+      profile: input.profile,
+      length: input.length,
+      recentTitlesCount: input.recentTitles.length,
       retriesLeft
     });
     const content = await this.readStreamContent(response, onChunk);
@@ -476,6 +506,116 @@ export class OpenAiGateway implements LlmGateway {
     }
 
     return fullContent.trim();
+  }
+
+  private createStructuredRequestBody<T>(input: StructuredGenerationInput<T>): Record<string, unknown> {
+    const model = getOpenAiModel();
+    const isGpt5Family = model.toLowerCase().startsWith("gpt-5");
+    return {
+      model,
+      ...(isGpt5Family ? {} : { temperature: getGenerationTemperature() }),
+      ...(isGpt5Family ? { reasoning: { effort: input.reasoningEffort ?? "low" } } : {}),
+      max_output_tokens: input.maxOutputTokens,
+      stream: false,
+      text: {
+        format: {
+          type: "json_schema",
+          name: input.schemaName,
+          schema: input.schema,
+          strict: true
+        }
+      },
+      input: [
+        {
+          role: "system",
+          content: input.systemPrompt
+        },
+        {
+          role: "user",
+          content: input.userPrompt
+        }
+      ]
+    };
+  }
+
+  private async generateStructuredWithRetry<T>(
+    input: StructuredGenerationInput<T>,
+    retriesLeft: number
+  ): Promise<T> {
+    if (isMockLlmEnabled()) {
+      throw new ApiError(
+        500,
+        "mock_llm_not_supported",
+        "Structured corpus generation requires real OpenAI access. Disable MOCK_LLM and retry."
+      );
+    }
+
+    const response = await this.postResponses(this.createStructuredRequestBody(input), {
+      mode: input.logLabel?.mode,
+      profile: input.logLabel?.profile,
+      length: input.logLabel?.length,
+      recentTitlesCount: input.logLabel?.recentTitlesCount,
+      stream: false,
+      retriesLeft
+    });
+
+    const rawText = await response.text();
+    if (!rawText.trim()) {
+      throw new ApiError(502, "invalid_llm_payload", "LLM returned an empty upstream body.", "empty-body");
+    }
+
+    let json: OpenAiChatResponse;
+    try {
+      json = JSON.parse(rawText) as OpenAiChatResponse;
+    } catch (error) {
+      throw new ApiError(
+        502,
+        "invalid_llm_json",
+        "LLM returned non-JSON upstream payload.",
+        rawText.slice(0, 500) || (error instanceof Error ? error.message : String(error))
+      );
+    }
+
+    const content = this.extractMessageContent(json);
+    if (!content) {
+      if (retriesLeft > 0) {
+        return this.generateStructuredWithRetry(
+          {
+            ...input,
+            correctiveInstruction: "You must return one valid JSON object only, with all required keys and no extras.",
+            userPrompt: `${input.userPrompt}\n\nReturn strict JSON only.`
+          },
+          retriesLeft - 1
+        );
+      }
+      throw new ApiError(502, "invalid_llm_payload", "LLM returned an empty response payload.", rawText.slice(0, 500));
+    }
+
+    try {
+      return input.parser(this.parsePostJson(content));
+    } catch (error) {
+      if (retriesLeft > 0) {
+        return this.generateStructuredWithRetry(
+          {
+            ...input,
+            userPrompt: [
+              input.userPrompt,
+              input.correctiveInstruction,
+              "Previous output was invalid. Return strict JSON matching the schema with no commentary."
+            ]
+              .filter(Boolean)
+              .join("\n\n")
+          },
+          retriesLeft - 1
+        );
+      }
+      throw new ApiError(
+        502,
+        "invalid_llm_json",
+        "LLM returned invalid JSON or schema.",
+        error instanceof Error ? error.message : String(error)
+      );
+    }
   }
 
   private generateMock(input: LlmGenerationInput): GeneratedPost {

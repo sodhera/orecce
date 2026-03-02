@@ -8,6 +8,7 @@
   "scripts": {
     "build": "npm run clean && tsc -p tsconfig.build.json",
     "clean": "rm -rf lib",
+    "corpus:generate": "tsx scripts/generate-spec-corpus.ts",
     "start": "node lib/server.js",
     "dev:generate": "tsx scripts/dev-generate.ts",
     "dev:server": "tsx scripts/dev-server.ts",

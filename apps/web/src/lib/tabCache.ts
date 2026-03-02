@@ -89,3 +89,21 @@ export function clearTabCache(key: string): void {
         // Ignore storage failures.
     }
 }
+
+export function clearTabCacheByPrefix(prefix: string): void {
+    const storage = getSessionStorage();
+    if (!storage) {
+        return;
+    }
+
+    try {
+        for (let index = storage.length - 1; index >= 0; index -= 1) {
+            const key = storage.key(index);
+            if (key?.startsWith(prefix)) {
+                storage.removeItem(key);
+            }
+        }
+    } catch {
+        // Ignore storage failures.
+    }
+}

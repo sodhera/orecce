@@ -28,7 +28,7 @@ function recceSubtitle(recce: Recce): string | null {
 }
 
 export default function Feed({ mode, onModeChange }: FeedProps) {
-    const { recces, followedKeys, toggleFollow } = useRecces();
+    const { recces, followedKeys, loading: reccesLoading, toggleFollow } = useRecces();
     const followedRecces = useMemo(
         () => recces.filter((recce) => followedKeys.has(recce.key)),
         [followedKeys, recces]
@@ -52,18 +52,29 @@ export default function Feed({ mode, onModeChange }: FeedProps) {
     );
 
     useEffect(() => {
-        if (mode !== "ALL") return;
-
         const handleFollowSuccess = (e: Event) => {
             const customEvent = e as CustomEvent<{ recceKey: string; isFollowing: boolean }>;
-            if (customEvent.detail.isFollowing) {
+            if (mode === "ALL") {
                 refreshFeed();
+                return;
+            }
+            if (!customEvent.detail.isFollowing && customEvent.detail.recceKey === mode) {
+                onModeChange?.("ALL");
             }
         };
 
         window.addEventListener("orecce:follow:success", handleFollowSuccess);
         return () => window.removeEventListener("orecce:follow:success", handleFollowSuccess);
-    }, [mode, refreshFeed]);
+    }, [mode, onModeChange, refreshFeed]);
+
+    useEffect(() => {
+        if (mode === "ALL" || reccesLoading) {
+            return;
+        }
+        if (!followedKeys.has(mode)) {
+            onModeChange?.("ALL");
+        }
+    }, [followedKeys, mode, onModeChange, reccesLoading]);
 
     const loadMoreRef = useRef<HTMLDivElement | null>(null);
     const seenInSessionRef = useRef(new Set<string>());

@@ -22,6 +22,8 @@ interface RecceSection {
     items: Recce[];
 }
 
+type DiscoverFilter = "all" | "following";
+
 export default function DiscoverPage() {
     const { isAuthenticated } = useAuth();
     const { recces, followedKeys, loading, error, toggleFollow } = useRecces();
@@ -29,11 +31,22 @@ export default function DiscoverPage() {
         "orecce:web:page:discover:expanded-category:v1",
         null,
     );
+    const [filter, setFilter] = useTabState<DiscoverFilter>(
+        "orecce:web:page:discover:filter:v1",
+        "all",
+    );
+    const followedCount = useMemo(
+        () => recces.filter((recce) => followedKeys.has(recce.key)).length,
+        [followedKeys, recces],
+    );
 
     const sections = useMemo<RecceSection[]>(() => {
         const grouped = new Map<RecceCategoryKey, Recce[]>();
 
         for (const recce of recces) {
+            if (filter === "following" && !followedKeys.has(recce.key)) {
+                continue;
+            }
             const categoryKey = getRecceCategoryKey(recce);
             const current = grouped.get(categoryKey) ?? [];
             current.push(recce);
@@ -49,7 +62,7 @@ export default function DiscoverPage() {
                 ),
             }))
             .filter((section) => section.items.length > 0);
-    }, [recces]);
+    }, [filter, followedKeys, recces]);
 
     useEffect(() => {
         if (loading || error || recces.length === 0) {
@@ -80,6 +93,12 @@ export default function DiscoverPage() {
         }
     }, [expandedCategory, sections, setExpandedCategory]);
 
+    useEffect(() => {
+        if (!isAuthenticated && filter !== "all") {
+            setFilter("all");
+        }
+    }, [filter, isAuthenticated, setFilter]);
+
     return (
         <div className="app-layout">
             <Sidebar />
@@ -96,6 +115,24 @@ export default function DiscoverPage() {
 
                 <div className="utility-page-body">
                     <section className="utility-card">
+                        {isAuthenticated && !loading && !error && recces.length > 0 && (
+                            <div className="discover-chip-row discover-recce-filter-row">
+                                <button
+                                    type="button"
+                                    className={`discover-chip ${filter === "all" ? "is-active" : ""}`}
+                                    onClick={() => setFilter("all")}
+                                >
+                                    All Recces
+                                </button>
+                                <button
+                                    type="button"
+                                    className={`discover-chip ${filter === "following" ? "is-active" : ""}`}
+                                    onClick={() => setFilter("following")}
+                                >
+                                    Following ({followedCount})
+                                </button>
+                            </div>
+                        )}
                         {loading ? (
                             <div className="discover-recces-sections">
                                 <section className="discover-recces-section">
@@ -114,6 +151,10 @@ export default function DiscoverPage() {
                         ) : recces.length === 0 ? (
                             <div className="authors-empty">
                                 No recces available yet.
+                            </div>
+                        ) : filter === "following" && sections.length === 0 ? (
+                            <div className="authors-empty">
+                                You are not following any recces yet.
                             </div>
                         ) : (
                             <div className="discover-recces-sections">

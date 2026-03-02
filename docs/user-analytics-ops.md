@@ -28,7 +28,7 @@ When updating this file:
 | Mobile feed and post details | Green | Feed view/impression/seen/open/read plus vote/save/share/source/chat events are instrumented and batched to the analytics endpoint. |
 | Web landing and auth | Green | Landing, auth modal, signup/login/password reset, OAuth, logout, and page/session lifecycle are instrumented. |
 | Web feed and recommendations | Green | Feed views, impressions, seen, load more, votes, saves, reads, shares, source opens, and carousel events are instrumented, and web route/feed state now hydrates from a tab-scoped cache after focus-triggered remounts. |
-| Web discover/search | Green | Discover views plus generic Recce impressions and follow/unfollow events now cover both author and topic Recces; search-specific analytics are still sparse on web. |
+| Web discover/search | Green | Discover views plus generic Recce impressions and follow/unfollow events now cover both author and topic Recces, the browser now includes an All/Following filter for followed Recces, and Home feed cache invalidation keeps unfollows from lingering in the All feed. Search-specific analytics are still sparse on web. |
 | Web collections | Green | Collection create/open/rename/delete flows are instrumented. |
 | Web notifications | Yellow | View/open/mark-read/clear events are instrumented, but the product surface is still fairly thin. |
 | Curation and feedback | Green | Curation panel, prompts, send/reply, session lifecycle, and feedback submission outcomes are instrumented. |
@@ -75,7 +75,7 @@ When updating this file:
 
 - web landing/auth: `landing_viewed`, `auth_modal_opened`, signup/login/OAuth/password reset/logout lifecycle events
 - web feed: `feed_viewed`, `feed_load_more_requested`, `feed_post_impression`, `feed_post_seen`, `feed_post_read`, votes, saves, shares, source opens, carousel events
-- web discover: `discover_viewed`, `discover_recce_impression`, `recce_followed`, `recce_unfollowed` across an accordion-style Recce browser
+- web discover: `discover_viewed`, `discover_recce_impression`, `recce_followed`, `recce_unfollowed` across an accordion-style Recce browser with an All/Following filter for current follows
 - web collections/saved: `saved_viewed`, `collection_create_started`, `collection_created`, `collection_renamed`, `collection_deleted`, `collection_opened`
 - web page resume: tab-scoped cache hydration restores low-sensitivity route state plus feed, discover, collection, notification, feedback-draft, and post-detail snapshots after browser discards or focus-triggered remounts; no new analytics event names were added for this resume path
 - web notifications: `notifications_viewed`, `notification_opened`, `notification_marked_read`, `notifications_cleared`
@@ -140,6 +140,8 @@ When updating this file:
 - Added an admin-only web analytics page at `/admin` that surfaces summary, platform, funnel, and top-actor views from the existing derived analytics tables.
 - Added a protected `/api/v1/admin/user-analytics` route so reporting consumes the shared warehouse layer instead of ad hoc client queries.
 - Kept the analytics taxonomy unchanged; the admin page reads existing derived facts rather than introducing new event names.
+- Added an All/Following filter to web Discover without changing the Recce analytics event names.
+- Invalidated personalized web Home feed snapshots after Recce follow changes so the All feed no longer reuses stale followed-Recces cache entries.
 
 ### 2026-03-01
 

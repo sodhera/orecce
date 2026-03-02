@@ -696,6 +696,9 @@ body[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
 }
 
 .discover-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 8px 14px;
   border-radius: 9999px;
   border: 1px solid var(--bg-border);
@@ -703,11 +706,23 @@ body[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
   color: var(--text-primary);
   font-size: 13px;
   font-weight: 600;
-  transition: background 0.2s;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
 }
 
-.discover-chip:hover {
+.discover-chip:hover:not(:disabled):not(.is-active) {
   background: var(--bg-hover);
+}
+
+.discover-chip.is-active {
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  border-color: var(--text-primary);
+}
+
+.discover-chip:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .discover-list {
@@ -4149,12 +4164,12 @@ body[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
   flex: 0 0 100%;
   width: 100%;
   height: 100%;
-  padding: 28px clamp(44px, 13%, 56px);
+  padding: 24px clamp(32px, 10%, 52px);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  text-align: center;
+  text-align: left;
   scroll-snap-align: center;
   user-select: none;
   -webkit-user-select: none;
@@ -4163,13 +4178,13 @@ body[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
 
 .ig-post-content {
   position: relative;
-  width: 100%;
+  width: min(100%, 520px);
   max-height: 100%;
   overflow: hidden;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: center;
+  align-items: stretch;
   user-select: none;
   -webkit-user-select: none;
 }
@@ -4185,9 +4200,11 @@ body[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
 
 .ig-post-text {
   color: #1a1a1a;
-  font-size: 15px;
-  line-height: 1.6;
+  width: 100%;
+  font-size: 16px;
+  line-height: 1.5;
   overflow: hidden;
+  text-align: left;
   user-select: none;
   -webkit-user-select: none;
 }
@@ -4198,11 +4215,21 @@ body[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
 }
 
 .ig-post-text p {
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .ig-post-text p:last-child {
   margin-bottom: 0;
+}
+
+.ig-post-text ul,
+.ig-post-text ol {
+  margin: 8px 0;
+  padding-left: 1.2em;
+}
+
+.ig-post-text li {
+  margin-bottom: 6px;
 }
 
 /* ── Light mode: flip to dark square ── */
@@ -4435,6 +4462,11 @@ body[data-theme="light"] .ig-post-dot.active {
 .discover-recces-sections {
   display: flex;
   flex-direction: column;
+}
+
+.discover-recce-filter-row {
+  border-bottom: 1px solid var(--bg-border);
+  padding-bottom: 12px;
 }
 
 .discover-recces-section+.discover-recces-section {

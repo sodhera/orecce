@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { buildRecceKey, type Recce } from "@/lib/recces";
-import { readTabCache, writeTabCache } from "@/lib/tabCache";
+import { clearTabCacheByPrefix, readTabCache, writeTabCache } from "@/lib/tabCache";
 
 interface AuthorRow {
     id: string;
@@ -36,6 +36,7 @@ interface PersistedReccesSnapshot {
 
 const RECCES_CACHE_KEY = "orecce:web:recces:v1";
 const RECCES_CACHE_TTL_MS = 15 * 60 * 1000;
+const PERSONALIZED_FEED_VIEW_CACHE_PREFIX = "orecce:web:feed:view:v1:feed";
 
 let cachedRecces: Recce[] = [];
 let cachedFollowedKeys = new Set<string>();
@@ -389,17 +390,20 @@ export function useRecces(): UseReccesReturn {
                 }
 
                 persistSnapshot(userId);
+                clearTabCacheByPrefix(PERSONALIZED_FEED_VIEW_CACHE_PREFIX);
+
+                const nextIsFollowing = !isFollowing;
 
                 if (typeof window !== "undefined") {
                     window.dispatchEvent(
                         new CustomEvent("orecce:follow:success", {
-                            detail: { recceKey: recce.key, isFollowing },
+                            detail: { recceKey: recce.key, isFollowing: nextIsFollowing },
                         })
                     );
                 }
 
                 trackAnalyticsEvent({
-                    eventName: isFollowing ? "recce_unfollowed" : "recce_followed",
+                    eventName: nextIsFollowing ? "recce_followed" : "recce_unfollowed",
                     surface: "discover",
                     properties: {
                         recce_id: recce.id,

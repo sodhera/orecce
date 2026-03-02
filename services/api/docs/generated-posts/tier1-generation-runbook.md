@@ -75,7 +75,29 @@ Notes:
 - reruns skip already-generated topics
 - each post is generated from one canonical topic plus its approved variants
 
-5. Import the generated Tier 1 corpus into Supabase.
+5. Tighten the existing Tier 1 corpus for compact carousels.
+
+```bash
+npm --prefix services/api/functions run posts:tier1-rewrite -- --model gpt-5-mini
+```
+
+What this rewrite step does:
+
+- reads the current Tier 1 corpus snapshot from `services/api/docs/generated-posts/tier1-corpus/*.posts.ndjson`
+- fetches the matching live Orecce posts from Supabase `posts`
+- rewrites each slide with `gpt-5-mini` for shorter, markdown-friendly formatting
+- keeps the same canonical topic, metadata, slide count, and slide roles
+- rewrites the local Tier 1 corpus files so the repo stays aligned with the live feed import source
+
+Formatting constraints used in the rewrite:
+
+- one idea per slide
+- short hook and short closer
+- body slides use short paragraphs, numbered points, or bullets
+- target roughly 18 to 42 words per slide
+- keep slide text under 220 characters
+
+6. Import the generated Tier 1 corpus into Supabase.
 
 ```bash
 npm --prefix services/api/functions run posts:tier1-import

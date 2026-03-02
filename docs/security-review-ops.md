@@ -131,6 +131,7 @@ When updating this file:
 - Gated admin access through a server-side repo allowlist with optional `ADMIN_USER_EMAILS` and `ADMIN_USER_IDS` extensions, with the client only using the protected status response to decide whether to show the sidebar entry.
 - Recorded the configuration-drift risk introduced by repo-managed and environment-managed admin access.
 - Added a documented Tier 1 library generation/import workflow that uses the Supabase service-role key to seed curated content into live `authors`, `posts`, `post_topics`, and `recces_essays`.
+- Added a follow-on Tier 1 rewrite workflow that pulls the live Orecce corpus back through the service-role client, tightens slide copy with `gpt-5-mini`, and reimports the same deterministic feed records.
 - Recorded the remaining schema-ownership gap around the deployed feed tables that these import scripts target.
 
 ### 2026-03-01

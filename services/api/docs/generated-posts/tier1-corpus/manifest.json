@@ -1,6 +1,6 @@
 {
   "generated_at": "2026-03-02T12:50:40.721Z",
-  "updated_at": "2026-03-02T13:18:41.938Z",
+  "updated_at": "2026-03-02T13:59:18.046Z",
   "model": "gpt-5-mini",
   "config": {
     "out_dir": "/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/docs/generated-posts/tier1-corpus"
@@ -14,5 +14,10 @@
       "tier1_topics": 53,
       "generated_posts": 53
     }
+  },
+  "rewrite": {
+    "model": "gpt-5-mini",
+    "source": "live_supabase_posts",
+    "rewritten_at": "2026-03-02T13:59:18.046Z"
   }
 }

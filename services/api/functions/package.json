@@ -11,6 +11,7 @@
     "corpus:generate": "tsx scripts/generate-spec-corpus.ts",
     "corpus:posts": "tsx scripts/generate-spec-corpus.ts --stage posts",
     "corpus:titles": "tsx scripts/generate-spec-corpus.ts --stage briefs",
+    "titles:generate": "tsx scripts/generate-spec-titles.ts",
     "start": "node lib/server.js",
     "dev:generate": "tsx scripts/dev-generate.ts",
     "dev:server": "tsx scripts/dev-server.ts",

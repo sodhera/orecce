@@ -1,0 +1,18 @@
+{
+  "generated_at": "2026-03-02T11:45:23.353Z",
+  "updated_at": "2026-03-02T11:48:54.681Z",
+  "model": "gpt-5.2-2025-12-11",
+  "config": {
+    "target_per_category": 200,
+    "batch_size": 20,
+    "out_dir": "/Users/sirishjoshi/Desktop/AI-Post/orecce/services/api/docs/generated-posts/title-lists"
+  },
+  "categories": {
+    "historical_nerd": {
+      "titles": 200
+    },
+    "mental_model_library": {
+      "titles": 200
+    }
+  }
+}

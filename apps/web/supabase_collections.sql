@@ -53,13 +53,13 @@ $$;
 -- ==========================================
 
 -- 4. Ensure a default collection exists for the current user, return its id
-create or replace function ensure_default_collection()
+create or replace function ensure_default_collection(p_user_id uuid default null)
 returns uuid
 language plpgsql
 security definer
 as $$
 declare
-  v_user_id uuid := auth.uid();
+  v_user_id uuid := coalesce(p_user_id, auth.uid());
   v_collection_id uuid;
 begin
   select id into v_collection_id
@@ -103,7 +103,7 @@ declare
   v_user_id uuid := auth.uid();
 begin
   -- Ensure at least the default collection exists
-  perform ensure_default_collection();
+  perform ensure_default_collection(v_user_id);
 
   return query
   select

@@ -751,9 +751,11 @@ export function useFeed(
                 const userId = await requireUserId();
                 if (optimisticSaved) {
                     // Ensure user has a default collection and save into it
-                    const { data: defaultColId } = await supabase.rpc(
+                    const { data: defaultColId, error: rpcError } = await supabase.rpc(
                         "ensure_default_collection" as any,
+                        { p_user_id: userId } as any,
                     );
+                    if (rpcError) throw new Error(rpcError.message);
                     const { error: insertError } = await supabase
                         .from("user_saves")
                         .insert({ user_id: userId, post_id: postId, collection_id: defaultColId });

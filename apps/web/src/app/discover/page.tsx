@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo } from "react";
 import Sidebar from "@/components/Sidebar";
+import RecceSkeleton from "@/components/RecceSkeleton";
 import { useRecces } from "@/hooks/useRecces";
 import { useTabState } from "@/hooks/useTabState";
 import { BsChevronDown } from "react-icons/bs";
@@ -96,8 +97,17 @@ export default function DiscoverPage() {
                 <div className="utility-page-body">
                     <section className="utility-card">
                         {loading ? (
-                            <div className="authors-loading">
-                                Loading recces…
+                            <div className="discover-recces-sections">
+                                <section className="discover-recces-section">
+                                    <div className="discover-recces-section-toggle is-expanded">
+                                        <div className="skeleton-line" style={{ width: '150px', height: '18px' }} />
+                                    </div>
+                                    <div className="authors-grid">
+                                        <RecceSkeleton />
+                                        <RecceSkeleton />
+                                        <RecceSkeleton />
+                                    </div>
+                                </section>
                             </div>
                         ) : error ? (
                             <div className="authors-error">Error: {error}</div>

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import PostCard from "./PostCard";
+import PostCardSkeleton from "./PostCardSkeleton";
 import { useFeed } from "@/hooks/useFeed";
 import { useRecces } from "@/hooks/useRecces";
 import { trackAnalyticsEvent } from "@/lib/analytics";
@@ -42,6 +43,22 @@ export default function Feed({ mode, onModeChange }: FeedProps) {
     );
 
     const feed = useFeed(mode === "ALL" ? null : selectedRecce);
+    const { refresh: refreshFeed } = feed;
+
+    useEffect(() => {
+        if (mode !== "ALL") return;
+
+        const handleFollowSuccess = (e: Event) => {
+            const customEvent = e as CustomEvent<{ recceKey: string; isFollowing: boolean }>;
+            if (customEvent.detail.isFollowing) {
+                refreshFeed();
+            }
+        };
+
+        window.addEventListener("orecce:follow:success", handleFollowSuccess);
+        return () => window.removeEventListener("orecce:follow:success", handleFollowSuccess);
+    }, [mode, refreshFeed]);
+
     const loadMoreRef = useRef<HTMLDivElement | null>(null);
     const seenInSessionRef = useRef(new Set<string>());
     const impressedInSessionRef = useRef(new Set<string>());
@@ -219,15 +236,11 @@ export default function Feed({ mode, onModeChange }: FeedProps) {
 
             <div className="feed-posts-container feed-posts-slides feed-posts-slides-center">
                 {feed.loading ? (
-                    <div
-                        style={{
-                            padding: 40,
-                            textAlign: "center",
-                            color: "var(--text-secondary)",
-                        }}
-                    >
-                        Loading posts…
-                    </div>
+                    <>
+                        <PostCardSkeleton />
+                        <PostCardSkeleton />
+                        <PostCardSkeleton />
+                    </>
                 ) : feed.items.length === 0 ? (
                     feed.error ? (
                         <div

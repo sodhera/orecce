@@ -590,7 +590,7 @@ export function useFeed(
             await hydrateSeenCache();
 
             if (hydrated && isFresh && !force) {
-                void hydrateReadCache().catch(() => {});
+                void hydrateReadCache().catch(() => { });
                 return;
             }
 
@@ -871,8 +871,8 @@ export function useFeed(
         toggleSave,
         markAsSeen,
         markAsRead,
-        refresh: () => {
+        refresh: useCallback(() => {
             void loadInitial(true);
-        },
+        }, [loadInitial]),
     };
 }

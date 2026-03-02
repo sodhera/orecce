@@ -300,14 +300,14 @@ export function useRecces(): UseReccesReturn {
                 }
                 syncFromCache();
                 if (!isFresh) {
-                    void ensureLoaded().catch(() => {});
+                    void ensureLoaded().catch(() => { });
                 }
             } catch {
                 if (cancelled) {
                     return;
                 }
                 syncFromCache();
-                void ensureLoaded().catch(() => {});
+                void ensureLoaded().catch(() => { });
             }
         })();
 
@@ -326,7 +326,7 @@ export function useRecces(): UseReccesReturn {
                     ? { followedKeys: new Set<string>(), loaded: false }
                     : { loaded: false },
             );
-            void ensureLoaded(true).catch(() => {});
+            void ensureLoaded(true).catch(() => { });
         });
         return () => {
             subscription.unsubscribe();
@@ -389,6 +389,14 @@ export function useRecces(): UseReccesReturn {
                 }
 
                 persistSnapshot(userId);
+
+                if (typeof window !== "undefined") {
+                    window.dispatchEvent(
+                        new CustomEvent("orecce:follow:success", {
+                            detail: { recceKey: recce.key, isFollowing },
+                        })
+                    );
+                }
 
                 trackAnalyticsEvent({
                     eventName: isFollowing ? "recce_unfollowed" : "recce_followed",

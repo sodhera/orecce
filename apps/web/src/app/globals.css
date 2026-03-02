@@ -4437,7 +4437,7 @@ body[data-theme="light"] .ig-post-dot.active {
   flex-direction: column;
 }
 
-.discover-recces-section + .discover-recces-section {
+.discover-recces-section+.discover-recces-section {
   border-top: 1px solid var(--bg-border);
 }
 
@@ -5584,4 +5584,97 @@ body[data-theme="light"] .ig-post-dot.active {
 
 .collection-delete-btn.cancel:hover {
   background: var(--bg-hover);
+}
+
+/* ── Skeleton Loaders ── */
+.skeleton-card {
+  pointer-events: none;
+}
+
+.skeleton-line {
+  background: var(--bg-hover);
+  border-radius: 4px;
+  height: 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-icon {
+  width: 24px;
+  height: 24px;
+  background: var(--bg-hover);
+  border-radius: 50%;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-author-name {
+  width: 90px;
+}
+
+.skeleton-topic {
+  width: 60px;
+}
+
+.skeleton-square {
+  background: var(--bg-hover);
+  position: relative;
+  overflow: hidden;
+  border-color: transparent !important;
+}
+
+.skeleton-caption {
+  width: 65%;
+  height: 14px;
+  margin-top: 4px;
+}
+
+.skeleton-recce-name {
+  width: 120px;
+}
+
+.skeleton-recce-bio {
+  width: 65%;
+}
+
+.skeleton-recce-btn {
+  width: 80px;
+  height: 36px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+/* Shimmer Animation */
+.skeleton-line::after,
+.skeleton-icon::after,
+.skeleton-square::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(to right,
+      transparent 0%,
+      rgba(255, 255, 255, 0.04) 50%,
+      transparent 100%);
+  animation: shimmer 1.5s infinite linear;
+}
+
+[data-theme="light"] .skeleton-line::after,
+[data-theme="light"] .skeleton-icon::after,
+[data-theme="light"] .skeleton-square::after,
+body[data-theme="light"] .skeleton-line::after,
+body[data-theme="light"] .skeleton-icon::after,
+body[data-theme="light"] .skeleton-square::after {
+  background: linear-gradient(to right,
+      transparent 0%,
+      rgba(0, 0, 0, 0.05) 50%,
+      transparent 100%);
+}
+
+@keyframes shimmer {
+  100% {
+    left: 200%;
+  }
 }

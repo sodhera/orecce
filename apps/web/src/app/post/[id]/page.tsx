@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useRecces } from "@/hooks/useRecces";
 import Sidebar from "@/components/Sidebar";
 import PostCard, { type Post, type Slide } from "@/components/PostCard";
+import PostCardSkeleton from "@/components/PostCardSkeleton";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import { buildRecceKey, type Recce } from "@/lib/recces";
 import { readTabCache, writeTabCache } from "@/lib/tabCache";
@@ -193,8 +194,8 @@ export default function PublicPostPage() {
 
     // ── Center content ──
     const centerContent = loading ? (
-        <div style={{ padding: 40, textAlign: "center", color: "var(--text-secondary)" }}>
-            Loading post…
+        <div className="feed-posts-container feed-posts-slides">
+            <PostCardSkeleton />
         </div>
     ) : error || !post ? (
         <div style={{ padding: 40, textAlign: "center", color: "var(--text-secondary)" }}>

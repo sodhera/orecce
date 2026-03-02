@@ -6,7 +6,7 @@ import type { Post, Slide } from "@/components/PostCard";
 import { sendPostFeedback } from "@/lib/api";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import type { Recce } from "@/lib/recces";
-import { readTabCache, writeTabCache } from "@/lib/tabCache";
+import { readTabCache, writeTabCache, clearTabCacheByPrefix } from "@/lib/tabCache";
 
 // ── Types ────────────────────────────────────────────────────────
 
@@ -771,7 +771,16 @@ export function useFeed(
                         throw new Error(deleteError.message);
                     }
                 }
-                await sendPostFeedback(postId, optimisticSaved ? "save" : "unsave");
+                // Non-blocking: don't let analytics failures revert the save
+                try {
+                    await sendPostFeedback(postId, optimisticSaved ? "save" : "unsave");
+                } catch { /* non-critical */ }
+
+                // Clear the cached feeds so they refetch next time they mount
+                clearTabCacheByPrefix(`${FEED_VIEW_CACHE_PREFIX}:saved`);
+                clearTabCacheByPrefix(`${FEED_VIEW_CACHE_PREFIX}:feed`);
+                clearTabCacheByPrefix(`${FEED_VIEW_CACHE_PREFIX}:liked`);
+
                 trackAnalyticsEvent({
                     eventName: optimisticSaved ? "post_saved" : "post_unsaved",
                     surface: feedMode,
@@ -824,7 +833,16 @@ export function useFeed(
                 if (insertError) {
                     throw new Error(insertError.message);
                 }
-                await sendPostFeedback(postId, "save");
+                // Non-blocking: don't let analytics failures revert the save
+                try {
+                    await sendPostFeedback(postId, "save");
+                } catch { /* non-critical */ }
+
+                // Clear the cached feeds so they refetch next time they mount
+                clearTabCacheByPrefix(`${FEED_VIEW_CACHE_PREFIX}:saved`);
+                clearTabCacheByPrefix(`${FEED_VIEW_CACHE_PREFIX}:feed`);
+                clearTabCacheByPrefix(`${FEED_VIEW_CACHE_PREFIX}:liked`);
+
                 trackAnalyticsEvent({
                     eventName: "post_saved_to_collection",
                     surface: feedMode,

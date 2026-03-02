@@ -15,7 +15,7 @@ When updating this file:
 
 ## Last review
 
-- Reviewed on: 2026-03-01
+- Reviewed on: 2026-03-02
 - Reviewer: Codex
 - Scope: repo-wide implementation pass across mobile, web, API, docs, schema, and automation
 
@@ -33,14 +33,14 @@ When updating this file:
 | Web notifications | Yellow | View/open/mark-read/clear events are instrumented, but the product surface is still fairly thin. |
 | Curation and feedback | Green | Curation panel, prompts, send/reply, session lifecycle, and feedback submission outcomes are instrumented. |
 | API analytics ingestion | Green | Shared validation, optional-auth ingestion, repository persistence, raw event storage, and forward migrations are in place. |
-| Derived reporting | Yellow | Session, daily user/content, funnel, and recommendation-outcome views exist, but dashboards and quality monitors do not yet. |
+| Derived reporting | Yellow | Session, daily user/content, funnel, and recommendation-outcome views exist, and the web app now exposes a first admin-only user analytics page backed by those views, but broader dashboards and quality monitors do not yet exist. |
 
 ## Current blockers
 
 1. Anonymous-to-auth identity stitching is not durable on the backend yet.
 2. Mobile still relies partly on mock feed data, which limits data quality for some feed metrics.
 3. Some secondary surfaces still emit generic `page_viewed` or `screen_viewed` instead of more intent-specific events.
-4. There are no analytics dashboards, freshness checks, or anomaly alerts yet.
+4. There is now a basic admin analytics page, but there are still no freshness checks or anomaly alerts.
 5. The analytics pipeline does not yet have dedicated integration tests that exercise end-to-end ingestion.
 
 ## Current instrumentation inventory
@@ -55,6 +55,7 @@ When updating this file:
 - derived views for sessions, daily user facts, daily content facts, funnels, and recommendation outcomes
 - web batching client with lifecycle flush support
 - mobile batching client with AsyncStorage-backed identity/session state
+- admin-only web reporting route at `/admin` backed by `/api/v1/admin/user-analytics`
 
 ### Product-state signals that still exist alongside analytics
 
@@ -79,6 +80,7 @@ When updating this file:
 - web page resume: tab-scoped cache hydration restores low-sensitivity route state plus feed, discover, collection, notification, feedback-draft, and post-detail snapshots after browser discards or focus-triggered remounts; no new analytics event names were added for this resume path
 - web notifications: `notifications_viewed`, `notification_opened`, `notification_marked_read`, `notifications_cleared`
 - web curation/feedback: panel, prompt, send/reply, session lifecycle, feedback submitted/failed
+- web admin analytics: admin-only `/admin` page consumes `analytics_daily_user_facts` and `analytics_funnel_facts` without adding a new event taxonomy
 - mobile lifecycle/auth: `app_opened`, `app_backgrounded`, route views, signup/login/OAuth/password reset/logout, welcome entry selection, verification actions
 - mobile preferences/feed: `interest_added`, `interest_removed`, `preferences_saved`, `feed_viewed`, `feed_refreshed`, impressions, seen, opens, reads, votes, saves, shares
 - mobile post detail: `post_detail_viewed`, `post_source_opened`, `sources_expanded`, `sources_collapsed`, curation send/reply
@@ -90,7 +92,7 @@ When updating this file:
 - richer web search analytics
 - settings/profile mutation analytics
 - latency/error analytics by journey
-- dashboards, alerts, and freshness monitoring
+- broader dashboards beyond the first admin page, plus alerts and freshness monitoring
 
 ## Gaps to fix first
 
@@ -106,7 +108,7 @@ When updating this file:
 - Add durable identity stitching between anonymous and authenticated usage.
 - Instrument remaining onboarding and settings/profile surfaces with intent-specific events.
 - Expand web search analytics.
-- Start consuming derived views in reporting queries or dashboards.
+- Expand the first admin analytics page into broader reporting and drill-downs.
 
 ### P2
 
@@ -128,10 +130,16 @@ When updating this file:
 1. Add analytics-specific integration tests for batch ingestion and repository persistence.
 2. Add durable anonymous-to-auth identity stitching if cross-auth attribution becomes a product requirement.
 3. Upgrade remaining generic route events to specific onboarding, settings, and search events.
-4. Build first-pass dashboards or SQL notebooks from `analytics_daily_user_facts`, `analytics_daily_content_facts`, and `analytics_funnel_facts`.
+4. Expand the admin analytics page or SQL notebooks from `analytics_daily_user_facts`, `analytics_daily_content_facts`, and `analytics_funnel_facts`.
 5. Add recurring quality checks for event volume, freshness, and duplicate sessions.
 
 ## Change log
+
+### 2026-03-02
+
+- Added an admin-only web analytics page at `/admin` that surfaces summary, platform, funnel, and top-actor views from the existing derived analytics tables.
+- Added a protected `/api/v1/admin/user-analytics` route so reporting consumes the shared warehouse layer instead of ad hoc client queries.
+- Kept the analytics taxonomy unchanged; the admin page reads existing derived facts rather than introducing new event names.
 
 ### 2026-03-01
 

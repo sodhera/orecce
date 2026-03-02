@@ -27,7 +27,7 @@ Implemented on 2026-03-01:
 | Surface | What exists now | Main gaps |
 | --- | --- | --- |
 | Mobile (`apps/mobile`) | Shared batching client, anonymous/device/session IDs, route tracking, auth events, onboarding/preferences events, feed impressions/seen/open/read, vote/save/share, post-detail source/chat events, collection and saved events. | Some screens still fall back to generic `screen_viewed`. Feed data is still partly mock, so analytics quality depends on real content rollout. |
-| Web (`apps/web`) | Shared batching client, anonymous/device/session IDs, page views, auth lifecycle events, feed impressions/seen/load-more, votes/saves/read, discover author impressions, collection events, notifications, feedback, curation, post-detail analytics, and tab-resume cache hydration for top-level page state plus feed/discover/collection/post snapshots. | Some secondary UI flows still emit generic `page_viewed` or route-only context. No server-side dashboards yet. |
+| Web (`apps/web`) | Shared batching client, anonymous/device/session IDs, page views, auth lifecycle events, feed impressions/seen/load-more, votes/saves/read, discover author impressions, collection events, notifications, feedback, curation, post-detail analytics, tab-resume cache hydration for top-level page state plus feed/discover/collection/post snapshots, and an admin-only `/admin` reporting page that reads derived user analytics. | Some secondary UI flows still emit generic `page_viewed` or route-only context. Reporting is still limited to the first admin page rather than a broader dashboard layer. |
 | API (`services/api` + `packages/api-core`) | Shared event contract, request validation, optional-auth batch ingestion, repository persistence, raw event storage, and derived views for sessions, daily user facts, daily content facts, funnels, and recommendation outcomes. | No dedicated reporting jobs, alerting, or analytics-specific endpoint tests yet. |
 | Data model | Analytics storage now lives in the core migration path with a forward migration for provisioned environments. | Canonical `user_id` is still split across existing product tables in some areas, and anonymous-to-auth identity aliasing is still client-side only. |
 
@@ -36,7 +36,7 @@ Implemented on 2026-03-01:
 1. Anonymous-to-auth identity merge is not yet modeled as a durable server-side alias table.
 2. Mobile still contains mock content paths, so some event properties will stay synthetic until the live feed path is fully wired.
 3. Some secondary routes only emit `page_viewed` or `screen_viewed` and could be upgraded to more specific intent events.
-4. There are no analytics dashboards, freshness checks, or anomaly alerts yet.
+4. There is now a basic admin reporting page, but there are still no freshness checks or anomaly alerts.
 5. The new analytics path has validation coverage, but not dedicated end-to-end analytics ingestion tests.
 
 ## Target architecture
@@ -111,6 +111,7 @@ Active ingestion path:
 
 - Core API: `packages/api-core/src/http/createApp.ts`
 - Web app route mirror: `apps/web/src/app/api/v1/analytics/events/batch/route.ts`
+- Admin reporting route: `apps/web/src/app/api/v1/admin/user-analytics/route.ts`
 
 Current rules:
 
@@ -132,6 +133,8 @@ Current analytics storage:
 - `analytics_recommendation_outcomes`
 
 These views are now present in both the base schema and the forward migration so fresh setups and provisioned databases converge.
+
+The web app now uses `analytics_daily_user_facts` and `analytics_funnel_facts` to power an admin-only `/admin` page, which is the first in-product reporting surface built on top of the derived views.
 
 ### 4. Identity and session normalization
 Partially implemented.
@@ -343,6 +346,7 @@ Status: mostly complete
 - Discover Recce impressions and author/topic follows are instrumented, and the web Discover surface now exposes those Recces through expandable categories.
 - Saved and collection actions are instrumented.
 - Web page state, feed, Recce discovery, collection views, feedback drafts, notifications, and post-detail snapshots now resume from tab-scoped cache after focus-triggered remounts without introducing new analytics event names.
+- Added an admin-only `/admin` reporting page that consumes the derived analytics views without changing the analytics taxonomy.
 
 ### Phase 2: Instrument secondary journeys
 

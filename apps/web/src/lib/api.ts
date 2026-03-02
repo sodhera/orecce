@@ -253,6 +253,60 @@ interface RecommendReccesInput {
     excludePostIds?: string[];
 }
 
+export interface AdminStatusResult {
+    isAdmin: boolean;
+}
+
+export interface AdminAnalyticsSummary {
+    trackedActors: number;
+    totalEvents: number;
+    totalSessions: number;
+    postReads: number;
+    saves: number;
+    upvotes: number;
+    follows: number;
+    feedbackSubmissions: number;
+}
+
+export interface AdminAnalyticsPlatformRow {
+    platform: string;
+    totalEvents: number;
+    totalSessions: number;
+    trackedActors: number;
+}
+
+export interface AdminAnalyticsFunnelRow {
+    date: string;
+    landingViewers: number;
+    signupStarters: number;
+    signupCompleters: number;
+    loginCompleters: number;
+    feedViewers: number;
+    engagedFeedUsers: number;
+    activatedUsers: number;
+}
+
+export interface AdminAnalyticsActorRow {
+    actorId: string;
+    totalEvents: number;
+    totalSessions: number;
+    postReads: number;
+    saves: number;
+    upvotes: number;
+    follows: number;
+    feedbackSubmissions: number;
+}
+
+export interface AdminUserAnalyticsResult {
+    generatedAt: string;
+    windowDays: number;
+    trendDays: number;
+    summary: AdminAnalyticsSummary;
+    platformBreakdown: AdminAnalyticsPlatformRow[];
+    funnelTrend: AdminAnalyticsFunnelRow[];
+    topActors: AdminAnalyticsActorRow[];
+}
+
 export async function recommendRecces(
     input: RecommendReccesInput,
     options?: RequestOptions,
@@ -272,6 +326,20 @@ export async function recommendRecces(
         },
         options,
     );
+}
+
+export async function getAdminStatus(): Promise<AdminStatusResult> {
+    return get<AdminStatusResult>("/admin/me");
+}
+
+export async function getAdminUserAnalytics(
+    days: number = 30,
+    trendDays: number = 14,
+): Promise<AdminUserAnalyticsResult> {
+    return get<AdminUserAnalyticsResult>("/admin/user-analytics", {
+        days,
+        trend_days: trendDays,
+    });
 }
 
 export async function sendPostFeedback(

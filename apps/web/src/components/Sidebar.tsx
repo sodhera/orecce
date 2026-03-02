@@ -22,13 +22,14 @@ import {
     IoNotificationsOutline,
     IoPersonCircleOutline,
     IoSettingsOutline,
+    IoShieldCheckmarkOutline,
 } from "react-icons/io5";
 import { MdExplore, MdOutlineExplore } from "react-icons/md";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 import { supabase } from "@/lib/supabaseClient";
 
-const navItems: Array<{
+const baseNavItems: Array<{
     label: string;
     href?: string;
     iconOutline: ReactNode;
@@ -107,7 +108,7 @@ const settingsNavItems: Array<{
     ];
 
 export default function Sidebar() {
-    const { isAuthenticated, user, setShowAuthModal, logout } = useAuth();
+    const { isAuthenticated, isAdmin, user, setShowAuthModal, logout } = useAuth();
     const { themeMode, themePreference, setThemePreference } = useTheme();
     const pathname = usePathname();
     const [showProfileModal, setShowProfileModal] = useState(false);
@@ -128,6 +129,17 @@ export default function Sidebar() {
     const [notificationsNotice, setNotificationsNotice] = useState<SettingsNotice | null>(null);
     const [settingsLoadError, setSettingsLoadError] = useState<string | null>(null);
     const userMenuRef = useRef<HTMLDivElement | null>(null);
+    const navItems: typeof baseNavItems = isAdmin
+        ? [
+            ...baseNavItems,
+            {
+                label: "Admin",
+                href: "/admin",
+                iconOutline: <IoShieldCheckmarkOutline aria-hidden="true" />,
+                iconFilled: undefined,
+            },
+        ]
+        : baseNavItems;
 
     useEffect(() => {
         if (!showUserMenu) return;

@@ -16,7 +16,7 @@ When updating this file:
 
 ## Last review
 
-- Reviewed on: 2026-03-01
+- Reviewed on: 2026-03-02
 - Reviewer: Codex
 - Scope: repo-wide implementation pass across mobile, web, API, schema, and security workflow
 - Review type: baseline hardening pass after initial security review findings
@@ -26,9 +26,9 @@ When updating this file:
 | Area | Coverage | Notes |
 | --- | --- | --- |
 | Identity and authentication | Yellow | Supabase bearer verification exists in the main API paths, but local-mode seams still exist in core code and require strict environment gating. |
-| Authorization and database policy model | Yellow | Web client RLS tables and policies are now mirrored into the canonical schema and forward migration path; web Recce follows now hit both `user_author_follows` and `user_topic_follows`, but the full route/table authorization matrix is still missing. |
+| Authorization and database policy model | Yellow | Web client RLS tables and policies are now mirrored into the canonical schema and forward migration path; web Recce follows now hit both `user_author_follows` and `user_topic_follows`, and the new admin analytics surface is gated by a server-side allowlist, but the full route/table authorization matrix is still missing. |
 | Mobile client and session handling | Yellow | iOS arbitrary loads were removed in favor of local-only ATS exceptions, but secure-storage review and privacy logging review remain open. |
-| Web browser surface | Yellow | Authenticated flows and server routes exist, and low-sensitivity route state plus feed/discover/collection/post snapshots now resume from sessionStorage, but CSP and browser security headers are not yet codified. |
+| Web browser surface | Yellow | Authenticated flows and server routes exist, low-sensitivity route state plus feed/discover/collection/post snapshots now resume from sessionStorage, and the `/admin` nav/page is hidden client-side unless the server confirms allowlisted access, but CSP and browser security headers are not yet codified. |
 | Core API hardening | Yellow | CORS is now allowlisted and several costly/write-heavy routes have request budgets, but protections are still in-memory only. |
 | LLM and external fetch surfaces | Yellow | Curate chat and several mutation paths are budgeted, but outbound fetch controls, prompt-injection review, and broader cost controls still need work. |
 | Secrets and configuration | Yellow | Service-role keys remain server-side and CORS config is now explicit, but secret-rotation and least-privilege work remain open. |
@@ -40,6 +40,7 @@ When updating this file:
 2. Security controls are split across Expo config, Next.js routes, Express middleware, and Supabase schema, even though canonical docs now exist.
 3. Abuse limiting is best-effort only because it currently lives in process memory.
 4. There is no recurring security audit automation yet.
+5. Admin allowlist management now depends on deployment configuration staying accurate.
 
 ## Current known risks
 
@@ -48,6 +49,7 @@ When updating this file:
 3. In-memory rate limiting will not synchronize across multiple server instances.
 4. Anonymous feedback insertion remains open by design and needs spam-tolerance review.
 5. Local-only auth bypass seams such as inferred `user_id` must stay impossible in production deployments.
+6. Admin access now depends on `ADMIN_USER_EMAILS` and/or `ADMIN_USER_IDS`; stale allowlists or misconfiguration could overgrant or undergrant access.
 
 ## Current security inventory
 
@@ -66,6 +68,7 @@ When updating this file:
 - Structured route logging with request IDs
 - Local-only iOS transport exceptions instead of global arbitrary-load allowance
 - Server-side segregation of privileged keys from browser/mobile clients
+- Server-side admin allowlist checks on `/api/v1/admin/me` and `/api/v1/admin/user-analytics`, mirrored by client-side nav visibility for `/admin`
 
 ### Controls missing or not yet standardized
 
@@ -75,6 +78,7 @@ When updating this file:
 - Distributed abuse controls beyond in-memory process state
 - Dependency-audit and secrets-rotation workflow
 - Dedicated security monitoring and incident-response guidance
+- Centralized admin-role management beyond environment-based allowlists
 
 ## Gaps to fix first
 
@@ -91,6 +95,7 @@ When updating this file:
 - Review direct browser writes to `user_feedback` for spam tolerance and ownership.
 - Review and reduce unnecessary service-role blast radius where feasible.
 - Add outbound-fetch guardrails for article and news ingestion paths.
+- Decide whether admin access should remain env-allowlisted or move to a durable role/claim model.
 
 ### P2
 
@@ -117,6 +122,12 @@ When updating this file:
 5. Enable a recurring security audit automation after approval.
 
 ## Change log
+
+### 2026-03-02
+
+- Added an admin-only `/admin` web surface with a matching protected reporting route at `/api/v1/admin/user-analytics`.
+- Gated admin access through server-side allowlists from `ADMIN_USER_EMAILS` and `ADMIN_USER_IDS`, with the client only using the protected status response to decide whether to show the sidebar entry.
+- Recorded the new configuration-drift risk introduced by environment-managed admin access.
 
 ### 2026-03-01
 

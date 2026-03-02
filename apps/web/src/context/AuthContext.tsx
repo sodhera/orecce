@@ -11,6 +11,7 @@ import {
 } from "react";
 import { Session, User as SupabaseUser } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
+import { getAdminStatus } from "@/lib/api";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 
 const API_BASE = "/api/v1";
@@ -29,6 +30,8 @@ export type SignupResult = "signed_in" | "verification_required";
 interface AuthContextValue {
     user: User | null;
     isAuthenticated: boolean;
+    isAdmin: boolean;
+    adminLoading: boolean;
     loading: boolean;
     showAuthModal: boolean;
     setShowAuthModal: (v: boolean) => void;
@@ -89,6 +92,8 @@ function getAuthRedirectUrl(): string | undefined {
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [session, setSession] = useState<Session | null>(null);
+    const [isAdmin, setIsAdmin] = useState(false);
+    const [adminLoading, setAdminLoading] = useState(true);
     const [loading, setLoading] = useState(true);
     const [showAuthModal, setShowAuthModal] = useState(false);
     const trackedOauthUserIdRef = useRef<string | null>(null);
@@ -145,6 +150,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
         })();
     }, [session]);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        if (!session?.access_token) {
+            setIsAdmin(false);
+            setAdminLoading(false);
+            return () => {
+                cancelled = true;
+            };
+        }
+
+        setAdminLoading(true);
+
+        void (async () => {
+            try {
+                const result = await getAdminStatus();
+                if (cancelled) {
+                    return;
+                }
+                setIsAdmin(Boolean(result.isAdmin));
+            } catch {
+                if (cancelled) {
+                    return;
+                }
+                setIsAdmin(false);
+            } finally {
+                if (!cancelled) {
+                    setAdminLoading(false);
+                }
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [session?.access_token]);
 
     const login = useCallback(async (email: string, password: string) => {
         trackAnalyticsEvent({
@@ -315,6 +357,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             value={{
                 user,
                 isAuthenticated: !!user,
+                isAdmin,
+                adminLoading,
                 loading,
                 showAuthModal,
                 setShowAuthModal,

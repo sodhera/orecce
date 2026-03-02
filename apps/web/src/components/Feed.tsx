@@ -5,6 +5,7 @@ import Link from "next/link";
 import PostCard from "./PostCard";
 import PostCardSkeleton from "./PostCardSkeleton";
 import { useFeed } from "@/hooks/useFeed";
+import { useCollections } from "@/hooks/useCollections";
 import { useRecces } from "@/hooks/useRecces";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import type { Recce } from "@/lib/recces";
@@ -44,6 +45,11 @@ export default function Feed({ mode, onModeChange }: FeedProps) {
 
     const feed = useFeed(mode === "ALL" ? null : selectedRecce);
     const { refresh: refreshFeed } = feed;
+    const { collections } = useCollections();
+    const collectionsList = useMemo(
+        () => collections.map((c) => ({ id: c.id, name: c.name })),
+        [collections],
+    );
 
     useEffect(() => {
         if (mode !== "ALL") return;
@@ -304,8 +310,10 @@ export default function Feed({ mode, onModeChange }: FeedProps) {
                                 isSaved={item.isSaved}
                                 authorName={item.authorName}
                                 authorAvatar={item.authorAvatar}
+                                collections={collectionsList}
                                 onLikeToggle={() => feed.toggleLike(item.post.id)}
                                 onSaveToggle={() => feed.toggleSave(item.post.id)}
+                                onSaveToCollection={(postId, collectionId) => feed.saveToCollection(postId, collectionId)}
                                 onLastSlide={() => feed.markAsRead(item.post.id)}
                             />
                         </div>

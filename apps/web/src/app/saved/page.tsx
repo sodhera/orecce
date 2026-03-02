@@ -12,6 +12,7 @@ import {
     BsArrowLeft,
     BsFolder2,
     BsFolderPlus,
+    BsPlusLg,
     BsPencil,
     BsTrash,
     BsCheck2,
@@ -327,9 +328,30 @@ function CollectionsList({
             <div className="feed-header">
                 <div
                     className="feed-header-top"
-                    style={{ paddingBottom: 12 }}
+                    style={{ paddingBottom: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}
                 >
                     <h1>Saved</h1>
+                    <button
+                        type="button"
+                        onClick={() => setShowCreate(true)}
+                        style={{
+                            background: "transparent",
+                            border: "none",
+                            color: "var(--text-primary)",
+                            cursor: "pointer",
+                            padding: "8px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            borderRadius: "50%",
+                            transition: "background 0.2s",
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                        aria-label="New Collection"
+                    >
+                        <BsPlusLg size={20} />
+                    </button>
                 </div>
             </div>
 
@@ -393,70 +415,81 @@ function CollectionsList({
                             </button>
                         ))}
 
-                        {/* New collection inline / button */}
-                        {showCreate ? (
-                            <div className="collection-create-row">
-                                <input
-                                    ref={createInputRef}
-                                    className="collection-create-input"
-                                    value={newName}
-                                    onChange={(e) => setNewName(e.target.value)}
-                                    placeholder="Collection name…"
-                                    maxLength={60}
-                                    onKeyDown={(e) => {
-                                        if (e.key === "Enter")
-                                            void handleCreate();
-                                        if (e.key === "Escape") {
-                                            setShowCreate(false);
-                                            setNewName("");
-                                        }
-                                    }}
-                                    disabled={creating}
-                                />
-                                <button
-                                    type="button"
-                                    className="collection-create-confirm"
-                                    onClick={() => void handleCreate()}
-                                    disabled={creating || !newName.trim()}
-                                >
-                                    {creating ? "…" : <BsCheck2 size={16} />}
-                                </button>
-                                <button
-                                    type="button"
-                                    className="collection-create-cancel"
-                                    onClick={() => {
-                                        setShowCreate(false);
-                                        setNewName("");
-                                    }}
-                                >
-                                    <BsX size={18} />
-                                </button>
-                            </div>
-                        ) : (
-                            <button
-                                type="button"
-                                className="collection-card collection-card-new"
-                                onClick={() => {
-                                    trackAnalyticsEvent({
-                                        eventName: "collection_create_started",
-                                        surface: "saved",
-                                    });
-                                    setShowCreate(true);
-                                }}
-                            >
-                                <div className="collection-card-icon new">
-                                    <BsFolderPlus size={22} />
-                                </div>
-                                <div className="collection-card-info">
-                                    <span className="collection-card-name">
-                                        New Collection
-                                    </span>
-                                </div>
-                            </button>
-                        )}
                     </div>
                 )}
             </div>
+
+            {/* Create Collection Modal */}
+            {showCreate && (
+                <div
+                    className="auth-overlay"
+                    onClick={() => {
+                        setShowCreate(false);
+                        setNewName("");
+                    }}
+                >
+                    <div
+                        className="collection-delete-modal"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <h2>New Collection</h2>
+                        <input
+                            ref={createInputRef}
+                            value={newName}
+                            onChange={(e) => setNewName(e.target.value)}
+                            placeholder="Collection name…"
+                            maxLength={60}
+                            style={{
+                                width: "100%",
+                                padding: "12px",
+                                borderRadius: "8px",
+                                border: "1px solid var(--bg-border)",
+                                background: "var(--bg-secondary)",
+                                color: "var(--text-primary)",
+                                outline: "none",
+                                fontSize: "15px",
+                                marginBottom: "20px",
+                                marginTop: "10px",
+                            }}
+                            onKeyDown={(e) => {
+                                if (e.key === "Enter") void handleCreate();
+                                if (e.key === "Escape") {
+                                    setShowCreate(false);
+                                    setNewName("");
+                                }
+                            }}
+                            disabled={creating}
+                        />
+                        <div className="collection-delete-actions">
+                            <button
+                                type="button"
+                                className="collection-delete-btn"
+                                style={{
+                                    background: "var(--text-primary)",
+                                    color: "var(--bg-primary)",
+                                    border: "none",
+                                    opacity: (!newName.trim() || creating) ? 0.5 : 1,
+                                    cursor: (!newName.trim() || creating) ? "not-allowed" : "pointer"
+                                }}
+                                onClick={() => void handleCreate()}
+                                disabled={creating || !newName.trim()}
+                            >
+                                {creating ? "Creating..." : "Create"}
+                            </button>
+                            <button
+                                type="button"
+                                className="collection-delete-btn cancel"
+                                onClick={() => {
+                                    setShowCreate(false);
+                                    setNewName("");
+                                }}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </main>
     );
 }

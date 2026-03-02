@@ -5678,3 +5678,74 @@ body[data-theme="light"] .skeleton-square::after {
     left: 200%;
   }
 }
+
+/* ── Save-to-Collection Popup ── */
+.save-btn-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.save-collection-popup {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  right: -8px;
+  /* Align better with the button */
+  min-width: 220px;
+  max-width: 280px;
+  max-height: 280px;
+  overflow-y: auto;
+  background: var(--bg-primary);
+  border: 1px solid var(--bg-border);
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2), 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  padding: 6px 0;
+  animation: savePopupFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes savePopupFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.save-collection-popup-title {
+  padding: 10px 18px 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.save-collection-popup-item {
+  display: block;
+  width: calc(100% - 12px);
+  margin: 2px 6px;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.save-collection-popup-item:hover {
+  background: var(--bg-hover);
+}

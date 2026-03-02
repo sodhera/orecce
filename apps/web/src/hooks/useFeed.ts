@@ -64,6 +64,7 @@ interface UseFeedReturn {
     loadMore: () => void;
     toggleLike: (postId: string) => void;
     toggleSave: (postId: string) => void;
+    saveToCollection: (postId: string, collectionId: string) => void;
     markAsSeen: (postId: string) => void;
     markAsRead: (postId: string) => void;
     refresh: () => void;
@@ -796,6 +797,60 @@ export function useFeed(
         })();
     }, [hasMore, items, persistFeedSnapshot]);
 
+    // ── Save to specific collection ──
+    const saveToCollection = useCallback((postId: string, collectionId: string) => {
+        const target = items.find((item) => item.post.id === postId);
+        if (!target) return;
+
+        const optimisticItems = items.map((item) =>
+            item.post.id === postId ? { ...item, isSaved: true } : item,
+        );
+        setItems(optimisticItems);
+        setError(null);
+        persistFeedSnapshot({
+            items: optimisticItems,
+            hasMore,
+            nextOffset: offsetRef.current,
+        });
+
+        void (async () => {
+            try {
+                const userId = await requireUserId();
+                const { error: insertError } = await supabase
+                    .from("user_saves")
+                    .insert({ user_id: userId, post_id: postId, collection_id: collectionId });
+                if (insertError) {
+                    throw new Error(insertError.message);
+                }
+                await sendPostFeedback(postId, "save");
+                trackAnalyticsEvent({
+                    eventName: "post_saved_to_collection",
+                    surface: feedMode,
+                    properties: {
+                        post_id: postId,
+                        collection_id: collectionId,
+                        topic: target.post.topic,
+                        author_name: target.authorName,
+                    },
+                });
+            } catch (error) {
+                const revertedItems = optimisticItems.map((item) => {
+                    if (item.post.id !== postId || !item.isSaved) {
+                        return item;
+                    }
+                    return { ...item, isSaved: target.isSaved };
+                });
+                setItems(revertedItems);
+                setError(error instanceof Error ? error.message : "Failed to save to collection.");
+                persistFeedSnapshot({
+                    items: revertedItems,
+                    hasMore,
+                    nextOffset: offsetRef.current,
+                });
+            }
+        })();
+    }, [hasMore, items, persistFeedSnapshot]);
+
     // ── Mark as read (fire-and-forget) ──
     const markAsSeen = useCallback((postId: string) => {
         const normalized = String(postId ?? "").trim();
@@ -869,6 +924,7 @@ export function useFeed(
         loadMore,
         toggleLike,
         toggleSave,
+        saveToCollection,
         markAsSeen,
         markAsRead,
         refresh: useCallback(() => {

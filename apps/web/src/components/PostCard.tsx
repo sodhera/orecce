@@ -49,6 +49,8 @@ interface PostCardProps {
     authorAvatar?: string | null;
     onLikeToggle?: (liked: boolean) => void;
     onSaveToggle?: (saved: boolean) => void;
+    onSaveToCollection?: (postId: string, collectionId: string) => void;
+    collections?: Array<{ id: string; name: string }>;
     onSlideFlip?: (payload: {
         flipDelta: number;
         currentSlideIndex: number;
@@ -161,6 +163,8 @@ export default function PostCard({
     authorAvatar,
     onLikeToggle,
     onSaveToggle,
+    onSaveToCollection,
+    collections,
     onSlideFlip,
     onLastSlide,
     onInteraction,
@@ -175,6 +179,8 @@ export default function PostCard({
     const lastTapAtRef = useRef(0);
     const lastTapPointRef = useRef<{ x: number; y: number } | null>(null);
     const copiedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [showCollectionPicker, setShowCollectionPicker] = useState(false);
+    const collectionPickerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isSlideVariant = variant === "slide";
     const authorLabel = useMemo(() => normalizeAuthorLabel(authorName), [authorName]);
     const topicLabel = useMemo(() => normalizeTopicLabel(post.topic), [post.topic]);
@@ -403,24 +409,59 @@ export default function PostCard({
     );
 
     const saveButton = (
-        <button
-            type="button"
-            className={`post-action post-save ${saved ? "active" : ""}`}
-            onClick={() => {
-                const next = !saved;
-                setSaved(next);
-                onSaveToggle?.(next);
-                emitInteraction("save");
+        <div
+            className="save-btn-wrapper"
+            onMouseEnter={() => {
+                if (collectionPickerTimer.current) clearTimeout(collectionPickerTimer.current);
+                if (collections && collections.length > 0) {
+                    setShowCollectionPicker(true);
+                }
             }}
-            aria-label={saved ? "Unsave post" : "Save post"}
-            title={saved ? "Unsave" : "Save"}
+            onMouseLeave={() => {
+                collectionPickerTimer.current = setTimeout(() => {
+                    setShowCollectionPicker(false);
+                }, 200);
+            }}
         >
-            {saved ? (
-                <BsBookmarkFill aria-hidden="true" />
-            ) : (
-                <BsBookmark aria-hidden="true" />
+            <button
+                type="button"
+                className={`post-action post-save ${saved ? "active" : ""}`}
+                onClick={() => {
+                    const next = !saved;
+                    setSaved(next);
+                    onSaveToggle?.(next);
+                    emitInteraction("save");
+                    setShowCollectionPicker(false);
+                }}
+                aria-label={saved ? "Unsave post" : "Save post"}
+                title={saved ? "Unsave" : "Save"}
+            >
+                {saved ? (
+                    <BsBookmarkFill aria-hidden="true" />
+                ) : (
+                    <BsBookmark aria-hidden="true" />
+                )}
+            </button>
+            {showCollectionPicker && collections && collections.length > 0 && (
+                <div className="save-collection-popup">
+                    <div className="save-collection-popup-title">Save to collection</div>
+                    {collections.map((col) => (
+                        <button
+                            key={col.id}
+                            type="button"
+                            className="save-collection-popup-item"
+                            onClick={() => {
+                                setSaved(true);
+                                onSaveToCollection?.(post.id, col.id);
+                                setShowCollectionPicker(false);
+                            }}
+                        >
+                            {col.name}
+                        </button>
+                    ))}
+                </div>
             )}
-        </button>
+        </div>
     );
 
 

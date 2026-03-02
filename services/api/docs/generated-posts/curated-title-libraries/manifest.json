@@ -1,6 +1,6 @@
 {
   "generated_at": "2026-03-02T12:10:45.843Z",
-  "updated_at": "2026-03-02T12:16:24.480Z",
+  "updated_at": "2026-03-02T12:29:33.788Z",
   "model": "gpt-5.2-2025-12-11",
   "config": {
     "target_per_category": 300,
@@ -8,14 +8,14 @@
   },
   "categories": {
     "historical_nerd": {
-      "total_titles": 300,
-      "core_topics": 90,
-      "variants": 210
+      "total_titles": 177,
+      "core_topics": 50,
+      "variants": 127
     },
     "mental_model_library": {
-      "total_titles": 300,
-      "core_topics": 90,
-      "variants": 210
+      "total_titles": 189,
+      "core_topics": 53,
+      "variants": 136
     }
   }
 }

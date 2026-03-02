@@ -40,7 +40,7 @@ When updating this file:
 2. Security controls are split across Expo config, Next.js routes, Express middleware, and Supabase schema, even though canonical docs now exist.
 3. Abuse limiting is best-effort only because it currently lives in process memory.
 4. There is no recurring security audit automation yet.
-5. Admin allowlist management now depends on deployment configuration staying accurate.
+5. Admin allowlist management now depends on both the repo-defined baseline list and deployment configuration staying accurate.
 
 ## Current known risks
 
@@ -49,7 +49,7 @@ When updating this file:
 3. In-memory rate limiting will not synchronize across multiple server instances.
 4. Anonymous feedback insertion remains open by design and needs spam-tolerance review.
 5. Local-only auth bypass seams such as inferred `user_id` must stay impossible in production deployments.
-6. Admin access now depends on `ADMIN_USER_EMAILS` and/or `ADMIN_USER_IDS`; stale allowlists or misconfiguration could overgrant or undergrant access.
+6. Admin access now depends on the repo-defined email allowlist and optional `ADMIN_USER_EMAILS`/`ADMIN_USER_IDS`; stale allowlists or misconfiguration could overgrant or undergrant access.
 
 ## Current security inventory
 
@@ -68,7 +68,7 @@ When updating this file:
 - Structured route logging with request IDs
 - Local-only iOS transport exceptions instead of global arbitrary-load allowance
 - Server-side segregation of privileged keys from browser/mobile clients
-- Server-side admin allowlist checks on `/api/v1/admin/me` and `/api/v1/admin/user-analytics`, mirrored by client-side nav visibility for `/admin`
+- Server-side admin allowlist checks on `/api/v1/admin/me` and `/api/v1/admin/user-analytics`, backed by a repo-defined email baseline plus optional env extensions, and mirrored by client-side nav visibility for `/admin`
 
 ### Controls missing or not yet standardized
 
@@ -78,7 +78,7 @@ When updating this file:
 - Distributed abuse controls beyond in-memory process state
 - Dependency-audit and secrets-rotation workflow
 - Dedicated security monitoring and incident-response guidance
-- Centralized admin-role management beyond environment-based allowlists
+- Centralized admin-role management beyond repo and environment-based allowlists
 
 ## Gaps to fix first
 
@@ -126,8 +126,8 @@ When updating this file:
 ### 2026-03-02
 
 - Added an admin-only `/admin` web surface with a matching protected reporting route at `/api/v1/admin/user-analytics`.
-- Gated admin access through server-side allowlists from `ADMIN_USER_EMAILS` and `ADMIN_USER_IDS`, with the client only using the protected status response to decide whether to show the sidebar entry.
-- Recorded the new configuration-drift risk introduced by environment-managed admin access.
+- Gated admin access through a server-side repo allowlist with optional `ADMIN_USER_EMAILS` and `ADMIN_USER_IDS` extensions, with the client only using the protected status response to decide whether to show the sidebar entry.
+- Recorded the configuration-drift risk introduced by repo-managed and environment-managed admin access.
 
 ### 2026-03-01
 

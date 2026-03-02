@@ -55,7 +55,7 @@ When updating this file:
 - derived views for sessions, daily user facts, daily content facts, funnels, and recommendation outcomes
 - web batching client with lifecycle flush support
 - mobile batching client with AsyncStorage-backed identity/session state
-- admin-only web reporting route at `/admin` backed by `/api/v1/admin/user-analytics`
+- admin-only web reporting route at `/admin` backed by `/api/v1/admin/user-analytics` and protected by the shared admin allowlist
 
 ### Product-state signals that still exist alongside analytics
 

@@ -3,6 +3,11 @@ import "server-only";
 import { ApiError } from "@orecce/api-core/src/types/errors";
 import type { AuthIdentity } from "@orecce/api-core/src/auth/types";
 
+const REPO_ADMIN_EMAILS = new Set([
+    "sirish@nyu.edu",
+    "sul4v2@gmail.com",
+]);
+
 function parseAllowlistEnv(raw: string | undefined): Set<string> {
     return new Set(
         (raw ?? "")
@@ -13,7 +18,10 @@ function parseAllowlistEnv(raw: string | undefined): Set<string> {
 }
 
 function getAdminEmails(): Set<string> {
-    return parseAllowlistEnv(process.env.ADMIN_USER_EMAILS);
+    return new Set([
+        ...REPO_ADMIN_EMAILS,
+        ...parseAllowlistEnv(process.env.ADMIN_USER_EMAILS),
+    ]);
 }
 
 function getAdminUserIds(): Set<string> {

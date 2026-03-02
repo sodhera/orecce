@@ -301,7 +301,8 @@ export default function AdminPage() {
                         The left-nav Admin button only appears for allowlisted users.
                     </p>
                     <p className="page-side-note-text">
-                        Set admin access with <code>ADMIN_USER_EMAILS</code> or{" "}
+                        Admin access currently includes the repo allowlist, and you can
+                        extend it with <code>ADMIN_USER_EMAILS</code> or{" "}
                         <code>ADMIN_USER_IDS</code> on the server.
                     </p>
                     {analytics && (

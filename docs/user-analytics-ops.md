@@ -141,7 +141,7 @@ When updating this file:
 - Added a protected `/api/v1/admin/user-analytics` route so reporting consumes the shared warehouse layer instead of ad hoc client queries.
 - Kept the analytics taxonomy unchanged; the admin page reads existing derived facts rather than introducing new event names.
 - Added an All/Following filter to web Discover without changing the Recce analytics event names.
-- Invalidated personalized web Home feed snapshots after Recce follow changes so the All feed no longer reuses stale followed-Recces cache entries.
+- Invalidated personalized web Home feed snapshots after Recce follow changes, and the Home All feed now re-checks current followed authors before rendering cached or freshly paged author-follow matches.
 
 ### 2026-03-01
 

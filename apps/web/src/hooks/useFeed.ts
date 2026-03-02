@@ -51,6 +51,7 @@ interface FeedPostState {
     isSaved: boolean;
     isRead: boolean;
     matchReason: string;
+    matchSource: "author" | "topic" | "liked" | "saved" | "collection" | "recommended";
     authorName: string;
     authorAvatar: string | null;
 }
@@ -145,6 +146,44 @@ function normalizeMatchReason(matchReason: string | null): string {
     return normalized;
 }
 
+function deriveMatchSource(matchReason: string | null): FeedPostState["matchSource"] {
+    const normalized = String(matchReason ?? "").trim().toLowerCase();
+
+    if (normalized === "following author") {
+        return "author";
+    }
+    if (normalized === "following topic") {
+        return "topic";
+    }
+    if (normalized === "liked") {
+        return "liked";
+    }
+    if (normalized === "saved") {
+        return "saved";
+    }
+
+    return "recommended";
+}
+
+function filterItemsForCurrentFollows(
+    items: FeedPostState[],
+    feedMode: FeedMode,
+    selectedRecce: Pick<Recce, "id" | "key" | "kind" | "name"> | null | undefined,
+    followedAuthorNames?: ReadonlySet<string>,
+): FeedPostState[] {
+    if (
+        feedMode !== "feed" ||
+        selectedRecce ||
+        !followedAuthorNames
+    ) {
+        return items;
+    }
+
+    return items.filter((item) =>
+        item.matchSource !== "author" || followedAuthorNames.has(item.authorName),
+    );
+}
+
 function deriveSourceTitle(row: RpcRow): string | undefined {
     const candidate = row.source_title ?? row.source_domain ?? row.source;
     const normalized = String(candidate ?? "").trim();
@@ -169,6 +208,7 @@ function rpcRowToState(row: RpcRow): FeedPostState {
         isSaved: row.has_saved,
         isRead: false,
         matchReason: topic,
+        matchSource: deriveMatchSource(row.match_reason),
         authorName: row.author_name ?? "Unknown",
         authorAvatar: row.author_avatar ?? null,
     };
@@ -197,6 +237,7 @@ function topicRowToState(
         isSaved: savedIds.has(row.id),
         isRead: false,
         matchReason: selectedTopic,
+        matchSource: "topic",
         authorName: author?.name ?? "Unknown",
         authorAvatar: author?.avatar_url ?? null,
     };
@@ -210,6 +251,7 @@ export function useFeed(
     selectedRecce?: Pick<Recce, "id" | "key" | "kind" | "name"> | null,
     feedMode: FeedMode = "feed",
     collectionId?: string | null,
+    followedAuthorNames?: ReadonlySet<string>,
 ): UseFeedReturn {
     const [items, setItems] = useState<FeedPostState[]>([]);
     const [loading, setLoading] = useState(true);
@@ -277,14 +319,24 @@ export function useFeed(
         }
 
         userIdRef.current = sessionUserId;
-        setItems(snapshot.value.items);
+        const filteredItems = filterItemsForCurrentFollows(
+            snapshot.value.items,
+            feedMode,
+            selectedRecce,
+            followedAuthorNames,
+        );
+
+        setItems(filteredItems);
         setHasMore(snapshot.value.hasMore);
         setLoading(false);
         setError(null);
         offsetRef.current = snapshot.value.nextOffset;
 
-        return { hydrated: true, isFresh: snapshot.isFresh };
-    }, [scopeKey]);
+        return {
+            hydrated: true,
+            isFresh: snapshot.isFresh && filteredItems.length === snapshot.value.items.length,
+        };
+    }, [feedMode, followedAuthorNames, scopeKey, selectedRecce]);
 
     const getUserId = useCallback(async () => {
         if (userIdRef.current) {
@@ -530,6 +582,15 @@ export function useFeed(
                 if (existingIds.has(postId)) {
                     continue;
                 }
+                if (
+                    feedMode === "feed" &&
+                    !selectedRecce &&
+                    followedAuthorNames &&
+                    item.matchSource === "author" &&
+                    !followedAuthorNames.has(item.authorName)
+                ) {
+                    continue;
+                }
                 if (feedMode === "feed" && readPostIdsRef.current.has(postId)) {
                     continue;
                 }
@@ -558,7 +619,7 @@ export function useFeed(
             nextOffset: offset,
             reachedEnd,
         };
-    }, [feedMode, fetchPage]);
+    }, [feedMode, fetchPage, followedAuthorNames, selectedRecce]);
 
     // ── Initial load ──
     const loadInitial = useCallback(async (force = false) => {

@@ -346,7 +346,7 @@ Status: mostly complete
 - Discover Recce impressions and author/topic follows are instrumented, and the web Discover surface now exposes those Recces through expandable categories.
 - Saved and collection actions are instrumented.
 - Web page state, feed, Recce discovery, collection views, feedback drafts, notifications, and post-detail snapshots now resume from tab-scoped cache after focus-triggered remounts without introducing new analytics event names.
-- The web Discover surface now supports an All/Following Recce filter, and Recce follow changes invalidate personalized Home feed snapshots so stale unfollowed Recces do not persist in the All feed cache.
+- The web Discover surface now supports an All/Following Recce filter, and Recce follow changes invalidate personalized Home feed snapshots plus re-apply current author-follow state so stale unfollowed Recces do not persist in the Home All feed.
 - Added an admin-only `/admin` reporting page that consumes the derived analytics views without changing the analytics taxonomy.
 
 ### Phase 2: Instrument secondary journeys

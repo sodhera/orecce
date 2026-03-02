@@ -33,6 +33,17 @@ export default function Feed({ mode, onModeChange }: FeedProps) {
         () => recces.filter((recce) => followedKeys.has(recce.key)),
         [followedKeys, recces]
     );
+    const followedAuthorNames = useMemo(() => {
+        if (reccesLoading) {
+            return undefined;
+        }
+
+        return new Set(
+            recces
+                .filter((recce) => recce.kind === "author" && followedKeys.has(recce.key))
+                .map((recce) => recce.name),
+        );
+    }, [followedKeys, recces, reccesLoading]);
     const selectedRecce = useMemo(
         () => recces.find((recce) => recce.key === mode) ?? null,
         [mode, recces]
@@ -43,7 +54,7 @@ export default function Feed({ mode, onModeChange }: FeedProps) {
         [followedKeys, recces]
     );
 
-    const feed = useFeed(mode === "ALL" ? null : selectedRecce);
+    const feed = useFeed(mode === "ALL" ? null : selectedRecce, "feed", null, followedAuthorNames);
     const { refresh: refreshFeed } = feed;
     const { collections } = useCollections();
     const collectionsList = useMemo(

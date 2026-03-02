@@ -16,30 +16,30 @@ When updating this file:
 
 ## Last review
 
-- Reviewed on: 2026-03-01
+- Reviewed on: 2026-03-02
 - Reviewer: Codex
-- Scope: repo-wide implementation pass across mobile, web, API, schema, and security workflow
-- Review type: baseline hardening pass after initial security review findings
+- Scope: repo-wide audit of mobile, web, API, schema, browser storage, and external-integration posture
+- Review type: scheduled automation refresh after recent web state-cache changes
 
 ## Coverage snapshot
 
 | Area | Coverage | Notes |
 | --- | --- | --- |
 | Identity and authentication | Yellow | Supabase bearer verification exists in the main API paths, but local-mode seams still exist in core code and require strict environment gating. |
-| Authorization and database policy model | Yellow | Web client RLS tables and policies are now mirrored into the canonical schema and forward migration path; web Recce follows now hit both `user_author_follows` and `user_topic_follows`, but the full route/table authorization matrix is still missing. |
+| Authorization and database policy model | Yellow | Web client RLS tables and policies are mirrored into the canonical schema and forward migration path, and browser clients now directly read or write `save_collections`, `user_likes`, `user_saves`, `user_history`, `user_feedback`, `user_author_follows`, and `user_topic_follows`, but the full route/table authorization matrix and policy tests are still missing. |
 | Mobile client and session handling | Yellow | iOS arbitrary loads were removed in favor of local-only ATS exceptions, but secure-storage review and privacy logging review remain open. |
-| Web browser surface | Yellow | Authenticated flows and server routes exist, and low-sensitivity route state plus feed/discover/collection/post snapshots now resume from sessionStorage, but CSP and browser security headers are not yet codified. |
+| Web browser surface | Yellow | Authenticated flows and server routes exist, and sessionStorage now buffers low-sensitivity route state, feed/discover/collection/post snapshots, plus curate-chat draft state, but CSP and browser security headers are not yet codified. |
 | Core API hardening | Yellow | CORS is now allowlisted and several costly/write-heavy routes have request budgets, but protections are still in-memory only. |
-| LLM and external fetch surfaces | Yellow | Curate chat and several mutation paths are budgeted, but outbound fetch controls, prompt-injection review, and broader cost controls still need work. |
+| LLM and external fetch surfaces | Yellow | The web article-text route now uses a host allowlist and bounded fetch window, but API news ingestion and sports/news fetchers still rely on source configuration without domain allowlists, and prompt-injection review plus broader cost controls still need work. |
 | Secrets and configuration | Yellow | Service-role keys remain server-side and CORS config is now explicit, but secret-rotation and least-privilege work remain open. |
-| Monitoring and incident readiness | Red | No dedicated security monitoring, response playbook, or recurring audit automation is in place yet. |
+| Monitoring and incident readiness | Red | A recurring security audit automation is now running, but there is still no dedicated monitoring, alerting, or incident-response playbook. |
 
 ## Current blockers
 
 1. There is still no route-by-route authorization matrix or policy test harness.
-2. Security controls are split across Expo config, Next.js routes, Express middleware, and Supabase schema, even though canonical docs now exist.
-3. Abuse limiting is best-effort only because it currently lives in process memory.
-4. There is no recurring security audit automation yet.
+2. Browser-direct Supabase access now spans several RLS-backed tables and RPCs, but ownership and test coverage are still implicit instead of codified in one matrix.
+3. Security controls are split across Expo config, Next.js routes, Express middleware, and Supabase schema, even though canonical docs now exist.
+4. Abuse limiting is best-effort only because it currently lives in process memory.
 
 ## Current known risks
 
@@ -48,6 +48,7 @@ When updating this file:
 3. In-memory rate limiting will not synchronize across multiple server instances.
 4. Anonymous feedback insertion remains open by design and needs spam-tolerance review.
 5. Local-only auth bypass seams such as inferred `user_id` must stay impossible in production deployments.
+6. Authenticated web session caches now retain more user-authored UI state in `sessionStorage`, including curate-chat drafts, without a dedicated browser-storage review.
 
 ## Current security inventory
 
@@ -60,18 +61,21 @@ When updating this file:
 - Optional-auth handling for analytics ingestion
 - Explicit API CORS allowlist with local-development defaults
 - Canonical RLS and policy definitions for web client tables in the base schema and forward migration path
-- Browser-side follow writes for both author and topic Recces, backed by Supabase RLS on `user_author_follows` and `user_topic_follows`
-- Tab-scoped sessionStorage cache for low-sensitivity route state, drafts, and feed/Recce/collection/post snapshots, with no auth tokens or password values stored in the cache layer
+- Browser-side direct reads and writes for collections, likes, saves, history, feedback, and follow state, backed by Supabase RLS and RPCs
+- Tab-scoped sessionStorage cache for low-sensitivity route state, drafts, feed/Recce/collection/post snapshots, and curate-chat draft state, with no auth tokens or password values stored in the cache layer
 - Request budgets on curate chat plus other costly and write-heavy web/API routes
 - Structured route logging with request IDs
 - Local-only iOS transport exceptions instead of global arbitrary-load allowance
+- Web article-text fetch route constrained to an explicit host allowlist with timeout and response-size bounds
 - Server-side segregation of privileged keys from browser/mobile clients
+- Recurring security audit automation refreshing this log
 
 ### Controls missing or not yet standardized
 
 - Route-by-route authorization matrix and tests
 - Web security headers and CSP strategy
 - Mobile secure-storage review for sensitive client state
+- Browser-storage review for authenticated cached UI content and curate-chat drafts
 - Distributed abuse controls beyond in-memory process state
 - Dependency-audit and secrets-rotation workflow
 - Dedicated security monitoring and incident-response guidance
@@ -88,7 +92,7 @@ When updating this file:
 ### P1
 
 - Build the route and table authorization matrix.
-- Review direct browser writes to `user_feedback` for spam tolerance and ownership.
+- Review direct browser writes to `user_feedback` plus other browser-accessed tables for spam tolerance, ownership, and RLS coverage.
 - Review and reduce unnecessary service-role blast radius where feasible.
 - Add outbound-fetch guardrails for article and news ingestion paths.
 
@@ -102,7 +106,7 @@ When updating this file:
 ## Questions this program must answer
 
 1. Which server-side code paths can read or write user data with a service-role client?
-2. Which tables are reachable directly from browser clients, and what policies protect them?
+2. Which tables and RPCs are reachable directly from browser clients, and what policies protect them?
 3. Which endpoints can be abused for cost amplification, spam, or denial of service?
 4. Which user-controlled inputs reach logs, prompts, SQL filters, or outbound fetches?
 5. Which environments allow insecure transport, mock data, or auth bypass behavior?
@@ -110,11 +114,11 @@ When updating this file:
 
 ## Next actions
 
-1. Build the route, table, policy, and privileged-client inventory across the repo.
-2. Add authorization and policy-drift tests around the newly canonical web client tables.
+1. Build the route, table, RPC, policy, and privileged-client inventory across the repo.
+2. Add authorization and policy-drift tests around the browser-accessed web tables and RPCs.
 3. Add browser security headers/CSP and document the production origin allowlist.
-4. Replace or augment in-memory abuse limits with environment-appropriate shared controls.
-5. Enable a recurring security audit automation after approval.
+4. Review the new browser cache surface, especially curate-chat draft persistence, for sensitivity and retention expectations.
+5. Replace or augment in-memory abuse limits with environment-appropriate shared controls.
 
 ## Change log
 
@@ -129,3 +133,11 @@ When updating this file:
 - Added agent instructions to keep security docs aligned with feature work.
 - Expanded the web Recce follow surface to include topic follows via `user_topic_follows`, making that client-exposed RLS path part of the current security inventory.
 - Expanded the tab-scoped web cache to low-sensitivity route state and page snapshots, and documented that it stores UI data only, not auth tokens or password values.
+
+### 2026-03-02
+
+- Refreshed the scheduled security audit after reviewing recent web tab-resume and curate-chat cache changes.
+- Updated the browser-surface inventory to include authenticated `sessionStorage` state for curate-chat drafts alongside other cached UI snapshots.
+- Expanded the authorization notes to reflect the current browser-direct Supabase table and RPC surface instead of only follow tables.
+- Marked the recurring security audit automation as active and removed the stale blocker that claimed it was not configured.
+- Recorded the web article-text host allowlist as an implemented external-fetch control while keeping API-side outbound-fetch hardening open.

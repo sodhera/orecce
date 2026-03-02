@@ -24,6 +24,10 @@ Implemented on 2026-03-01:
 - Shared in-memory abuse limiter applied to costly and write-heavy web and API routes
 - iOS App Transport Security tightened to local-only exceptions for development
 
+Implemented on 2026-03-02:
+
+- Recurring security audit automation is now active and refreshing `docs/security-review-ops.md`
+
 ## Security program deliverables
 
 1. A strategy document that defines scope, priorities, and required controls.
@@ -38,7 +42,7 @@ Implemented on 2026-03-01:
 | Surface | Assets | Primary risks | Expected controls |
 | --- | --- | --- | --- |
 | Mobile (`apps/mobile`) | Supabase session state, local preferences, analytics/session identifiers, API base URL, deep-link and OAuth flows | Token theft, insecure transport, auth bypass, unsafe local storage, over-logging | Secure session-storage review, transport hardening, route and auth checks, dependency review, privacy-safe logging |
-| Web (`apps/web`) | Browser session, direct Supabase client access, Next.js API routes, low-sensitivity browser storage for route state and tab-resume caches, user feedback and curation flows | XSS, broken access control, RLS drift, CSRF assumptions, weak browser headers, over-broad client data access | CSP/header strategy, route authz review, RLS verification, input/output handling review, low-sensitivity client storage |
+| Web (`apps/web`) | Browser session, direct Supabase client access, Next.js API routes, low-sensitivity browser storage for route state and tab-resume caches, cached curate-chat drafts, user feedback and curation flows | XSS, broken access control, RLS drift, CSRF assumptions, weak browser headers, over-broad client data access | CSP/header strategy, route authz review, RLS verification, input/output handling review, browser-storage sensitivity review |
 | API (`services/api` and `packages/api-core`) | Bearer auth, write endpoints, recommendation state, LLM and news fetch paths, request logs | Broken authz, permissive CORS, SSRF, abuse/cost amplification, unsafe logging, prompt injection | Authn/authz matrix, origin allowlist, rate limiting, payload validation, outbound fetch restrictions, structured redaction |
 | Database and Supabase | User tables, analytics, feedback, recommendation state, views, service-role access | Missing or drifting RLS, excessive service-role blast radius, migration drift, data retention issues | Canonical forward migrations, RLS/policy tests, least-privilege review, retention rules, schema ownership clarity |
 | External integrations | OpenAI, RSS/news fetches, article scraping, Google auth | Secret leakage, prompt injection, unsafe URL fetching, provider misconfiguration, third-party drift | Secret management, URL allowlists, timeout and content limits, provider-specific hardening, audit logging |
@@ -83,6 +87,7 @@ Review environment-variable handling, service-role usage, package-lock drift, de
 3. Abuse controls are now broader, but they are still in-memory and not yet backed by a distributed store or edge control.
 4. Anonymous feedback insertion remains intentionally open and needs product-level spam tolerance review.
 5. Local-only auth bypass seams in core code must stay impossible in production deployments.
+6. Browser-cached authenticated UI state now includes curate-chat drafts and should be reviewed explicitly for sensitivity and retention expectations.
 
 ## Review methodology
 
@@ -117,11 +122,13 @@ Acceptance criteria:
 - Build a route-by-route and table-by-table authorization matrix.
 - Add tests for server-side authz, policy drift, and user-boundary enforcement.
 - Reduce unnecessary service-role exposure where a user-scoped client or stricter seam is possible.
+- Document the browser-direct table and RPC surface so RLS ownership is explicit.
 
 Acceptance criteria:
 
 - Every write path has an explicit authorization rule.
 - Direct client table access has tested RLS.
+- Browser-direct RPC and cache surfaces have explicit ownership and review notes.
 - Server-only privileged paths are intentional and documented.
 
 ### Phase 3. External integration hardening
@@ -138,7 +145,7 @@ Acceptance criteria:
 
 ### Phase 4. Continuous assurance
 
-- Enable recurring security audit automation.
+- Keep the recurring security audit automation prompt aligned with this workflow.
 - Add dependency and lockfile auditing to the release workflow.
 - Add security monitoring queries, alerting thresholds, and incident-response notes.
 - Refresh the threat model when new features land.
@@ -146,7 +153,7 @@ Acceptance criteria:
 Acceptance criteria:
 
 - Security docs are updated during normal feature work.
-- Recurring audits refresh the ops log.
+- Recurring audits refresh the ops log and stay aligned with the documented workflow.
 - Release decisions can reference current security status instead of stale assumptions.
 
 ## Required change-management rules

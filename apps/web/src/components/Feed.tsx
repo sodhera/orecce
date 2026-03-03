@@ -8,7 +8,7 @@ import { useFeed } from "@/hooks/useFeed";
 import { useCollections } from "@/hooks/useCollections";
 import { useRecces } from "@/hooks/useRecces";
 import { trackAnalyticsEvent } from "@/lib/analytics";
-import type { Recce } from "@/lib/recces";
+import { isPaulGrahamRecce, type Recce } from "@/lib/recces";
 
 interface FeedProps {
     mode: string;
@@ -291,7 +291,10 @@ export default function Feed({ mode, onModeChange }: FeedProps) {
                             {recommendedRecces.length > 0 && (
                                 <div className="feed-recommended-authors">
                                     {recommendedRecces.map((recce) => (
-                                        <div key={recce.key} className="feed-rec-author-card">
+                                        <div
+                                            key={recce.key}
+                                            className={`feed-rec-author-card ${isPaulGrahamRecce(recce) ? "recce-card--paul-graham" : ""}`}
+                                        >
                                             <div className="feed-rec-author-avatar">
                                                 {recce.name?.charAt(0).toUpperCase() || "?"}
                                             </div>

@@ -4544,6 +4544,128 @@ body[data-theme="light"] .ig-post-dot.active {
   background: var(--bg-hover);
 }
 
+.recce-card--paul-graham {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: rgba(241, 245, 252, 0.78);
+  border-color: rgba(156, 173, 204, 0.32);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.62), 0 10px 24px rgba(90, 112, 150, 0.08);
+}
+
+.recce-card--paul-graham::before {
+  content: "";
+  position: absolute;
+  inset: -2%;
+  z-index: -2;
+  background: url("/recces/paul-graham-recce-bg.v1.svg") center / cover no-repeat;
+  filter: saturate(0.6) brightness(1.05) contrast(0.92);
+  transform: scale(1.05);
+}
+
+.recce-card--paul-graham::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(180deg, rgba(249, 251, 255, 0.76) 0%, rgba(241, 246, 253, 0.66) 40%, rgba(236, 243, 251, 0.84) 100%),
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.56), transparent 44%),
+    linear-gradient(135deg, rgba(209, 222, 242, 0.22), rgba(255, 255, 255, 0));
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.recce-card--paul-graham:hover {
+  background: rgba(244, 248, 255, 0.84);
+}
+
+.recce-card--paul-graham > * {
+  position: relative;
+  z-index: 1;
+}
+
+.recce-card--paul-graham .author-card-name,
+.recce-card--paul-graham .feed-rec-author-name,
+.recce-card--paul-graham .post-page-recce-name,
+.recce-card--paul-graham .post-page-author-name {
+  color: #12233c;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.24);
+}
+
+.recce-card--paul-graham .author-card-bio,
+.recce-card--paul-graham .feed-rec-author-bio,
+.recce-card--paul-graham .post-page-recce-bio,
+.recce-card--paul-graham .post-page-author-bio {
+  color: rgba(25, 42, 67, 0.84);
+}
+
+.author-card.recce-card--paul-graham {
+  min-height: 148px;
+  align-items: flex-end;
+  gap: 18px;
+}
+
+.author-card.recce-card--paul-graham .author-card-info {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.author-card.recce-card--paul-graham:hover {
+  background: rgba(244, 248, 255, 0.84);
+}
+
+.feed-rec-author-card.recce-card--paul-graham,
+.post-page-recce-item.recce-card--paul-graham {
+  border-color: rgba(156, 173, 204, 0.32);
+}
+
+.feed-rec-author-card.recce-card--paul-graham:hover {
+  background: rgba(244, 248, 255, 0.84);
+}
+
+.recce-card--paul-graham .author-follow-btn,
+.recce-card--paul-graham .feed-rec-follow-btn,
+.recce-card--paul-graham .post-page-recce-follow-btn,
+.recce-card--paul-graham .post-page-author-follow-btn {
+  background: rgba(255, 255, 255, 0.76);
+  color: #18304f;
+  border: 1px solid rgba(131, 149, 182, 0.44);
+  box-shadow: 0 8px 18px rgba(85, 103, 139, 0.08);
+}
+
+.recce-card--paul-graham .author-follow-btn:hover,
+.recce-card--paul-graham .feed-rec-follow-btn:hover,
+.recce-card--paul-graham .post-page-recce-follow-btn:hover,
+.recce-card--paul-graham .post-page-author-follow-btn:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.recce-card--paul-graham .author-follow-btn.following,
+.recce-card--paul-graham .post-page-author-follow-btn.is-following {
+  background: rgba(230, 238, 249, 0.68);
+  color: #18304f;
+  border-color: rgba(131, 149, 182, 0.5);
+}
+
+.recce-card--paul-graham .author-follow-btn.following:hover,
+.recce-card--paul-graham .post-page-author-follow-btn.is-following:hover {
+  background: rgba(236, 242, 251, 0.84);
+  color: #18304f;
+  border-color: rgba(131, 149, 182, 0.56);
+}
+
+.recce-card--paul-graham .feed-rec-author-avatar,
+.recce-card--paul-graham .post-page-recce-avatar,
+.recce-card--paul-graham .post-page-author-avatar {
+  background: rgba(27, 46, 76, 0.58);
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+
 .author-card-info {
   flex: 1;
   min-width: 0;

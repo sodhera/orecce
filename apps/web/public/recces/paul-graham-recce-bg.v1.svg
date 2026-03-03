@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="Abstract Paul Graham recce background">
+  <defs>
+    <linearGradient id="base" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#f5f1fb"/>
+      <stop offset="52%" stop-color="#eef4ff"/>
+      <stop offset="100%" stop-color="#e4e7f8"/>
+    </linearGradient>
+    <linearGradient id="leftWash" x1="0%" x2="0%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#c9c0f4"/>
+      <stop offset="100%" stop-color="#a79dde"/>
+    </linearGradient>
+    <linearGradient id="panelBlue" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#315c90"/>
+      <stop offset="100%" stop-color="#204870"/>
+    </linearGradient>
+    <linearGradient id="sky" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#b6d6fb"/>
+      <stop offset="100%" stop-color="#d3e7fb"/>
+    </linearGradient>
+    <linearGradient id="orangeBar" x1="0%" x2="100%" y1="0%" y2="0%">
+      <stop offset="0%" stop-color="#f7c960"/>
+      <stop offset="100%" stop-color="#ef884f"/>
+    </linearGradient>
+    <filter id="softBlur" x="-15%" y="-15%" width="130%" height="130%">
+      <feGaussianBlur stdDeviation="28"/>
+    </filter>
+    <filter id="grain" x="0%" y="0%" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="1" seed="11" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer>
+        <feFuncA type="table" tableValues="0 0.09"/>
+      </feComponentTransfer>
+    </filter>
+    <radialGradient id="fog" cx="50%" cy="18%" r="78%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.3"/>
+      <stop offset="72%" stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0.18"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1024" height="1024" fill="url(#base)"/>
+
+  <g filter="url(#softBlur)">
+    <rect x="-40" y="112" width="152" height="624" rx="30" fill="url(#leftWash)" opacity="0.9"/>
+    <rect x="160" y="120" width="442" height="536" rx="26" fill="url(#panelBlue)"/>
+    <path
+      d="M344 192c47 0 82 38 82 84 0 21-7 40-18 55l77 68-55 18 44 162-54 18-85-138-74 122-55-18 48-147-61-15 70-76c-11-15-18-34-18-53 0-46 38-80 99-80z"
+      fill="#9ce995"
+      opacity="0.96"
+    />
+    <rect x="620" y="116" width="292" height="566" rx="40" fill="url(#sky)" opacity="0.96"/>
+    <circle cx="765" cy="410" r="24" fill="#d59a82" opacity="0.94"/>
+    <path
+      d="M686 592c28-70 88-110 162-110s138 42 172 126c-64 34-138 52-224 52-38 0-75-4-110-13z"
+      fill="#deb89c"
+      opacity="0.96"
+    />
+    <path
+      d="M738 552c61-7 126 12 206 68-54 34-104 51-150 51-39 0-70-12-95-36 7-31 20-59 39-83z"
+      fill="#bdb7b1"
+      opacity="0.88"
+    />
+    <rect x="108" y="728" width="834" height="114" rx="58" fill="url(#orangeBar)" opacity="0.97"/>
+    <rect x="0" y="866" width="1024" height="158" fill="#d9daf1"/>
+    <rect x="42" y="900" width="930" height="22" rx="11" fill="#babbe4" opacity="0.56"/>
+    <rect x="60" y="944" width="880" height="20" rx="10" fill="#b2b5e3" opacity="0.5"/>
+    <rect x="32" y="986" width="902" height="18" rx="9" fill="#bcc0ea" opacity="0.48"/>
+  </g>
+
+  <rect width="1024" height="1024" fill="url(#fog)"/>
+  <rect width="1024" height="1024" fill="#ffffff" filter="url(#grain)"/>
+</svg>

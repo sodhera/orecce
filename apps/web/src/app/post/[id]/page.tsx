@@ -9,7 +9,7 @@ import Sidebar from "@/components/Sidebar";
 import PostCard, { type Post, type Slide } from "@/components/PostCard";
 import PostCardSkeleton from "@/components/PostCardSkeleton";
 import { trackAnalyticsEvent } from "@/lib/analytics";
-import { buildRecceKey, type Recce } from "@/lib/recces";
+import { buildRecceKey, isPaulGrahamRecce, type Recce } from "@/lib/recces";
 import { readTabCache, writeTabCache } from "@/lib/tabCache";
 
 interface PostRow {
@@ -218,7 +218,9 @@ export default function PublicPostPage() {
     const rightContent = isAuthenticated ? (
         <aside className="right-sidebar">
             {authorId && (
-                <div className="post-page-author-card">
+                <div
+                    className={`post-page-author-card ${authorRecce && isPaulGrahamRecce(authorRecce) ? "recce-card--paul-graham" : ""}`}
+                >
                     <div className="post-page-author-header">
                         <div className="post-page-author-avatar">
                             {authorName.charAt(0).toUpperCase()}

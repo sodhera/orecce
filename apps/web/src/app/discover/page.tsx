@@ -10,6 +10,7 @@ import { useAuth } from "@/context/AuthContext";
 import { trackAnalyticsEvent } from "@/lib/analytics";
 import {
     getRecceCategoryKey,
+    isPaulGrahamRecce,
     RECCE_CATEGORY_LABELS,
     RECCE_CATEGORY_ORDER,
     type Recce,
@@ -187,10 +188,11 @@ export default function DiscoverPage() {
                                                         const isFollowed = followedKeys.has(
                                                             recce.key,
                                                         );
+                                                        const isPaulGraham = isPaulGrahamRecce(recce);
                                                         return (
                                                             <article
                                                                 key={recce.key}
-                                                                className="author-card"
+                                                                className={`author-card ${isPaulGraham ? "recce-card--paul-graham" : ""}`}
                                                             >
                                                                 <div className="author-card-info">
                                                                     <h3 className="author-card-name">

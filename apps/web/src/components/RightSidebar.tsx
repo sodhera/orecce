@@ -11,7 +11,7 @@ import {
 } from "@/lib/api";
 import { useRecces } from "@/hooks/useRecces";
 import { trackAnalyticsEvent } from "@/lib/analytics";
-import type { Recce } from "@/lib/recces";
+import { isPaulGrahamRecce, type Recce } from "@/lib/recces";
 
 interface RightSidebarProps {
     mode: string;
@@ -642,7 +642,10 @@ function RecommendedRecces() {
             <h3 className="post-page-recces-title">You might be interested in</h3>
             <div className="post-page-recces-list">
                 {unfollowed.map((a) => (
-                    <div key={a.key} className="post-page-recce-item">
+                    <div
+                        key={a.key}
+                        className={`post-page-recce-item ${isPaulGrahamRecce(a) ? "recce-card--paul-graham" : ""}`}
+                    >
                         <div className="post-page-recce-avatar">
                             {a.name?.charAt(0).toUpperCase() || "?"}
                         </div>

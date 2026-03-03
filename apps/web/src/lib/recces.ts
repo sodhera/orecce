@@ -22,6 +22,21 @@ export function buildRecceKey(kind: RecceKind, id: string): string {
     return `${kind}:${id}`;
 }
 
+export const PAUL_GRAHAM_RECCE_ID = "paul_graham";
+
+export function isPaulGrahamRecce(recce: Pick<Recce, "id" | "kind" | "name">): boolean {
+    if (recce.kind !== "author") {
+        return false;
+    }
+
+    const normalizedId = String(recce.id ?? "").trim().toLowerCase();
+    if (normalizedId === PAUL_GRAHAM_RECCE_ID) {
+        return true;
+    }
+
+    return String(recce.name ?? "").trim().toLowerCase() === "paul graham";
+}
+
 export const RECCE_CATEGORY_ORDER: RecceCategoryKey[] = [
     "authors",
     "business",

@@ -25,7 +25,12 @@ export function buildRecceKey(kind: RecceKind, id: string): string {
 export const PAUL_GRAHAM_RECCE_ID = "paul_graham";
 
 export function isPaulGrahamAuthorName(name: string | null | undefined): boolean {
-    return String(name ?? "").trim().toLowerCase() === "paul graham";
+    const normalized = String(name ?? "")
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, " ");
+
+    return normalized.includes("paul graham");
 }
 
 export function isPaulGrahamRecce(recce: Pick<Recce, "id" | "kind" | "name">): boolean {

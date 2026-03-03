@@ -1,7 +1,5 @@
 "use client";
 
-import { supabase } from "@/lib/supabaseClient";
-
 type AnalyticsPlatform = "web";
 
 interface TrackEventInput {
@@ -36,6 +34,7 @@ const MAX_BATCH_SIZE = 25;
 
 let currentUserId: string | null = null;
 let currentRouteName = "";
+let currentAccessToken: string | null = null;
 let queue: AnalyticsBatchEvent[] = [];
 let flushTimer: number | null = null;
 let listenersRegistered = false;
@@ -91,13 +90,12 @@ function scheduleFlush(): void {
     }, FLUSH_DELAY_MS);
 }
 
-async function getAuthHeaders(): Promise<Record<string, string>> {
+function getAuthHeaders(): Record<string, string> {
     const headers: Record<string, string> = {
         "Content-Type": "application/json",
     };
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session?.access_token) {
-        headers.Authorization = `Bearer ${session.access_token}`;
+    if (currentAccessToken) {
+        headers.Authorization = `Bearer ${currentAccessToken}`;
     }
     return headers;
 }
@@ -139,6 +137,10 @@ function registerLifecycleListeners(): void {
 
 export function setAnalyticsUserId(userId: string | null): void {
     currentUserId = userId;
+}
+
+export function setAnalyticsAccessToken(accessToken: string | null): void {
+    currentAccessToken = String(accessToken ?? "").trim() || null;
 }
 
 export function setAnalyticsRouteName(routeName: string): void {
@@ -213,7 +215,7 @@ export async function flushAnalyticsQueue(useBeacon: boolean = false): Promise<v
     }
 
     try {
-        const headers = await getAuthHeaders();
+        const headers = getAuthHeaders();
         const response = await fetch(url, {
             method: "POST",
             headers,

@@ -366,30 +366,45 @@ export function createApp(deps: CreateAppDeps): express.Express {
         }
       }
 
-      await deps.repository.saveAnalyticsEvents({
-        userId,
-        events: parsed.data.events.map((event) => ({
-          eventId: event.event_id,
-          eventName: event.event_name,
-          platform: event.platform,
-          surface: event.surface,
-          occurredAtMs: event.occurred_at_ms,
-          sessionId: event.session_id,
-          anonymousId: event.anonymous_id,
-          deviceId: event.device_id,
-          appVersion: event.app_version,
-          routeName: event.route_name,
-          requestId: event.request_id,
-          properties: event.properties
-        }))
-      });
-
-      res.json({
-        ok: true,
-        data: {
-          accepted_count: parsed.data.events.length
-        }
-      });
+      try {
+        await deps.repository.saveAnalyticsEvents({
+          userId,
+          events: parsed.data.events.map((event) => ({
+            eventId: event.event_id,
+            eventName: event.event_name,
+            platform: event.platform,
+            surface: event.surface,
+            occurredAtMs: event.occurred_at_ms,
+            sessionId: event.session_id,
+            anonymousId: event.anonymous_id,
+            deviceId: event.device_id,
+            appVersion: event.app_version,
+            routeName: event.route_name,
+            requestId: event.request_id,
+            properties: event.properties
+          }))
+        });
+        res.json({
+          ok: true,
+          data: {
+            accepted_count: parsed.data.events.length
+          }
+        });
+      } catch (error) {
+        logError("analytics.batch.persist_failed", {
+          event_count: parsed.data.events.length,
+          user_id: userId,
+          error: error instanceof Error ? error.message : String(error)
+        });
+        res.json({
+          ok: true,
+          data: {
+            accepted_count: 0,
+            dropped_count: parsed.data.events.length,
+            degraded: true
+          }
+        });
+      }
     })
   );
 

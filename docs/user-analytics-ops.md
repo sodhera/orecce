@@ -143,6 +143,11 @@ When updating this file:
 - Added an All/Following filter to web Discover without changing the Recce analytics event names.
 - Invalidated personalized web Home feed snapshots after Recce follow changes, and the Home All feed now re-checks current followed authors before rendering cached or freshly paged author-follow matches.
 
+### 2026-03-03
+
+- Switched the web analytics batching client to reuse the auth token already held in auth state instead of calling `supabase.auth.getSession()` during batch flushes, which reduces Supabase auth lock contention.
+- Hardened both analytics batch ingestion paths to fail open and log when analytics persistence is unavailable, so user sessions no longer surface repeated 500s for non-critical analytics writes.
+
 ### 2026-03-01
 
 - Created the initial repo-wide analytics plan.

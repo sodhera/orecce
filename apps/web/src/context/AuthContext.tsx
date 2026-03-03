@@ -12,7 +12,10 @@ import {
 import { Session, User as SupabaseUser } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabaseClient";
 import { getAdminStatus } from "@/lib/api";
-import { trackAnalyticsEvent } from "@/lib/analytics";
+import {
+    setAnalyticsAccessToken,
+    trackAnalyticsEvent,
+} from "@/lib/analytics";
 
 const API_BASE = "/api/v1";
 const PUBLIC_APP_URL = process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/+$/, "");
@@ -102,6 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         const applySession = (s: Session | null) => {
             setSession(s);
+            setAnalyticsAccessToken(s?.access_token ?? null);
             if (s?.user) {
                 setUser(mapSupabaseUser(s.user));
             } else {
@@ -111,14 +115,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
 
         // Get initial session
-        supabase.auth.getSession().then(({ data: { session: s } }) => {
-            if (s?.user && !canTreatAsAuthenticated(s.user)) {
-                void supabase.auth.signOut();
+        supabase.auth
+            .getSession()
+            .then(({ data: { session: s } }) => {
+                if (s?.user && !canTreatAsAuthenticated(s.user)) {
+                    void supabase.auth.signOut();
+                    applySession(null);
+                    return;
+                }
+                applySession(s);
+            })
+            .catch(() => {
                 applySession(null);
-                return;
-            }
-            applySession(s);
-        });
+            });
 
         // Subscribe to changes
         const {

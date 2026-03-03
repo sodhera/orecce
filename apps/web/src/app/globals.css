@@ -1297,6 +1297,69 @@ body[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
   background: var(--bg-hover);
 }
 
+.post-card--paul-graham {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: rgba(241, 245, 252, 0.78);
+  border-bottom-color: rgba(156, 173, 204, 0.24);
+}
+
+.post-card--paul-graham::before {
+  content: "";
+  position: absolute;
+  inset: -2%;
+  z-index: -2;
+  background: url("/recces/paul-graham-recce-bg.v1.svg") center / cover no-repeat;
+  filter: saturate(0.56) brightness(1.02) contrast(0.92);
+  transform: scale(1.05);
+}
+
+.post-card--paul-graham::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(180deg, rgba(250, 252, 255, 0.78) 0%, rgba(239, 245, 252, 0.72) 44%, rgba(236, 243, 250, 0.86) 100%),
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.56), transparent 42%);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.post-card--paul-graham > * {
+  position: relative;
+  z-index: 1;
+}
+
+.post-card--paul-graham:hover {
+  background: rgba(244, 248, 255, 0.84);
+}
+
+.post-card--paul-graham .post-title,
+.post-card--paul-graham .post-content,
+.post-card--paul-graham .post-markdown strong {
+  color: #17304b;
+}
+
+.post-card--paul-graham .post-topic-badge,
+.post-card--paul-graham .post-carousel-button {
+  background: rgba(255, 255, 255, 0.78);
+  border-color: rgba(136, 154, 186, 0.38);
+  color: #355173;
+}
+
+.post-card--paul-graham .post-action,
+.post-card--paul-graham .post-source-link,
+.post-card--paul-graham .post-header-source-btn {
+  color: #355173;
+}
+
+.post-card--paul-graham .post-source-link:hover,
+.post-card--paul-graham .post-header-source-btn:hover {
+  color: #17304b;
+}
+
 .post-avatar {
   width: 40px;
   height: 40px;
@@ -4118,6 +4181,74 @@ body[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
   justify-content: center;
 }
 
+.ig-post-square--paul-graham {
+  background: #edf4fc;
+  border: 1px solid rgba(156, 173, 204, 0.32);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.72), 0 16px 34px rgba(84, 104, 141, 0.12);
+}
+
+.ig-post-square--paul-graham::before {
+  content: "";
+  position: absolute;
+  inset: -2%;
+  background: url("/recces/paul-graham-recce-bg.v1.svg") center / cover no-repeat;
+  filter: saturate(0.56) brightness(1.02) contrast(0.92);
+  transform: scale(1.05);
+}
+
+.ig-post-square--paul-graham::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(250, 252, 255, 0.42) 0%, rgba(239, 245, 252, 0.18) 34%, rgba(236, 243, 250, 0.68) 100%),
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.62), transparent 42%),
+    linear-gradient(135deg, rgba(210, 223, 243, 0.26), rgba(255, 255, 255, 0));
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.ig-post-square--paul-graham .ig-post-carousel,
+.ig-post-square--paul-graham .ig-post-counter,
+.ig-post-square--paul-graham .ig-post-chevron,
+.ig-post-square--paul-graham .ig-post-dots {
+  position: relative;
+  z-index: 1;
+}
+
+.ig-post--paul-graham .ig-post-text {
+  color: #17304b;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.32);
+}
+
+.ig-post--paul-graham .ig-post-text strong {
+  color: #0b1f37;
+}
+
+.ig-post--paul-graham .ig-post-counter {
+  background: rgba(255, 255, 255, 0.72);
+  color: #1c3557;
+  border: 1px solid rgba(136, 154, 186, 0.38);
+}
+
+.ig-post--paul-graham .ig-post-chevron {
+  background: rgba(255, 255, 255, 0.86);
+  color: #213a5c;
+  box-shadow: 0 8px 22px rgba(84, 104, 141, 0.14);
+}
+
+.ig-post--paul-graham .ig-post-dot {
+  background: rgba(28, 53, 87, 0.18);
+}
+
+.ig-post--paul-graham .ig-post-dot.active {
+  background: #284b75;
+}
+
+.ig-post--paul-graham .ig-post-source-btn:hover {
+  background: rgba(228, 237, 248, 0.82);
+}
+
 .ig-post-sheen {
   position: absolute;
   inset: 0;
@@ -4267,6 +4398,43 @@ body[data-theme="light"] .ig-post-dot {
 :root[data-theme="light"] .ig-post-dot.active,
 body[data-theme="light"] .ig-post-dot.active {
   background: #fff;
+}
+
+:root[data-theme="light"] .ig-post-square--paul-graham,
+body[data-theme="light"] .ig-post-square--paul-graham {
+  background: #edf4fc;
+}
+
+:root[data-theme="light"] .ig-post--paul-graham .ig-post-text,
+body[data-theme="light"] .ig-post--paul-graham .ig-post-text {
+  color: #17304b;
+}
+
+:root[data-theme="light"] .ig-post--paul-graham .ig-post-text strong,
+body[data-theme="light"] .ig-post--paul-graham .ig-post-text strong {
+  color: #0b1f37;
+}
+
+:root[data-theme="light"] .ig-post--paul-graham .ig-post-counter,
+body[data-theme="light"] .ig-post--paul-graham .ig-post-counter {
+  background: rgba(255, 255, 255, 0.72);
+  color: #1c3557;
+}
+
+:root[data-theme="light"] .ig-post--paul-graham .ig-post-chevron,
+body[data-theme="light"] .ig-post--paul-graham .ig-post-chevron {
+  background: rgba(255, 255, 255, 0.86);
+  color: #213a5c;
+}
+
+:root[data-theme="light"] .ig-post--paul-graham .ig-post-dot,
+body[data-theme="light"] .ig-post--paul-graham .ig-post-dot {
+  background: rgba(28, 53, 87, 0.18);
+}
+
+:root[data-theme="light"] .ig-post--paul-graham .ig-post-dot.active,
+body[data-theme="light"] .ig-post--paul-graham .ig-post-dot.active {
+  background: #284b75;
 }
 
 /* ── Chevrons on left/right edge ── */

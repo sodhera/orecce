@@ -22,6 +22,7 @@ import {
     BsSend,
 } from "react-icons/bs";
 import { trackAnalyticsEvent } from "@/lib/analytics";
+import { isPaulGrahamAuthorName } from "@/lib/recces";
 
 export interface Slide {
     slide_number: number;
@@ -183,6 +184,10 @@ export default function PostCard({
     const collectionPickerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const isSlideVariant = variant === "slide";
     const authorLabel = useMemo(() => normalizeAuthorLabel(authorName), [authorName]);
+    const isPaulGrahamPost = useMemo(
+        () => isPaulGrahamAuthorName(authorLabel),
+        [authorLabel],
+    );
     const topicLabel = useMemo(() => normalizeTopicLabel(post.topic), [post.topic]);
     const sourceLabel = useMemo(() => getSourceLabel(post.sourceUrl), [post.sourceUrl]);
     const captionSourceLabel = useMemo(() => {
@@ -467,7 +472,7 @@ export default function PostCard({
 
     if (isSlideVariant) {
         return (
-            <article className="ig-post">
+            <article className={`ig-post ${isPaulGrahamPost ? "ig-post--paul-graham" : ""}`}>
                 {/* ── Author header (above the square) ── */}
                 <div className="ig-post-header">
                     <div className="ig-post-author">
@@ -493,7 +498,9 @@ export default function PostCard({
                 </div>
 
                 {/* ── Square content card ── */}
-                <div className="ig-post-square">
+                <div
+                    className={`ig-post-square ${isPaulGrahamPost ? "ig-post-square--paul-graham" : ""}`}
+                >
                     {/* Slide counter badge — top right */}
                     {canSlide && (
                         <span className="ig-post-counter">
@@ -586,7 +593,7 @@ export default function PostCard({
     }
 
     return (
-        <article className="post-card">
+        <article className={`post-card ${isPaulGrahamPost ? "post-card--paul-graham" : ""}`}>
             <div className="post-body">
                 <div className="post-header">
                     <span className="post-topic-badge">{post.topic}</span>
